@@ -1,0 +1,10 @@
+#ifndef STGISCONFIG_H
+#define STGISCONFIG_H
+
+#ifdef SWGISGUI_LIB
+# define SWGISGUI_EXPORT Q_DECL_EXPORT
+#else
+# define SWGISGUI_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // STGISCONFIG_H

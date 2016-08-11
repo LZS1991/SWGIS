@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SWGISApp</class>
+ <widget class="QMainWindow" name="SWGISApp">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>689</width>
+    <height>512</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SWGISApp</string>
+  </property>
+  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>689</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuProject">
+    <property name="title">
+     <string>Project</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuDecorations">
+     <property name="title">
+      <string>Decorations</string>
+     </property>
+     <addaction name="action_Decoration_NorthArrow"/>
+     <addaction name="action_Decoration_CopyRight"/>
+     <addaction name="action_Decoration_ScaleBar"/>
+     <addaction name="action_Decoration_Grid"/>
+    </widget>
+    <addaction name="menuDecorations"/>
+   </widget>
+   <widget class="QMenu" name="menuLayer">
+    <property name="title">
+     <string>Layer</string>
+    </property>
+    <widget class="QMenu" name="menuAdd_Layer">
+     <property name="title">
+      <string>Add Layer</string>
+     </property>
+     <addaction name="action_Add_Vector_Layer"/>
+     <addaction name="action_Add_WMS_WMTS_Layer"/>
+    </widget>
+    <addaction name="menuAdd_Layer"/>
+   </widget>
+   <addaction name="menuProject"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuView"/>
+   <addaction name="menuLayer"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="action_New_Project"/>
+   <addaction name="action_Open_Project"/>
+   <addaction name="action_Save_Project"/>
+   <addaction name="action_Save_Project_As"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="action_New_Shapefile_Layer"/>
+   <addaction name="action_Add_Vector_Layer"/>
+   <addaction name="action_Add_WMS_WMTS_Layer"/>
+  </widget>
+  <widget class="QToolBar" name="toolBar_2">
+   <property name="windowTitle">
+    <string>toolBar_2</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="action_All_Edits"/>
+   <addaction name="action_Toggle_Editing"/>
+   <addaction name="action_Save_Layer_Edits"/>
+  </widget>
+  <widget class="QToolBar" name="toolBar_3">
+   <property name="windowTitle">
+    <string>toolBar_3</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="action_Highlight_Pinned_Labels"/>
+  </widget>
+  <widget class="QToolBar" name="toolBar_4">
+   <property name="windowTitle">
+    <string>toolBar_4</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="action_Pan_Map"/>
+   <addaction name="action_Zoom_In"/>
+   <addaction name="action_Zoom_Out"/>
+  </widget>
+  <action name="action_Add_Vector_Layer">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionAddOgrLayer.svg</normaloff>:/images/mActionAddOgrLayer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Add Vector Layer...</string>
+   </property>
+  </action>
+  <action name="action_Add_WMS_WMTS_Layer">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/ActionAddWmsLayer.svg</normaloff>:/images/ActionAddWmsLayer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Add WMS/WMTS Layer...</string>
+   </property>
+  </action>
+  <action name="action_New_Project">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/ActionFileNew.svg</normaloff>:/images/ActionFileNew.svg</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;New</string>
+   </property>
+  </action>
+  <action name="action_Open_Project">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/ActionFileOpen.svg</normaloff>:/images/ActionFileOpen.svg</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Open...</string>
+   </property>
+  </action>
+  <action name="action_Save_Project">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/ActionFileSave.svg</normaloff>:/images/ActionFileSave.svg</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Save</string>
+   </property>
+  </action>
+  <action name="action_Save_Project_As">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/ActionFileSaveAs.svg</normaloff>:/images/ActionFileSaveAs.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Save &amp;As...</string>
+   </property>
+  </action>
+  <action name="action_Decoration_Grid">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/transformed.png</normaloff>:/images/transformed.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Grid</string>
+   </property>
+  </action>
+  <action name="action_Decoration_CopyRight">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/copyright_label.png</normaloff>:/images/copyright_label.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;CopyRight</string>
+   </property>
+  </action>
+  <action name="action_Decoration_NorthArrow">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/north_arrow.png</normaloff>:/images/north_arrow.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;NorthArrow</string>
+   </property>
+  </action>
+  <action name="action_Decoration_ScaleBar">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/scale_bar.png</normaloff>:/images/scale_bar.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;ScaleBar</string>
+   </property>
+  </action>
+  <action name="action_Toggle_Editing">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionToggleEditing.png</normaloff>:/images/mActionToggleEditing.png</iconset>
+   </property>
+   <property name="text">
+    <string>Toggle Editing</string>
+   </property>
+  </action>
+  <action name="action_Highlight_Pinned_Labels">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionShowPinnedLabels.svg</normaloff>:/images/mActionShowPinnedLabels.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Highlight Pinned Labels</string>
+   </property>
+  </action>
+  <action name="action_All_Edits">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionAllEdits.svg</normaloff>:/images/mActionAllEdits.svg</iconset>
+   </property>
+   <property name="text">
+    <string>All Edits</string>
+   </property>
+  </action>
+  <action name="action_Save_Layer_Edits">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionSaveAllEdits.svg</normaloff>:/images/mActionSaveAllEdits.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Save Layer Edits</string>
+   </property>
+  </action>
+  <action name="action_New_Shapefile_Layer">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionNewVectorLayer.svg</normaloff>:/images/mActionNewVectorLayer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New Shapefile Layer</string>
+   </property>
+  </action>
+  <action name="action_Feature_Action">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mAction.svg</normaloff>:/images/mAction.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Feature Action</string>
+   </property>
+  </action>
+  <action name="action_Pan_Map">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionPan.svg</normaloff>:/images/mActionPan.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Pan Map</string>
+   </property>
+   <property name="toolTip">
+    <string>Pan Map</string>
+   </property>
+  </action>
+  <action name="action_Zoom_In">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionZoomIn.svg</normaloff>:/images/mActionZoomIn.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom in</string>
+   </property>
+  </action>
+  <action name="action_Zoom_Out">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionZoomOut.svg</normaloff>:/images/mActionZoomOut.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom Out</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom Out</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
+ <connections/>
+</ui>

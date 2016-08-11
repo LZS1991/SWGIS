@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/ActionAddWmsLayer.svg</file>
+        <file>images/ActionFileNew.svg</file>
+        <file>images/ActionFileOpen.svg</file>
+        <file>images/ActionFileSave.svg</file>
+        <file>images/ActionFileSaveAs.svg</file>
+        <file>images/mActionAddOgrLayer.svg</file>
+        <file>images/copyright_label.png</file>
+        <file>images/north_arrow.png</file>
+        <file>images/scale_bar.png</file>
+        <file>images/transformed.png</file>
+        <file>images/mActionToggleEditing.png</file>
+        <file>images/mActionShowPinnedLabels.svg</file>
+        <file>images/mActionAllEdits.svg</file>
+        <file>images/mActionSaveAllEdits.svg</file>
+        <file>images/themes/default/mActionAddLayer.svg</file>
+        <file>images/themes/default/mActionCollapseTree.svg</file>
+        <file>images/themes/default/mActionDraw.svg</file>
+        <file>images/themes/default/mActionFilter2.svg</file>
+        <file>images/themes/default/mActionPropertiesWidget.svg</file>
+        <file>images/mActionNewVectorLayer.svg</file>
+        <file>images/mAction.svg</file>
+        <file>images/mActionPan.svg</file>
+        <file>images/mActionZoomIn.svg</file>
+        <file>images/mActionZoomOut.svg</file>
+    </qresource>
+</RCC>

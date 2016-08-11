@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.cpp</file>
+        <file>images/Themes/mActionAddWmsLayer.svg</file>
+        <file>images/Themes/mActionNewVectorLayer.svg</file>
+        <file>images/Themes/mActionRefresh.png</file>
+        <file>images/Themes/mActionSetProjection.svg</file>
+    </qresource>
+</RCC>

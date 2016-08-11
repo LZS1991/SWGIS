@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SWGISBrowser</class>
+ <widget class="QMainWindow" name="SWGISBrowser">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1036</width>
+    <height>557</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SWGISBrowser</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QGridLayout" name="gridLayout_3">
+    <item row="0" column="0">
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="STGISBrowserTreeView" name="treeView">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+      <widget class="QTabWidget" name="tabWidget">
+       <property name="focusPolicy">
+        <enum>Qt::StrongFocus</enum>
+       </property>
+       <property name="currentIndex">
+        <number>2</number>
+       </property>
+       <widget class="QWidget" name="paramTab">
+        <attribute name="title">
+         <string>Param</string>
+        </attribute>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0">
+          <layout class="QVBoxLayout" name="paramLayout"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="metaDataTab">
+        <attribute name="title">
+         <string>MetaData</string>
+        </attribute>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <widget class="QTextBrowser" name="metaTextBrowser"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="PreviewTab">
+        <attribute name="title">
+         <string>Preview</string>
+        </attribute>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QgsMapCanvas" name="mapCanvas"/>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="stopRenderingButton">
+               <property name="text">
+                <string>stop rendering</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="attributesTab">
+        <attribute name="title">
+         <string>Attributes</string>
+        </attribute>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="action_Refresh"/>
+   <addaction name="action_Manage_WMS_Connection"/>
+   <addaction name="action_New_Vector_File"/>
+   <addaction name="action_Set_Projection"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="action_Refresh">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/Themes/mActionRefresh.png</normaloff>:/images/Themes/mActionRefresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>Refresh</string>
+   </property>
+   <property name="toolTip">
+    <string>Refresh the scenario</string>
+   </property>
+  </action>
+  <action name="action_Manage_WMS_Connection">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/Themes/mActionAddWmsLayer.svg</normaloff>:/images/Themes/mActionAddWmsLayer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Manage WMS Connection</string>
+   </property>
+   <property name="toolTip">
+    <string>Manage WMS Connection</string>
+   </property>
+  </action>
+  <action name="action_New_Vector_File">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/Themes/mActionNewVectorLayer.svg</normaloff>:/images/Themes/mActionNewVectorLayer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New Vector File</string>
+   </property>
+  </action>
+  <action name="action_Set_Projection">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/Themes/mActionSetProjection.svg</normaloff>:/images/Themes/mActionSetProjection.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Set Layer CRS</string>
+   </property>
+   <property name="toolTip">
+    <string>Set Layer CRS</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>STGISBrowserTreeView</class>
+   <extends>QTreeView</extends>
+   <header>stgisbrowsertreeview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapCanvas</class>
+   <extends>QGraphicsView</extends>
+   <header>qgsmapcanvas.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

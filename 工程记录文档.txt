@@ -1,0 +1,2 @@
+2016/8/6
+1.将Qgslayertreemodel.cpp中refreshlayerlegend函数中的490~493注释掉；

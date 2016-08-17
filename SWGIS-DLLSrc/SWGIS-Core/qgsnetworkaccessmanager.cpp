@@ -286,8 +286,6 @@ void QgsNetworkAccessManager::setupDefaultProxyAndCache()
 {
   mInitialized = true;
   mUseSystemProxy = false;
-//  //这里为什么会出错？LZS2851
-//  Q_ASSERT( smMainNAM );
 
   if ( smMainNAM != this )
   {

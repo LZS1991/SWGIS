@@ -23,12 +23,12 @@ class QTcpSocket;
 class QValidator;
 
 //class QgisAppInterface;
-//class QgisAppStyleSheet;
+class QgisAppStyleSheet;
 class QgsAnnotationItem;
 class QgsClipboard;
-//class QgsComposer;
-//class QgsComposerManager;
-//class QgsComposerView;
+class QgsComposer;
+class QgsComposerManager;
+class QgsComposerView;
 class QgsStatusBarCoordinatesWidget;
 //class QgsContrastEnhancement;
 class QgsCustomLayerOrderWidget;
@@ -196,8 +196,8 @@ public:
 
     void setIconSizes( int size );
 
-//    //! Get stylesheet builder object for app and print composers
-//    QgisAppStyleSheet *styleSheetBuilder();
+    //! Get stylesheet builder object for app and print composers
+    QgisAppStyleSheet *styleSheetBuilder();
 
 //    //! Setup the toolbar popup menus for a given theme
 //    void setupToolbarPopups( QString themeName );
@@ -240,21 +240,21 @@ public:
 //     * windows which are hidden rather than deleted when closed. */
 //    void removeWindow( QAction *action );
 
-//    /** Returns the print composers*/
-//    QSet<QgsComposer*> printComposers() const {return mPrintComposers;}
-//    /** Get a unique title from user for new and duplicate composers
-//     * @param acceptEmpty whether to accept empty titles (one will be generated)
-//     * @param currentTitle base name for initial title choice
-//     * @return QString::null if user cancels input dialog
-//     */
-//    bool uniqueComposerTitle( QWidget *parent, QString& composerTitle, bool acceptEmpty, const QString& currentTitle = QString() );
-//    /** Creates a new composer and returns a pointer to it*/
-//    QgsComposer* createNewComposer( QString title = QString() );
-//    /** Deletes a composer and removes entry from Set*/
-//    void deleteComposer( QgsComposer *c );
-//    /** Duplicates a composer and adds it to Set
-//     */
-//    QgsComposer *duplicateComposer( QgsComposer *currentComposer, QString title = QString() );
+    /** Returns the print composers*/
+    QSet<QgsComposer*> printComposers() const {return m_PrintComposers;}
+    /** Get a unique title from user for new and duplicate composers
+     * @param acceptEmpty whether to accept empty titles (one will be generated)
+     * @param currentTitle base name for initial title choice
+     * @return QString::null if user cancels input dialog
+     */
+    bool uniqueComposerTitle( QWidget *parent, QString& composerTitle, bool acceptEmpty, const QString& currentTitle = QString() );
+    /** Creates a new composer and returns a pointer to it*/
+    QgsComposer* createNewComposer( QString title = QString() );
+    /** Deletes a composer and removes entry from Set*/
+    void deleteComposer( QgsComposer *c );
+    /** Duplicates a composer and adds it to Set
+     */
+    QgsComposer *duplicateComposer( QgsComposer *currentComposer, QString title = QString() );
 
     /** Overloaded function used to sort menu entries alphabetically */
     QMenu* createPopupMenu() override;
@@ -269,11 +269,11 @@ public:
 //    //! Actions to be inserted in menus and toolbars
 //    QAction *actionNewProject() { return mActionNewProject; }
 //    QAction *actionOpenProject() { return mActionOpenProject; }
-//    QAction *actionSaveProject() { return mActionSaveProject; }
+    QAction *actionSaveProject() { return ui->action_Save_Project; }
 //    QAction *actionSaveProjectAs() { return mActionSaveProjectAs; }
 //    QAction *actionSaveMapAsImage() { return mActionSaveMapAsImage; }
 //    QAction *actionProjectProperties() { return mActionProjectProperties; }
-//    QAction *actionShowComposerManager() { return mActionShowComposerManager; }
+    QAction *actionShowComposerManager() { return ui->action_Show_Composer_Manager; }
 //    QAction *actionNewPrintComposer() { return mActionNewPrintComposer; }
 //    QAction *actionExit() { return mActionExit; }
 
@@ -309,8 +309,8 @@ public:
 //    QAction *actionSelectRadius() { return mActionSelectRadius; }
 //    QAction *actionIdentify() { return mActionIdentify; }
     QAction *actionFeatureAction() { return ui->action_Feature_Action; }
-//    QAction *actionMeasure() { return mActionMeasure; }
-//    QAction *actionMeasureArea() { return mActionMeasureArea; }
+    QAction *actionMeasure() { return ui->action_Measure_Line; }
+    QAction *actionMeasureArea() { return ui->action_Measure_Area; }
 //    QAction *actionZoomFullExtent() { return mActionZoomFullExtent; }
 //    QAction *actionZoomToLayer() { return mActionZoomToLayer; }
 //    QAction *actionZoomToSelected() { return mActionZoomToSelected; }
@@ -357,10 +357,10 @@ public:
 //    QAction *actionAddToOverview() { return mActionAddToOverview; }
 //    QAction *actionAddAllToOverview() { return mActionAddAllToOverview; }
 //    QAction *actionRemoveAllFromOverview() { return mActionRemoveAllFromOverview; }
-//    QAction *actionHideAllLayers() { return mActionHideAllLayers; }
-//    QAction *actionShowAllLayers() { return mActionShowAllLayers; }
-//    QAction *actionHideSelectedLayers() { return mActionHideSelectedLayers; }
-//    QAction *actionShowSelectedLayers() { return mActionShowSelectedLayers; }
+    QAction *actionHideAllLayers() { return ui->action_Hide_All_Layers; }
+    QAction *actionShowAllLayers() { return ui->action_Show_All_Layers; }
+    QAction *actionHideSelectedLayers() { return ui->action_Hide_Selected_Layers; }
+    QAction *actionShowSelectedLayers() { return ui->action_Show_Selected_Layers; }
 
 //    QAction *actionManagePlugins() { return mActionManagePlugins; }
 //    QAction *actionPluginListSeparator() { return mActionPluginSeparator1; }
@@ -368,7 +368,7 @@ public:
 //    QAction *actionShowPythonDialog() { return mActionShowPythonDialog; }
 
 //    QAction *actionToggleFullScreen() { return mActionToggleFullScreen; }
-//    QAction *actionOptions() { return mActionOptions; }
+    QAction *actionOptions() { return ui->action_Options; }
 //    QAction *actionCustomProjection() { return mActionCustomProjection; }
 //    QAction *actionConfigureShortcuts() { return mActionConfigureShortcuts; }
 
@@ -398,9 +398,9 @@ public:
 //    QMenu *vectorMenu() { return mVectorMenu; }
 //    QMenu *webMenu() { return mWebMenu; }
 //    QMenu *firstRightStandardMenu() { return mHelpMenu; }
-//    QMenu *windowMenu() { return nullptr; }
-//    QMenu *printComposersMenu() {return mPrintComposersMenu;}
-//    QMenu *helpMenu() { return mHelpMenu; }
+    QMenu *windowMenu() { return nullptr; }
+    QMenu *printComposersMenu() {return ui->menu_Print_Composers;}
+    QMenu *helpMenu() { return ui->menu_Help; }
 
 //    //! Toolbars
 //    /** Get a reference to a toolbar. Mainly intended
@@ -589,8 +589,8 @@ public slots:
 //    //! project was read
 //    void readProject( const QDomDocument & );
 
-//    //! Set app stylesheet from settings
-//    void setAppStyleSheet( const QString& stylesheet );
+    //! Set app stylesheet from settings
+    void setAppStyleSheet( const QString& stylesheet );
 
     //! request credentials for network manager
     void namAuthenticationRequired(QNetworkReply *reply, QAuthenticator *auth );
@@ -627,11 +627,11 @@ public slots:
 
 //    QgsMessageLogViewer *logViewer() { return mLogViewer; }
 
-//    //! Update project menu with the project templates
-//    void updateProjectFromTemplates();
+    //! Update project menu with the project templates
+    void updateProjectFromTemplates();
 
-//    //! Opens the options dialog
-//    void showOptionsDialog( QWidget *parent = nullptr, const QString& currentPage = QString() );
+    //! Opens the options dialog
+    void showOptionsDialog( QWidget *parent = nullptr, const QString& currentPage = QString() );
 
     /** Refreshes the state of the layer actions toolbar action
       * @note added in 2.1 */
@@ -640,7 +640,7 @@ public slots:
     QMenu *panelMenu() { return m_PanelMenu; }
 
     bool autoTransaction() const;
-//    void setAutoTransaction( bool state );
+    void setAutoTransaction( bool state );
 
 protected:
 //    //! Handle state changes (WindowTitleChange)
@@ -752,7 +752,7 @@ private:
 //    /** Copy a vector style from a layer to another one, if they have the same geometry type */
 //    void duplicateVectorStyle( QgsVectorLayer* srcLayer, QgsVectorLayer* destLayer );
 
-//    QgisAppStyleSheet *mStyleSheetBuilder;
+    QgisAppStyleSheet *m_StyleSheetBuilder;
 
 //    // actions for menus and toolbars -----------------
 
@@ -786,9 +786,9 @@ private:
                 , m_Pan( nullptr )
 //            , mIdentify( nullptr )
 //            , mFeatureAction( nullptr )
-//            , mMeasureDist( nullptr )
-//            , mMeasureArea( nullptr )
-//            , mMeasureAngle( nullptr )
+                , m_MeasureDist( nullptr )
+                , m_MeasureArea( nullptr )
+                , m_MeasureAngle( nullptr )
 //            , mAddFeature( nullptr )
 //            , mCircularStringCurvePoint( nullptr )
 //            , mCircularStringRadius( nullptr )
@@ -831,9 +831,9 @@ private:
             QgsMapTool *m_Pan;
 //        QgsMapTool *mIdentify;
 //        QgsMapTool *mFeatureAction;
-//        QgsMapTool *mMeasureDist;
-//        QgsMapTool *mMeasureArea;
-//        QgsMapTool *mMeasureAngle;
+            QgsMapTool *m_MeasureDist;
+            QgsMapTool *m_MeasureArea;
+            QgsMapTool *m_MeasureAngle;
 //        QgsMapTool *mAddFeature;
 //        QgsMapTool *mCircularStringCurvePoint;
 //        QgsMapTool *mCircularStringRadius;
@@ -933,8 +933,8 @@ private:
     QSplashScreen *m_Splash;
 //    //! list of recently opened/saved project files
 //    QList<QgsWelcomePageItemsModel::RecentProjectData> mRecentProjects;
-//    //! Print composers of this project, accessible by id string
-//    QSet<QgsComposer*> m_PrintComposers;
+    //! Print composers of this project, accessible by id string
+    QSet<QgsComposer*> m_PrintComposers;
     /** QGIS-internal vector feature clipboard */
     QgsClipboard *m_InternalClipboard;
     //! Flag to indicate how the project properties dialog was summoned
@@ -986,7 +986,7 @@ private:
 
 //    QgsPluginManager *mPluginManager;
 
-//    QgsComposerManager *mComposerManager;
+    QgsComposerManager *m_ComposerManager;
 
     //! map of transaction group: QPair( providerKey, connString ) -> transactionGroup
     QMap< QPair< QString, QString>, QgsTransactionGroup*> m_TransactionGroups;
@@ -996,7 +996,7 @@ private:
 
     QList<QgsDecorationItem*> m_DecorationItems;
 
-//    int mLastComposerId;
+    int m_LastComposerId;
 
 //    //! Persistent GPS toolbox
 //    QgsGPSInformationWidget *mpGpsWidget;
@@ -1277,7 +1277,7 @@ private slots:
 //    void fileOpenedOKAfterLaunch();
     //! Create a new file from a template project
     bool fileNewFromTemplate( const QString& fileName );
-//    void fileNewFromTemplateAction( QAction * qAction );
+    void fileNewFromTemplateAction( QAction * qAction );
     void fileNewFromDefaultTemplate();
 //    //! Calculate new rasters from existing ones
 //    void showRasterCalculator();
@@ -1293,19 +1293,19 @@ private slots:
 //    void newSpatialiteLayer();
 //    //! Print the current map view frame
 //    void newPrintComposer();
-//    void showComposerManager();
+    void showComposerManager();
 //    //! Add all loaded layers into the overview - overrides qgisappbase method
 //    void addAllToOverview();
 //    //! Remove all loaded layers from the overview - overrides qgisappbase method
 //    void removeAllFromOverview();
 //    //reimplements method from base (gui) class
-//    void hideAllLayers();
-//    //reimplements method from base (gui) class
-//    void showAllLayers();
-//    //reimplements method from base (gui) class
-//    void hideSelectedLayers();
-//    //reimplements method from base (gui) class
-//    void showSelectedLayers();
+    void hideAllLayers();
+    //reimplements method from base (gui) class
+    void showAllLayers();
+    //reimplements method from base (gui) class
+    void hideSelectedLayers();
+    //reimplements method from base (gui) class
+    void showSelectedLayers();
     //! Return pointer to the active layer
     QgsMapLayer *activeLayer();
     //! set the active layer
@@ -1330,8 +1330,8 @@ private slots:
 //    void configureShortcuts();
 //    //! show customization dialog
 //    void customize();
-//    //! options dialog slot
-//    void options();
+    //! options dialog slot
+    void options();
 //    //! Whats-this help slot
 //    void whatsThis();
     //! Set project properties, including map untis
@@ -1406,8 +1406,8 @@ private slots:
 //    //! select features by expression
 //    void selectByExpression();
 
-//    //! refresh map canvas
-//    void refreshMapCanvas();
+    //! refresh map canvas
+    void refreshMapCanvas();
 
     //! start "busy" progress bar
     void canvasRefreshStarted();
@@ -1472,12 +1472,12 @@ private slots:
     void pan();
 //    //! Identify feature(s) on the currently selected layer
 //    void identify();
-//    //! Measure distance
-//    void measure();
-//    //! Measure area
-//    void measureArea();
-//    //! Measure angle
-//    void measureAngle();
+    //! Measure distance
+    void measure();
+    //! Measure area
+    void measureArea();
+    //! Measure angle
+    void measureAngle();
 
 //    //! Run the default feature action on the current layer
 //    void doFeatureAction();
@@ -1595,8 +1595,8 @@ private slots:
 //    //! catch MapCanvas keyPress event so we can check if selected feature collection must be deleted
 //    void mapCanvas_keyPressed( QKeyEvent *e );
 
-//    //! Deletes the active QgsComposerManager instance
-//    void deleteComposerManager();
+    //! Deletes the active QgsComposerManager instance
+    void deleteComposerManager();
 
 //    /** Disable any preview modes shown on the map canvas
 //     * @note added in 2.3 */
@@ -1650,17 +1650,17 @@ signals:
 //     * can change there tool button icons. */
 //    void currentThemeChanged( const QString& );
 
-//    /** This signal is emitted when a new composer instance has been created
-//       */
-//    void composerAdded( QgsComposerView* v );
+    /** This signal is emitted when a new composer instance has been created
+       */
+    void composerAdded( QgsComposerView* v );
 
-//    /** This signal is emitted before a new composer instance is going to be removed
-//      */
-//    void composerWillBeRemoved( QgsComposerView* v );
+    /** This signal is emitted before a new composer instance is going to be removed
+      */
+    void composerWillBeRemoved( QgsComposerView* v );
 
-//    /** This signal is emitted when a composer instance has been removed
-//       @note added in version 2.3*/
-//    void composerRemoved( QgsComposerView* v );
+    /** This signal is emitted when a composer instance has been removed
+       @note added in version 2.3*/
+    void composerRemoved( QgsComposerView* v );
 
     /** This signal is emitted when QGIS' initialization is complete */
     void initializationCompleted();

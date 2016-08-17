@@ -21,8 +21,8 @@ INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Gui \
                $$SWGISINC_PATH/SWGIS-Core/symbology-ng \
                $$SWGISINC_PATH/SWGIS-Core/geometry \
                $$SWGISINC_PATH/SWGIS-Core/raster \
-               $$SWGISINC_PATH/SWGIS-Core/layertree
-
+               $$SWGISINC_PATH/SWGIS-Core/layertree \
+               $$SWGISINC_PATH/SWGIS-Core/composer
 
 INCLUDEPATH += $$THIRDPARTY_PATH \
                $$THIRDPARTY_PATH/GDAL/win_msvc_x64/include \
@@ -268,7 +268,13 @@ SOURCES += \
     qgsannotationitem.cpp \
     layertree/qgslayertreemapcanvasbridge.cpp \
     layertree/qgscustomlayerorderwidget.cpp \
-    qgsscalevisibilitydialog.cpp
+    qgsscalevisibilitydialog.cpp \
+    qgsrasterformatsaveoptionswidget.cpp \
+    qgsrasterpyramidsoptionswidget.cpp \
+    qgscomposerruler.cpp \
+    qgscomposerview.cpp \
+    qgsbusyindicatordialog.cpp \
+    qgsnewnamedialog.cpp
 
 HEADERS += \
     $$SWGISINC_PATH/SWGIS-Gui/stgisbrowsertreeview.h \
@@ -484,7 +490,13 @@ HEADERS += \
     ../../SWGIS-Inc/SWGIS-Gui/qgsannotationitem.h \
     ../../SWGIS-Inc/SWGIS-Gui/layertree/qgslayertreemapcanvasbridge.h \
     ../../SWGIS-Inc/SWGIS-Gui/layertree/qgscustomlayerorderwidget.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsscalevisibilitydialog.h
+    ../../SWGIS-Inc/SWGIS-Gui/qgsscalevisibilitydialog.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsrasterformatsaveoptionswidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsrasterpyramidsoptionswidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgscomposerruler.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgscomposerview.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsbusyindicatordialog.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsnewnamedialog.h
 
 FORMS += \
     stgismessageviewer.ui \
@@ -578,5 +590,7 @@ FORMS += \
     swgischaracterselectdialogbase.ui \
     widget_svgselector.ui \
     swgismessagelogviewer.ui \
-    swgisnewvectorlayerdialogbase.ui
+    swgisnewvectorlayerdialogbase.ui \
+    swgisrasterformatsaveoptionswidgetbase.ui \
+    swgisrasterpyramidsoptionswidgetbase.ui
 

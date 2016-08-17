@@ -1,4 +1,4 @@
-QT += core widgets gui network sql xml svg printsupport concurrent positioning script webkitwidgets uitools
+QT += core widgets gui network sql xml svg printsupport concurrent positioning script webkitwidgets uitools quick
 
 #定义文件输出目录
 SWGIS_LIB_PATH = ../../SWGIS-Lib

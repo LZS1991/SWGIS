@@ -38,6 +38,7 @@
 #include <QSettings>
 #include <QSpinBox>
 #include <QSplashScreen>
+#include <QFileSystemWatcher>
 //#ifndef QT_NO_OPENSSL
 //#include <QSslConfiguration>
 //#endif
@@ -63,7 +64,7 @@
 
 #include "ui_defaults.h"
 //#include "qgisappinterface.h"
-//#include "qgisappstylesheet.h"
+#include "qgisappstylesheet.h"
 #include "qgis.h"
 //#include "qgisplugin.h"
 //#include "qgsabout.h"
@@ -82,9 +83,9 @@
 #include "qgsbrowserdockwidget.h"
 //#include "qgsadvanceddigitizingdockwidget.h"
 #include "qgsclipboard.h"
-//#include "qgscomposer.h"
-//#include "qgscomposermanager.h"
-//#include "qgscomposerview.h"
+#include "qgscomposer.h"
+#include "qgscomposermanager.h"
+#include "qgscomposerview.h"
 #include "qgsstatusbarcoordinateswidget.h"
 //#include "qgsconfigureshortcutsdialog.h"
 #include "qgscoordinatetransform.h"
@@ -147,7 +148,7 @@
 #include "qgsmultibandcolorrenderer.h"
 #include "qgsnewvectorlayerdialog.h"
 //#include "qgsnewmemorylayerdialog.h"
-//#include "qgsoptions.h"
+#include "qgsoptions.h"
 #include "qgspluginlayer.h"
 #include "qgspluginlayerregistry.h"
 //#include "qgspluginmanager.h"
@@ -243,7 +244,7 @@
 //#include "qgsmaptoolformannotation.h"
 //#include "qgsmaptoolhtmlannotation.h"
 //#include "qgsmaptoolidentifyaction.h"
-//#include "qgsmaptoolmeasureangle.h"
+#include "qgsmaptoolmeasureangle.h"
 //#include "qgsmaptoolmovefeature.h"
 //#include "qgsmaptoolrotatefeature.h"
 //#include "qgsmaptooloffsetcurve.h"
@@ -261,7 +262,7 @@
 //#include "qgsmaptooltextannotation.h"
 #include "qgsmaptoolzoom.h"
 //#include "qgsmaptoolsimplify.h"
-//#include "qgsmeasuretool.h"
+#include "qgsmeasuretool.h"
 #include "qgsmaptoolpinlabels.h"
 #include "qgsmaptoolshowhidelabels.h"
 #include "qgsmaptoolmovelabel.h"
@@ -273,41 +274,16 @@
 // Editor widgets
 #include "qgseditorwidgetregistry.h"
 
-/** Set the application title bar text
-
-  If the current project title is null
-  if the project file is null then
-  set title text to just application name and version
-  else
-  set set title text to the project file name
-  else
-  set the title text to project title
-  */
-static void setTitleBarText_(QWidget & SWGISApp)
+/*********************************
+ * 设置系统启动之后右上角的标题
+**********************************/
+static void setTitleBarText_(QWidget & swgisApp)
 {
     QString caption = SWGISApp::tr("SWGIS ");
 
     caption += QGis::QGIS_VERSION;
 
-//    if (QgsProject::instance()->title().isEmpty())
-//    {
-//        if (QgsProject::instance()->fileName().isEmpty())
-//        {
-//      // no project title nor file name, so just leave caption with
-//      // application name and version
-//        }
-//        else
-//        {
-//            QFileInfo projectFileInfo(QgsProject::instance()->fileName());
-//            caption += " - " + projectFileInfo.completeBaseName();
-//        }
-//    }
-//    else
-//    {
-//        caption += " - " + QgsProject::instance()->title();
-//    }
-
-    SWGISApp.setWindowTitle( caption );
+    swgisApp.setWindowTitle( caption );
 } // setTitleBarText_( QWidget * qgisApp )
 
 static void customSrsValidation_(QgsCoordinateReferenceSystem &crs)
@@ -345,6 +321,7 @@ SWGISApp::SWGISApp(QSplashScreen *splash, bool restorePlugins, bool skipVersionC
     , m_ProjectLastModified()
     , m_LayerTreeCanvasBridge(nullptr)
     , m_NonEditMapTool(nullptr)
+    , m_ComposerManager(nullptr)
     , ui(new Ui::SWGISApp)
 {
     if (m_Instance)
@@ -371,6 +348,14 @@ SWGISApp::SWGISApp(QSplashScreen *splash, bool restorePlugins, bool skipVersionC
     m_Splash->showMessage(tr("Setting up the GUI"), Qt::AlignHCenter | Qt::AlignBottom);
     qApp->processEvents();
     QSettings settings;
+
+    // set up stylesheet builder and apply saved or default style options
+    m_StyleSheetBuilder = new QgisAppStyleSheet( this );
+    connect( m_StyleSheetBuilder, SIGNAL( appStyleSheetChanged( const QString& ) ),
+             this, SLOT( setAppStyleSheet( const QString& ) ) );
+    m_StyleSheetBuilder->buildStyleSheet( m_StyleSheetBuilder->defaultOptions() );
+
+
     QWidget *centralWidget = this->centralWidget();
     QGridLayout *centralLayout = new QGridLayout(centralWidget);
     centralWidget->setLayout(centralLayout);
@@ -416,7 +401,14 @@ SWGISApp::SWGISApp(QSplashScreen *splash, bool restorePlugins, bool skipVersionC
     createOverview();
     createMapTips();
     createDecorations();
+    updateProjectFromTemplates();
     legendLayerSelectionChanged();
+
+    QFileSystemWatcher* projectsTemplateWatcher = new QFileSystemWatcher( this );
+    QString templateDirName = settings.value( "/qgis/projectTemplateDir",
+                              QgsApplication::qgisSettingsDirPath() + "project_templates" ).toString();
+    projectsTemplateWatcher->addPath( templateDirName );
+    connect( projectsTemplateWatcher, SIGNAL( directoryChanged( QString ) ), this, SLOT( updateProjectFromTemplates() ) );
 
     m_BrowserWidget = new QgsBrowserDockWidget(tr("Browser Panel"), this);
     m_BrowserWidget->setObjectName("Browser");
@@ -501,7 +493,7 @@ SWGISApp::SWGISApp(QSplashScreen *splash, bool restorePlugins, bool skipVersionC
 
     m_MapCanvas->freeze(false);
     m_MapCanvas->clearExtentHistory();//将放大缩小复原
-
+    m_LastComposerId = 0;
     // Show a nice tip of the day
     if(settings.value(QString("/qgis/showTips%1").arg(QGis::QGIS_VERSION_INT / 100), true).toBool())
     {
@@ -535,9 +527,13 @@ SWGISApp::~SWGISApp()
     m_MapCanvas->stopRendering();
 
     delete m_InternalClipboard;
+    delete m_StyleSheetBuilder;
     delete m_MapTools.m_ZoomIn;
     delete m_MapTools.m_ZoomOut;
     delete m_MapTools.m_Pan;
+    delete m_MapTools.m_MeasureDist;
+    delete m_MapTools.m_MeasureArea;
+    delete m_ComposerManager;
     delete m_Maptip;
     delete m_OverviewMapCursor;
     delete m_VectorLayerTools;
@@ -1047,6 +1043,13 @@ void SWGISApp::setIconSizes(int size)
     //    }
 }
 
+QgisAppStyleSheet *SWGISApp::styleSheetBuilder()
+{
+    Q_ASSERT(m_StyleSheetBuilder);
+    return m_StyleSheetBuilder;
+
+}
+
 QgsClipboard *SWGISApp::clipboard()
 {
     return m_InternalClipboard;
@@ -1076,6 +1079,140 @@ void SWGISApp::namSetup()
 void SWGISApp::namUpdate()
 {
     QgsNetworkAccessManager::instance()->setupDefaultProxyAndCache();
+}
+
+bool SWGISApp::uniqueComposerTitle(QWidget *parent, QString &composerTitle, bool acceptEmpty, const QString &currentName)
+{
+    if(!parent)
+        parent = this;
+    bool ok = false;
+    bool titleValid = false;
+    QString newTitle = QString(currentName);
+    QString chooseMsg = tr("Create unique print composer title");
+    if(acceptEmpty)
+        chooseMsg += '\n' + tr( "(title generated if left empty)" );
+    QString titleMsg = chooseMsg;
+
+    QStringList cNames;
+    cNames << newTitle;
+    Q_FOREACH(QgsComposer* c, printComposers())
+      cNames << c->title();
+
+    while(!titleValid)
+    {
+        newTitle = QInputDialog::getItem(parent,
+                                        tr("Composer title"),
+                                        titleMsg,
+                                        cNames,
+                                        cNames.indexOf(newTitle),
+                                        true,
+                                        &ok);
+        if(!ok)
+            return false;
+
+        if(newTitle.isEmpty())
+        {
+            if(!acceptEmpty)
+                titleMsg = chooseMsg + "\n\n" + tr("Title can not be empty!");
+            else
+                titleValid = true;
+        }
+        else if(cNames.indexOf(newTitle, 1) >= 0)
+        {
+            cNames[0] = QString(); // clear non-unique name
+            titleMsg = chooseMsg + "\n\n" + tr("Title already exists!");
+        }
+        else
+            titleValid = true;
+    }
+    composerTitle = newTitle;
+    return true;
+}
+
+QgsComposer *SWGISApp::createNewComposer(QString title)
+{
+    //ask user about name
+    m_LastComposerId++;
+    if ( title.isEmpty() )
+    {
+      title = tr( "Composer %1" ).arg( m_LastComposerId );
+    }
+    //create new composer object
+    QgsComposer* newComposerObject = new QgsComposer( this, title );
+
+    //add it to the map of existing print composers
+    m_PrintComposers.insert( newComposerObject );
+    //and place action into print composers menu
+    ui->menu_Print_Composers->addAction( newComposerObject->windowAction() );
+    newComposerObject->open();
+    emit composerAdded( newComposerObject->view() );
+    connect( newComposerObject, SIGNAL( composerAdded( QgsComposerView* ) ), this, SIGNAL( composerAdded( QgsComposerView* ) ) );
+    connect( newComposerObject, SIGNAL( composerWillBeRemoved( QgsComposerView* ) ), this, SIGNAL( composerWillBeRemoved( QgsComposerView* ) ) );
+    connect( newComposerObject, SIGNAL( atlasPreviewFeatureChanged() ), this, SLOT( refreshMapCanvas() ) );
+    markDirty();
+    return newComposerObject;
+}
+
+void SWGISApp::deleteComposer(QgsComposer *c)
+{
+    emit composerWillBeRemoved( c->view() );
+    m_PrintComposers.remove( c );
+    ui->menu_Print_Composers->removeAction( c->windowAction() );
+    markDirty();
+    emit composerRemoved( c->view() );
+
+    //save a reference to the composition
+    QgsComposition* composition = c->composition();
+
+    //first, delete the composer. This must occur before deleting the composition as some of the cleanup code in
+    //composer or in composer item widgets may require the composition to still be around
+    delete c;
+
+    //next, delete the composition
+    if ( composition )
+        delete composition;
+}
+
+QgsComposer *SWGISApp::duplicateComposer(QgsComposer *currentComposer, QString title)
+{
+    QgsComposer* newComposer = nullptr;
+
+    // test that current composer template write is valid
+    QDomDocument currentDoc;
+    currentComposer->templateXML( currentDoc );
+    QDomElement compositionElem = currentDoc.documentElement().firstChildElement( "Composition" );
+    if ( compositionElem.isNull() )
+    {
+        QgsDebugMsg( "selected composer could not be stored as temporary template" );
+        return newComposer;
+    }
+
+    if ( title.isEmpty() )
+    {
+        // TODO: inject a bit of randomness in auto-titles?
+        title = currentComposer->title() + tr( " copy" );
+    }
+
+    newComposer = createNewComposer( title );
+    if ( !newComposer )
+    {
+        QgsDebugMsg( "could not create new composer" );
+        return newComposer;
+    }
+
+    // hiding composer until template is loaded is much faster, provide feedback to user
+    newComposer->hide();
+    QApplication::setOverrideCursor( Qt::BusyCursor );
+    if ( !newComposer->composition()->loadFromTemplate( currentDoc, nullptr, false ) )
+    {
+        deleteComposer( newComposer );
+        newComposer = nullptr;
+        QgsDebugMsg( "Error, composer could not be duplicated" );
+        return newComposer;
+    }
+    newComposer->activate();
+    QApplication::restoreOverrideCursor();
+    return newComposer;
 }
 
 QMenu *SWGISApp::createPopupMenu()
@@ -1597,6 +1734,18 @@ void SWGISApp::loadGDALSublayers(const QString &uri, const QStringList &list)
     }
 }
 
+void SWGISApp::setAppStyleSheet(const QString &stylesheet)
+{
+    setStyleSheet( stylesheet );
+
+    // cascade styles to any current project composers
+    Q_FOREACH ( QgsComposer *c, m_PrintComposers )
+    {
+      c->setStyleSheet( stylesheet );
+    }
+
+}
+
 void SWGISApp::namAuthenticationRequired(QNetworkReply *inReply, QAuthenticator *auth)
 {
     QPointer<QNetworkReply> reply(inReply);
@@ -1848,6 +1997,98 @@ QgsPluginLayer *SWGISApp::addPluginLayer(const QString &uri, const QString &base
     return layer;
 }
 
+void SWGISApp::updateProjectFromTemplates()
+{
+    // get list of project files in template dir
+    QSettings settings;
+    QString templateDirName = settings.value( "/qgis/projectTemplateDir",
+                              QgsApplication::qgisSettingsDirPath() + "project_templates" ).toString();
+    QDir templateDir( templateDirName );
+    QStringList filters( "*.qgs" );
+    templateDir.setNameFilters( filters );
+    QStringList templateFiles = templateDir.entryList( filters );
+
+    // Remove existing entries
+    ui->menu_New_From_Template->clear();
+
+    // Add entries
+    Q_FOREACH ( const QString& templateFile, templateFiles )
+    {
+        ui->menu_New_From_Template->addAction( templateFile );
+    }
+
+    // add <blank> entry, which loads a blank template (regardless of "default template")
+    if ( settings.value( "/qgis/newProjectDefault", QVariant( false ) ).toBool() )
+        ui->menu_New_From_Template->addAction( tr( "< Blank >" ) );
+
+}
+
+void SWGISApp::showOptionsDialog(QWidget *parent, const QString &currentPage)
+{
+    QSettings mySettings;
+    QString oldScales = mySettings.value("Map/scales",PROJECT_SCALES).toString();
+    bool oldCapitalise = mySettings.value("/qgis/capitaliseLayerName", QVariant(false)).toBool();
+
+    QgsOptions *optionsDialog = new QgsOptions(parent);
+    if(!currentPage.isEmpty())
+    {
+        optionsDialog->setCurrentPage(currentPage);
+    }
+
+    if(optionsDialog->exec())
+    {
+        QgsProject::instance()->layerTreeRegistryBridge()->setNewLayersVisible(mySettings.value("/qgis/new_layers_visible", true).toBool());
+
+        setupLayerTreeViewFromSettings();
+
+        m_MapCanvas->enableAntiAliasing(mySettings.value("/qgis/enable_anti_aliasing").toBool());
+
+        int action = mySettings.value( "/qgis/wheel_action", 2 ).toInt();
+        double zoomFactor = mySettings.value( "/qgis/zoom_factor", 2 ).toDouble();
+        m_MapCanvas->setWheelAction( static_cast< QgsMapCanvas::WheelAction >( action ), zoomFactor );
+
+        m_MapCanvas->setCachingEnabled( mySettings.value( "/qgis/enable_render_caching", true ).toBool() );
+
+        m_MapCanvas->setParallelRenderingEnabled( mySettings.value( "/qgis/parallel_rendering", false ).toBool() );
+
+        m_MapCanvas->setMapUpdateInterval( mySettings.value( "/qgis/map_update_interval", 250 ).toInt() );
+
+        if ( oldCapitalise != mySettings.value( "/qgis/capitaliseLayerName", QVariant( false ) ).toBool() )
+        {
+            // if the layer capitalization has changed, we need to update all layer names
+            Q_FOREACH (QgsMapLayer* layer, QgsMapLayerRegistry::instance()->mapLayers())
+            layer->setLayerName(layer->originalName());
+        }
+
+        //update any open compositions so they reflect new composer settings
+        //we have to push the changes to the compositions here, because compositions
+        //have no access to qgisapp and accordingly can't listen in to changes
+        QSet<QgsComposer*> composers = instance()->printComposers();
+        QSet<QgsComposer*>::iterator composer_it = composers.begin();
+        for(; composer_it != composers.end(); ++composer_it)
+        {
+            QgsComposition* composition = (*composer_it)->composition();
+            composition->updateSettings();
+        }
+
+        //do we need this? TS
+        m_MapCanvas->refresh();
+
+        m_RasterFileFilter = QgsProviderRegistry::instance()->fileRasterFilters();
+
+        if(oldScales != mySettings.value("Map/scales", PROJECT_SCALES).toString() )
+            m_ScaleEdit->updateScales();
+
+        qobject_cast<QgsMeasureTool*>( m_MapTools.m_MeasureDist )->updateSettings();
+        qobject_cast<QgsMeasureTool*>( m_MapTools.m_MeasureArea )->updateSettings();
+        qobject_cast<QgsMapToolMeasureAngle*>( m_MapTools.m_MeasureAngle )->updateSettings();
+
+        bool otfTransformAutoEnable = mySettings.value( "/Projections/otfTransformAutoEnable", true ).toBool();
+        m_LayerTreeCanvasBridge->setAutoEnableCrsTransform( otfTransformAutoEnable );
+    }
+    delete optionsDialog;
+}
+
 void SWGISApp::refreshActionFeatureAction()
 {
     QgsMapLayer* layer = activeLayer();
@@ -1865,6 +2106,14 @@ bool SWGISApp::autoTransaction() const
 {
     QSettings settings;
     return settings.value( "/qgis/autoTransaction", false ).toBool();
+}
+
+void SWGISApp::setAutoTransaction(bool state)
+{
+    QSettings settings;
+
+    if ( settings.value( "/qgis/autoTransaction", false ).toBool() != state )
+        settings.setValue( "/qgis/autoTransaction", state );
 }
 
 bool SWGISApp::askUserForZipItemLayers(QString path)
@@ -2128,14 +2377,26 @@ void SWGISApp::setupLayerTreeViewFromSettings()
 
 void SWGISApp::createActions()
 {
+    connect(ui->action_Save_Project, SIGNAL(triggered()), this, SLOT(fileSave()));
+    connect(ui->action_Show_Composer_Manager, SIGNAL(triggered()), this, SLOT(showComposerManager()));
+
     connect(ui->action_Add_WMS_WMTS_Layer, SIGNAL(triggered()), this, SLOT(addWmsLayer()));
     connect(ui->action_Add_Vector_Layer, SIGNAL(triggered()), this, SLOT(addVectorLayer()));
     connect(ui->action_New_Shapefile_Layer, SIGNAL(triggered()), this, SLOT(newVectorLayer()));
 
+    connect(ui->action_Options, SIGNAL(triggered()), this, SLOT(options()));
     connect(ui->action_Pan_Map, SIGNAL(triggered()), this, SLOT(pan()));
 //    connect( mActionPanToSelected, SIGNAL( triggered() ), this, SLOT( panToSelected() ) );
     connect(ui->action_Zoom_In, SIGNAL(triggered()), this, SLOT(zoomIn()));
     connect(ui->action_Zoom_Out, SIGNAL(triggered()), this, SLOT(zoomOut()));
+    connect(ui->action_Measure_Line, SIGNAL(triggered()), this, SLOT(measure()));
+    connect(ui->action_Measure_Area, SIGNAL(triggered()), this, SLOT(measureArea()));
+    connect(ui->action_Measure_Angle, SIGNAL(triggered()), this, SLOT(measureAngle()));
+
+    connect( ui->action_Show_All_Layers, SIGNAL( triggered() ), this, SLOT( showAllLayers() ) );
+    connect( ui->action_Hide_All_Layers, SIGNAL( triggered() ), this, SLOT( hideAllLayers() ) );
+    connect( ui->action_Show_Selected_Layers, SIGNAL( triggered() ), this, SLOT( showSelectedLayers() ) );
+    connect( ui->action_Hide_Selected_Layers, SIGNAL( triggered() ), this, SLOT( hideSelectedLayers() ) );
 
 }
 
@@ -2143,6 +2404,16 @@ void SWGISApp::createMenus()
 {
     m_PanelMenu = new QMenu(tr("Panels"), this);
     m_PanelMenu->setObjectName("mPanelMenu");
+
+    connect( ui->menu_New_From_Template, SIGNAL( triggered( QAction * ) ),
+             this, SLOT( fileNewFromTemplateAction( QAction * ) ) );
+
+//    QAction* before = mActionHelpAPI;
+//    QAction* actionWhatsThis = QWhatsThis::createAction( this );
+//    actionWhatsThis->setIcon( QgsApplication::getThemeIcon( "/mActionWhatsThis.svg" ) );
+//    mHelpMenu->insertAction( before, actionWhatsThis );
+
+
 }
 
 void SWGISApp::createStatusBar()
@@ -2509,6 +2780,12 @@ void SWGISApp::createCanvasTools()
     m_MapTools.m_ZoomOut->setAction( ui->action_Zoom_Out );
     m_MapTools.m_Pan = new QgsMapToolPan( m_MapCanvas );
     m_MapTools.m_Pan->setAction( ui->action_Pan_Map );
+    m_MapTools.m_MeasureDist = new QgsMeasureTool(m_MapCanvas, false);
+    m_MapTools.m_MeasureDist->setAction(ui->action_Measure_Line);
+    m_MapTools.m_MeasureArea = new QgsMeasureTool(m_MapCanvas, false);
+    m_MapTools.m_MeasureArea->setAction(ui->action_Measure_Area);
+    m_MapTools.m_MeasureAngle = new QgsMeasureTool(m_MapCanvas, false);
+    m_MapTools.m_MeasureAngle->setAction(ui->action_Measure_Angle);
 
 
 }
@@ -3199,6 +3476,24 @@ bool SWGISApp::fileNewFromTemplate(const QString &fileName)
     return false;
 }
 
+void SWGISApp::fileNewFromTemplateAction(QAction *qAction)
+{
+    if(! qAction)
+        return;
+
+    if(qAction->text() == tr("< Blank >"))
+    {
+        fileNewBlank();
+    }
+    else
+    {
+        QSettings settings;
+        QString templateDirName = settings.value( "/qgis/projectTemplateDir",
+                                QgsApplication::qgisSettingsDirPath() + "project_templates" ).toString();
+        fileNewFromTemplate( templateDirName + QDir::separator() + qAction->text() );
+    }
+}
+
 void SWGISApp::fileNewFromDefaultTemplate()
 {
     QString projectTemplate = QgsApplication::qgisSettingsDirPath() + QLatin1String( "project_default.qgs" );
@@ -3240,6 +3535,62 @@ void SWGISApp::newVectorLayer()
     }
 }
 
+void SWGISApp::showComposerManager()
+{
+    if ( !m_ComposerManager )
+    {
+      m_ComposerManager = new QgsComposerManager( nullptr, Qt::Window );
+      connect( m_ComposerManager, SIGNAL( finished( int ) ), this, SLOT( deleteComposerManager() ) );
+    }
+    m_ComposerManager->show();
+    m_ComposerManager->activate();
+
+}
+
+void SWGISApp::hideAllLayers()
+{
+    QgsDebugMsg( "hiding all layers!" );
+
+    Q_FOREACH(QgsLayerTreeLayer* nodeLayer, m_LayerTreeView->layerTreeModel()->rootGroup()->findLayers())
+        nodeLayer->setVisible(Qt::Unchecked);
+}
+
+void SWGISApp::showAllLayers()
+{
+    QgsDebugMsg( "Showing all layers!" );
+    Q_FOREACH ( QgsLayerTreeLayer* nodeLayer, m_LayerTreeView->layerTreeModel()->rootGroup()->findLayers() )
+        nodeLayer->setVisible( Qt::Checked );
+
+}
+
+void SWGISApp::hideSelectedLayers()
+{
+    QgsDebugMsg( "hiding selected layers!" );
+
+    Q_FOREACH ( QgsLayerTreeNode* node, m_LayerTreeView->selectedNodes() )
+    {
+        if ( QgsLayerTree::isGroup( node ) )
+            QgsLayerTree::toGroup( node )->setVisible( Qt::Unchecked );
+        else if ( QgsLayerTree::isLayer( node ) )
+            QgsLayerTree::toLayer( node )->setVisible( Qt::Unchecked );
+    }
+
+}
+
+void SWGISApp::showSelectedLayers()
+{
+    QgsDebugMsg( "show selected layers!" );
+
+    Q_FOREACH ( QgsLayerTreeNode* node, m_LayerTreeView->selectedNodes() )
+    {
+        if ( QgsLayerTree::isGroup( node ) )
+            QgsLayerTree::toGroup( node )->setVisible( Qt::Checked );
+        else if ( QgsLayerTree::isLayer( node ) )
+            QgsLayerTree::toLayer( node )->setVisible( Qt::Checked );
+    }
+
+}
+
 QgsMapLayer *SWGISApp::activeLayer()
 {
     return m_LayerTreeView ? m_LayerTreeView->currentLayer() : nullptr;
@@ -3255,6 +3606,11 @@ bool SWGISApp::setActiveLayer(QgsMapLayer *layer)
 
     m_LayerTreeView->setCurrentLayer(layer);
     return true;
+}
+
+void SWGISApp::options()
+{
+    this->showOptionsDialog(this);
 }
 
 void SWGISApp::projectProperties()
@@ -3289,9 +3645,9 @@ void SWGISApp::projectProperties()
     pp->exec();
 
     //LZS2851
-//    qobject_cast<QgsMeasureTool*>(mMapTools.mMeasureDist)->updateSettings();
-//    qobject_cast<QgsMeasureTool*>(mMapTools.mMeasureArea)->updateSettings();
-//    qobject_cast<QgsMapToolMeasureAngle*>(mMapTools.mMeasureAngle)->updateSettings();
+    qobject_cast<QgsMeasureTool*>(m_MapTools.m_MeasureDist)->updateSettings();
+    qobject_cast<QgsMeasureTool*>(m_MapTools.m_MeasureArea)->updateSettings();
+    qobject_cast<QgsMapToolMeasureAngle*>(m_MapTools.m_MeasureAngle)->updateSettings();
 
     // Set the window title.
     setTitleBarText_( *this );
@@ -3305,6 +3661,13 @@ void SWGISApp::projectPropertiesProjections()
 {
     m_ShowProjectionTab = true;
     projectProperties();
+}
+
+void SWGISApp::refreshMapCanvas()
+{
+    //stop any current rendering
+    m_MapCanvas->stopRendering();
+    m_MapCanvas->refreshAllLayers();
 }
 
 void SWGISApp::canvasRefreshStarted()
@@ -3564,6 +3927,21 @@ void SWGISApp::pan()
     m_MapCanvas->setMapTool(m_MapTools.m_Pan);
 }
 
+void SWGISApp::measure()
+{
+    m_MapCanvas->setMapTool(m_MapTools.m_MeasureDist);
+}
+
+void SWGISApp::measureArea()
+{
+    m_MapCanvas->setMapTool( m_MapTools.m_MeasureArea);
+}
+
+void SWGISApp::measureAngle()
+{
+    m_MapCanvas->setMapTool( m_MapTools.m_MeasureAngle);
+}
+
 void SWGISApp::labelingFontNotFound(QgsVectorLayer *vlayer, const QString &fontfamily)
 {
     // TODO: update when pref for how to resolve missing family (use matching algorithm or just default font) is implemented
@@ -3792,6 +4170,13 @@ void SWGISApp::closeProject()
 void SWGISApp::clipboardChanged()
 {
     activateDeactivateLayerRelatedActions(activeLayer());
+}
+
+void SWGISApp::deleteComposerManager()
+{
+    m_ComposerManager->deleteLater();
+    m_ComposerManager = nullptr;
+
 }
 
 void SWGISApp::toggleFilterLegendByExpression(bool checked)

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>689</width>
-    <height>512</height>
+    <width>729</width>
+    <height>608</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,14 +19,30 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>689</width>
-     <height>26</height>
+     <width>729</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuProject">
     <property name="title">
      <string>Project</string>
     </property>
+    <widget class="QMenu" name="menu_Print_Composers">
+     <property name="title">
+      <string>Print Composers</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <widget class="QMenu" name="menu_New_From_Template">
+     <property name="title">
+      <string>New From Template</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="action_Save_Project"/>
+    <addaction name="menu_Print_Composers"/>
+    <addaction name="menu_New_From_Template"/>
+    <addaction name="action_Show_Composer_Manager"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -46,7 +62,16 @@
      <addaction name="action_Decoration_ScaleBar"/>
      <addaction name="action_Decoration_Grid"/>
     </widget>
+    <widget class="QMenu" name="menuMeasure">
+     <property name="title">
+      <string>Measure</string>
+     </property>
+     <addaction name="action_Measure_Line"/>
+     <addaction name="action_Measure_Area"/>
+     <addaction name="action_Measure_Angle"/>
+    </widget>
     <addaction name="menuDecorations"/>
+    <addaction name="menuMeasure"/>
    </widget>
    <widget class="QMenu" name="menuLayer">
     <property name="title">
@@ -60,11 +85,28 @@
      <addaction name="action_Add_WMS_WMTS_Layer"/>
     </widget>
     <addaction name="menuAdd_Layer"/>
+    <addaction name="action_Show_All_Layers"/>
+    <addaction name="action_Hide_All_Layers"/>
+    <addaction name="action_Show_Selected_Layers"/>
+    <addaction name="action_Hide_Selected_Layers"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="action_Options"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>Help</string>
+    </property>
    </widget>
    <addaction name="menuProject"/>
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuLayer"/>
+   <addaction name="menuSettings"/>
+   <addaction name="menu_Help"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -311,6 +353,83 @@
    </property>
    <property name="toolTip">
     <string>Zoom Out</string>
+   </property>
+  </action>
+  <action name="action_Measure_Line">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionMeasure.png</normaloff>:/images/mActionMeasure.png</iconset>
+   </property>
+   <property name="text">
+    <string>Measure Line</string>
+   </property>
+  </action>
+  <action name="action_Measure_Area">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionMeasureArea.png</normaloff>:/images/mActionMeasureArea.png</iconset>
+   </property>
+   <property name="text">
+    <string>Measure Area</string>
+   </property>
+  </action>
+  <action name="action_Measure_Angle">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionMeasureAngle.png</normaloff>:/images/mActionMeasureAngle.png</iconset>
+   </property>
+   <property name="text">
+    <string>Measure Angle</string>
+   </property>
+  </action>
+  <action name="action_Options">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionOptions.svg</normaloff>:/images/mActionOptions.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Options</string>
+   </property>
+  </action>
+  <action name="action_Show_All_Layers">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionShowAllLayers.png</normaloff>:/images/mActionShowAllLayers.png</iconset>
+   </property>
+   <property name="text">
+    <string>Show All Layer</string>
+   </property>
+  </action>
+  <action name="action_Hide_All_Layers">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionHideAllLayers.png</normaloff>:/images/mActionHideAllLayers.png</iconset>
+   </property>
+   <property name="text">
+    <string>Hide All Layers</string>
+   </property>
+  </action>
+  <action name="action_Show_Selected_Layers">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionShowSelectedLayers.png</normaloff>:/images/mActionShowSelectedLayers.png</iconset>
+   </property>
+   <property name="text">
+    <string>Show Selected Layers</string>
+   </property>
+  </action>
+  <action name="action_Hide_Selected_Layers">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionHideSelectedLayers.png</normaloff>:/images/mActionHideSelectedLayers.png</iconset>
+   </property>
+   <property name="text">
+    <string>Hide Selected Layers</string>
+   </property>
+  </action>
+  <action name="action_Show_Composer_Manager">
+   <property name="text">
+    <string>Show Composer Manager</string>
    </property>
   </action>
  </widget>

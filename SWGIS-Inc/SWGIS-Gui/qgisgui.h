@@ -19,7 +19,13 @@
 #include <QPair>
 #include <QWidget>
 #include <QStringList>
-#include "stgisguiconfig.h"
+
+#ifdef SWGISGUI_LIB
+# define SWGISGUI_EXPORT Q_DECL_EXPORT
+#else
+# define SWGISGUI_EXPORT Q_DECL_IMPORT
+#endif
+
 class QFont;
 
 /** \ingroup gui

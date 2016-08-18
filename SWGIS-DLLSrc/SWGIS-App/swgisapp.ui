@@ -39,7 +39,19 @@
      </property>
      <addaction name="separator"/>
     </widget>
+    <widget class="QMenu" name="menu_Recent_Project">
+     <property name="title">
+      <string>Recent Project</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="action_New_Project"/>
+    <addaction name="action_Open_Project"/>
     <addaction name="action_Save_Project"/>
+    <addaction name="action_Save_Project_As"/>
+    <addaction name="action_Save_as_Image"/>
+    <addaction name="menu_Recent_Project"/>
+    <addaction name="action_Project_Properties"/>
     <addaction name="menu_Print_Composers"/>
     <addaction name="menu_New_From_Template"/>
     <addaction name="action_Show_Composer_Manager"/>
@@ -83,12 +95,14 @@
      </property>
      <addaction name="action_Add_Vector_Layer"/>
      <addaction name="action_Add_WMS_WMTS_Layer"/>
+     <addaction name="action_Add_WFS_Layer"/>
     </widget>
     <addaction name="menuAdd_Layer"/>
     <addaction name="action_Show_All_Layers"/>
     <addaction name="action_Hide_All_Layers"/>
     <addaction name="action_Show_Selected_Layers"/>
     <addaction name="action_Hide_Selected_Layers"/>
+    <addaction name="action_Labeling"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -134,6 +148,7 @@
    <addaction name="action_New_Shapefile_Layer"/>
    <addaction name="action_Add_Vector_Layer"/>
    <addaction name="action_Add_WMS_WMTS_Layer"/>
+   <addaction name="action_Add_WFS_Layer"/>
   </widget>
   <widget class="QToolBar" name="toolBar_2">
    <property name="windowTitle">
@@ -430,6 +445,45 @@
   <action name="action_Show_Composer_Manager">
    <property name="text">
     <string>Show Composer Manager</string>
+   </property>
+  </action>
+  <action name="action_Save_as_Image">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionSaveMapAsImage.png</normaloff>:/images/mActionSaveMapAsImage.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save as &amp;Image...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save as Image</string>
+   </property>
+  </action>
+  <action name="action_Project_Properties">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionProjectProperties.png</normaloff>:/images/mActionProjectProperties.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Project Properties...</string>
+   </property>
+  </action>
+  <action name="action_Add_WFS_Layer">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionAddWfsLayer.svg</normaloff>:/images/mActionAddWfsLayer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Add WFS Layer...</string>
+   </property>
+  </action>
+  <action name="action_Labeling">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/mActionLabeling.png</normaloff>:/images/mActionLabeling.png</iconset>
+   </property>
+   <property name="text">
+    <string>Labeling</string>
    </property>
   </action>
  </widget>

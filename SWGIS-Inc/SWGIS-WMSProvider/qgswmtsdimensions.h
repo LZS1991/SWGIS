@@ -18,7 +18,7 @@
 #ifndef QGSWMTSDIMENSIONS_H
 #define QGSWMTSDIMENSIONS_H
 #include "ui_stgiswmtsdimensionsbase.h"
-//#include "qgisgui.h"
+#include "qgisgui.h"
 #include "qgscontexthelp.h"
 #include "qgswmsprovider.h"
 #include "wmsproviderconfig.h"
@@ -37,7 +37,7 @@ class SWGISWMSPROVIDER_EXPORT QgsWmtsDimensions : public QDialog, private Ui::Wm
 
   public:
     //! Constructor
-    QgsWmtsDimensions( const QgsWmtsTileLayer &layer, QWidget *parent = nullptr, Qt::WindowFlags fl = nullptr );
+    QgsWmtsDimensions( const QgsWmtsTileLayer &layer, QWidget *parent = nullptr, Qt::WindowFlags fl = QgisGui::ModalDialogFlags );
     //! Destructor
     ~QgsWmtsDimensions();
 

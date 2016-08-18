@@ -60,7 +60,6 @@ win32{
 }
 
 SOURCES += \
-    stgisbrowsertreeview.cpp \
     qgsnumericsortlistviewitem.cpp \
     qgsmessageviewer.cpp \
     qgsmanageconnectionsdialog.cpp \
@@ -83,7 +82,6 @@ SOURCES += \
     qgsmaptoolpan.cpp \
     qgsmaptoolzoom.cpp \
     qgsrubberband.cpp \
-    swgisnewhttpconnection.cpp \
     qgscredentialdialog.cpp \
     layertree/qgslayertreeview.cpp \
     layertree/qgslayertreeviewdefaultactions.cpp \
@@ -274,10 +272,10 @@ SOURCES += \
     qgscomposerruler.cpp \
     qgscomposerview.cpp \
     qgsbusyindicatordialog.cpp \
-    qgsnewnamedialog.cpp
+    qgsnewnamedialog.cpp \
+    swgisnewhttpconnection.cpp
 
 HEADERS += \
-    $$SWGISINC_PATH/SWGIS-Gui/stgisbrowsertreeview.h \
     $$SWGISINC_PATH/SWGIS-Gui/stgisguiconfig.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgsnumericsortlistviewitem.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgsmessageviewer.h \
@@ -301,7 +299,6 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Gui/qgsmaptoolpan.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgsmaptoolzoom.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgsrubberband.h \
-    $$SWGISINC_PATH/SWGIS-Gui/swgisnewhttpconnection.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgscredentialdialog.h \
     $$SWGISINC_PATH/SWGIS-Gui/layertree/qgslayertreeview.h \
     $$SWGISINC_PATH/SWGIS-Gui/layertree/qgslayertreeviewdefaultactions.h \
@@ -481,29 +478,29 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Gui/qgsbrowsertreeview.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgsmaptip.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgssublayersdialog.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsprojectionselectionwidget.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsvariableeditorwidget.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgscharacterselectdialog.h \
-    ../../SWGIS-Inc/SWGIS-Gui/symbology-ng/qgssvgselectorwidget.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsmessagelogviewer.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsnewvectorlayerdialog.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsannotationitem.h \
-    ../../SWGIS-Inc/SWGIS-Gui/layertree/qgslayertreemapcanvasbridge.h \
-    ../../SWGIS-Inc/SWGIS-Gui/layertree/qgscustomlayerorderwidget.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsscalevisibilitydialog.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsrasterformatsaveoptionswidget.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsrasterpyramidsoptionswidget.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgscomposerruler.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgscomposerview.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsbusyindicatordialog.h \
-    ../../SWGIS-Inc/SWGIS-Gui/qgsnewnamedialog.h
+    $$SWGISINC_PATH/SWGIS-Gui/qgsprojectionselectionwidget.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsvariableeditorwidget.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgscharacterselectdialog.h \
+    $$SWGISINC_PATH/SWGIS-Gui/symbology-ng/qgssvgselectorwidget.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsmessagelogviewer.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsnewvectorlayerdialog.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsannotationitem.h \
+    $$SWGISINC_PATH/SWGIS-Gui/layertree/qgslayertreemapcanvasbridge.h \
+    $$SWGISINC_PATH/SWGIS-Gui/layertree/qgscustomlayerorderwidget.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsscalevisibilitydialog.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsrasterformatsaveoptionswidget.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsrasterpyramidsoptionswidget.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgscomposerruler.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgscomposerview.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsbusyindicatordialog.h \
+    $$SWGISINC_PATH/SWGIS-Gui/qgsnewnamedialog.h \
+    $$SWGISINC_PATH/SWGIS-Gui/swgisnewhttpconnection.h
 
 FORMS += \
     stgismessageviewer.ui \
     stgismanageconnectionsdialogbase.ui \
     stgisgenericprojectionselectorbase.ui \
     stgisdatumtransformdialogbase.ui \
-    swgisnewhttpconnection.ui \
     stgisprojectionselectorbase.ui \
     swgiscredentialdialog.ui \
     swgiscolordialog.ui \
@@ -592,5 +589,6 @@ FORMS += \
     swgismessagelogviewer.ui \
     swgisnewvectorlayerdialogbase.ui \
     swgisrasterformatsaveoptionswidgetbase.ui \
-    swgisrasterpyramidsoptionswidgetbase.ui
+    swgisrasterpyramidsoptionswidgetbase.ui \
+    swgisnewhttpconnection.ui
 

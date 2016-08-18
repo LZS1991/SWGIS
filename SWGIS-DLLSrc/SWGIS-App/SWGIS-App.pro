@@ -242,7 +242,10 @@ SOURCES += \
     qgsvariantdelegate.cpp \
     composer/qgscomposertablebackgroundcolorsdialog.cpp \
     composer/qgscomposermanager.cpp \
-    qgscursors.cpp
+    qgscursors.cpp \
+    qgswelcomepageitemsmodel.cpp \
+    qgswelcomepage.cpp \
+    qgsversioninfo.cpp
 
 HEADERS += \
     $$SWGISINC_PATH/SWGIS-App/swgisappconfig.h \
@@ -333,7 +336,10 @@ HEADERS += \
     ../../SWGIS-Inc/SWGIS-App/qgsvariantdelegate.h \
     ../../SWGIS-Inc/SWGIS-App/composer/qgscomposertablebackgroundcolorsdialog.h \
     ../../SWGIS-Inc/SWGIS-App/composer/qgscomposermanager.h \
-    ../../SWGIS-Inc/SWGIS-App/qgscursors.h
+    ../../SWGIS-Inc/SWGIS-App/qgscursors.h \
+    ../../SWGIS-Inc/SWGIS-App/qgswelcomepageitemsmodel.h \
+    ../../SWGIS-Inc/SWGIS-App/qgswelcomepage.h \
+    ../../SWGIS-Inc/SWGIS-App/qgsversioninfo.h
 
 RESOURCES += \
     resource.qrc

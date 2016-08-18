@@ -3,22 +3,25 @@
 # Project created by QtCreator 2016-07-24T13:26:27
 #
 #-------------------------------------------------
-TARGET = SWGIS-WMSProvider
+TARGET = SWGIS-WFSProvider
 CONFIG += console
 CONFIG -= app_bundle
-DEFINES      += SWGISWMSPROVIDER_LIB
+DEFINES      += SWGISWFSPROVIDER_LIB
 TEMPLATE = lib
 
 #加入代码输出路径配置
 include(../SWGISSrcSetting.pri)
 
 INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Core \
+               $$SWGISINC_PATH/SWGIS-Core/geometry \
                $$SWGISINC_PATH/SWGIS-Gui \
-               $$SWGISINC_PATH/SWGIS-WMSProvider \
+               $$SWGISINC_PATH/SWGIS-WFSProvider \
+               $$SWGIS_BUILD_PATH/SWGIS-Gui
 
 INCLUDEPATH += $$THIRDPARTY_PATH \
                $$THIRDPARTY_PATH/GDAL/win_msvc_x64/include \
                $$THIRDPARTY_PATH/libspatialindex/win_msvc_x64/include
+
 LIBS += $$THIRDPARTY_PATH/GDAL/win_msvc_x64/lib/sqlite3_i.lib
 LIBS += $$THIRDPARTY_PATH/GDAL/win_msvc_x64/lib/gdal_i.lib
 
@@ -51,28 +54,21 @@ win32{
     }
 }
 
-
-FORMS += \
-    stgistilescalewidget.ui \
-    stgiswmssourceselectbase.ui \
-    stgiswmtsdimensionsbase.ui
-
 SOURCES += \
-    qgstilescalewidget.cpp \
-    qgswmscapabilities.cpp \
-    qgswmsconnection.cpp \
-    qgswmsdataitems.cpp \
-    qgswmsprovider.cpp \
-    qgswmssourceselect.cpp \
-    qgswmtsdimensions.cpp
+    qgswfscapabilities.cpp \
+    qgswfsdataitems.cpp \
+    qgswfsfeatureiterator.cpp \
+    qgswfsprovider.cpp \
+    qgswfssourceselect.cpp
 
 HEADERS += \
-    $$SWGISINC_PATH/SWGIS-WMSProvider/qgstilescalewidget.h \
-    $$SWGISINC_PATH/SWGIS-WMSProvider/qgswmscapabilities.h \
-    $$SWGISINC_PATH/SWGIS-WMSProvider/qgswmsconnection.h \
-    $$SWGISINC_PATH/SWGIS-WMSProvider/qgswmsdataitems.h \
-    $$SWGISINC_PATH/SWGIS-WMSProvider/qgswmsprovider.h \
-    $$SWGISINC_PATH/SWGIS-WMSProvider/qgswmssourceselect.h \
-    $$SWGISINC_PATH/SWGIS-WMSProvider/qgswmtsdimensions.h \
-    $$SWGISINC_PATH/SWGIS-WMSProvider/wmsproviderconfig.h
+    $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfscapabilities.h \
+    $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfsdataitems.h \
+    $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfsfeatureiterator.h \
+    $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfsprovider.h \
+    $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfssourceselect.h \
+    $$SWGISINC_PATH/SWGIS-WFSProvider/wfsproviderconfig.h
+
+FORMS += \
+    swgiswfssourceselectbase.ui
 

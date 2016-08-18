@@ -54,7 +54,7 @@ class QgsTransactionGroup;
 //class QgsUserInputDockWidget;
 //class QgsVectorLayer;
 class QgsVectorLayerTools;
-//class QgsWelcomePage;
+class QgsWelcomePage;
 class QgsLegendFilterButton;
 
 //class QDomDocument;
@@ -100,7 +100,7 @@ class QgsScaleComboBox;
 //#include "qgspluginmanager.h"
 //#include "qgsmessagebar.h"
 //#include "qgsbookmarks.h"
-//#include "qgswelcomepageitemsmodel.h"
+#include "qgswelcomepageitemsmodel.h"
 #include "swgisappconfig.h"
 #include "qgsmapcanvas.h"
 #include "ui_swgisapp.h"
@@ -163,10 +163,10 @@ public:
       @returns true if the file is successfully opened
       */
     bool openLayer( const QString & fileName, bool allowInteractive = false );
-//    /** Open the specified project file; prompt to save previous project if necessary.
-//      Used to process a commandline argument, FileOpen or Drop event.
-//      */
-//    void openProject( const QString & fileName );
+    /** Open the specified project file; prompt to save previous project if necessary.
+      Used to process a commandline argument, FileOpen or Drop event.
+      */
+    void openProject( const QString & fileName );
 
 //    void openLayerDefinition( const QString & filename );
     /** Opens a qgis project file
@@ -267,12 +267,12 @@ public:
     QgsVectorLayerTools *vectorLayerTools() { return m_VectorLayerTools; }
 
 //    //! Actions to be inserted in menus and toolbars
-//    QAction *actionNewProject() { return mActionNewProject; }
-//    QAction *actionOpenProject() { return mActionOpenProject; }
+    QAction *actionNewProject() { return ui->action_New_Project; }
+    QAction *actionOpenProject() { return ui->action_Open_Project; }
     QAction *actionSaveProject() { return ui->action_Save_Project; }
-//    QAction *actionSaveProjectAs() { return mActionSaveProjectAs; }
-//    QAction *actionSaveMapAsImage() { return mActionSaveMapAsImage; }
-//    QAction *actionProjectProperties() { return mActionProjectProperties; }
+    QAction *actionSaveProjectAs() { return ui->action_Save_Project_As; }
+    QAction *actionSaveMapAsImage() { return ui->action_Save_as_Image; }
+    QAction *actionProjectProperties() { return ui->action_Project_Properties; }
     QAction *actionShowComposerManager() { return ui->action_Show_Composer_Manager; }
 //    QAction *actionNewPrintComposer() { return mActionNewPrintComposer; }
 //    QAction *actionExit() { return mActionExit; }
@@ -331,7 +331,7 @@ public:
 //    QAction *actionAddSpatiaLiteLayer() { return mActionAddSpatiaLiteLayer; }
     QAction *actionAddWmsLayer() { return ui->action_Add_WMS_WMTS_Layer; }
 //    QAction *actionAddWcsLayer() { return mActionAddWcsLayer; }
-//    QAction *actionAddWfsLayer() { return mActionAddWfsLayer; }
+    QAction *actionAddWfsLayer() { return ui->action_Add_WFS_Layer; }
 //    QAction *actionCopyLayerStyle() { return mActionCopyStyle; }
 //    QAction *actionPasteLayerStyle() { return mActionPasteStyle; }
 //    QAction *actionOpenTable() { return mActionOpenTable; }
@@ -621,7 +621,7 @@ public slots:
     /** Open a plugin layer using its provider */
     QgsPluginLayer* addPluginLayer( const QString& uri, const QString& baseName, const QString& providerKey );
 
-//    void addWfsLayer( const QString& uri, const QString& typeName );
+    void addWfsLayer( const QString& uri, const QString& typeName );
 
 //    void versionReplyFinished();
 
@@ -685,15 +685,15 @@ private:
                                            const QString & providerKey, bool guiWarning,
                                            bool guiUpdate );
 
-//    /** Add this file to the recently opened/saved projects list
-//     *  pass settings by reference since creating more than one
-//     * instance simultaneously results in data loss.
-//     *
-//     * @param savePreviewImage Set to false when the preview image should not be saved. E.g. project load.
-//     */
-//    void saveRecentProjectPath( const QString& projectPath, bool savePreviewImage = true );
-//    //! Update project menu with the current list of recently accessed projects
-//    void updateRecentProjectPaths();
+    /** Add this file to the recently opened/saved projects list
+     *  pass settings by reference since creating more than one
+     * instance simultaneously results in data loss.
+     *
+     * @param savePreviewImage Set to false when the preview image should not be saved. E.g. project load.
+     */
+    void saveRecentProjectPath( const QString& projectPath, bool savePreviewImage = true );
+    //! Update project menu with the current list of recently accessed projects
+    void updateRecentProjectPaths();
 //    //! Read Well Known Binary stream from PostGIS
 //    //void readWKB(const char *, QStringList tables);
 //    //! shows the paste-transformations dialog
@@ -931,8 +931,8 @@ private:
 //    friend class QgisAppInterface;
 
     QSplashScreen *m_Splash;
-//    //! list of recently opened/saved project files
-//    QList<QgsWelcomePageItemsModel::RecentProjectData> mRecentProjects;
+    //! list of recently opened/saved project files
+    QList<QgsWelcomePageItemsModel::RecentProjectData> m_RecentProjects;
     //! Print composers of this project, accessible by id string
     QSet<QgsComposer*> m_PrintComposers;
     /** QGIS-internal vector feature clipboard */
@@ -1033,7 +1033,7 @@ private:
 
     QDateTime m_ProjectLastModified;
 
-//    QgsWelcomePage* mWelcomePage;
+    QgsWelcomePage* m_WelcomePage;
 
     QStackedWidget* m_CentralContainer;
 
@@ -1249,8 +1249,8 @@ private slots:
     void restoreWindowState();
     //! Save project. Returns true if the user selected a file to save to, false if not.
     bool fileSave();
-//    //! Save project as
-//    void fileSaveAs();
+    //! Save project as
+    void fileSaveAs();
 //    //! Export project in dxf format
 //    void dxfExport();
 //    //! Open the project file corresponding to the
@@ -1261,12 +1261,12 @@ private slots:
 //     * @note added in QGIS 2.7
 //     */
 //    void runScript( const QString& filePath );
-//    //! Save the map view as an image - user is prompted for image name using a dialog
-//    void saveMapAsImage();
-//    //! Open a project
-//    void fileOpen();
-//    //! Create a new project
-//    void fileNew();
+    //! Save the map view as an image - user is prompted for image name using a dialog
+    void saveMapAsImage();
+    //! Open a project
+    void fileOpen();
+    //! Create a new project
+    void fileNew();
     //! Create a new blank project (no template)
     void fileNewBlank();
     //! As above but allows forcing without prompt and forcing blank project
@@ -1462,8 +1462,8 @@ private slots:
     void addWmsLayer();
 //    //! Add a WCS layer to the map
 //    void addWcsLayer();
-//    //! Add a WFS layer to the map
-//    void addWfsLayer();
+    //! Add a WFS layer to the map
+    void addWfsLayer();
     //! Set map tool to Zoom out
     void zoomOut();
     //! Set map tool to Zoom in

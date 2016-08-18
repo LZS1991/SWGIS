@@ -19,7 +19,7 @@
 #define QGSWMSSOURCESELECT_H
 #include "ui_stgiswmssourceselectbase.h"
 #include "qgsdatasourceuri.h"
-//#include "qgisgui.h"
+#include "qgisgui.h"
 #include "qgscontexthelp.h"
 #include "wmsproviderconfig.h"
 #include "qgswmsprovider.h"
@@ -49,8 +49,7 @@ class SWGISWMSPROVIDER_EXPORT QgsWMSSourceSelect : public QDialog, private Ui::W
 
   public:
     //! Constructor
-//    QgsWMSSourceSelect( QWidget *parent = nullptr, Qt::WindowFlags fl = QgisGui::ModalDialogFlags, bool managerMode = false, bool embeddedMode = false );
-    QgsWMSSourceSelect( QWidget *parent = nullptr, Qt::WindowFlags fl = nullptr, bool managerMode = false, bool embeddedMode = false );
+    QgsWMSSourceSelect( QWidget *parent = nullptr, Qt::WindowFlags fl = QgisGui::ModalDialogFlags, bool managerMode = false, bool embeddedMode = false );
 
     //! Destructor
     ~QgsWMSSourceSelect();

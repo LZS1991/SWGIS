@@ -193,7 +193,7 @@
 #include "qgsmessagelogviewer.h"
 //#include "qgsdataitem.h"
 #include "qgsmaplayeractionregistry.h"
-//#include "qgswelcomepage.h"
+#include "qgswelcomepage.h"
 //#include "qgsmaprendererparalleljob.h"
 //#include "qgsversioninfo.h"
 #include "qgslegendfilterbutton.h"
@@ -322,6 +322,7 @@ SWGISApp::SWGISApp(QSplashScreen *splash, bool restorePlugins, bool skipVersionC
     , m_LayerTreeCanvasBridge(nullptr)
     , m_NonEditMapTool(nullptr)
     , m_ComposerManager(nullptr)
+    , m_WelcomePage(nullptr)
     , ui(new Ui::SWGISApp)
 {
     if (m_Instance)
@@ -371,8 +372,11 @@ SWGISApp::SWGISApp(QSplashScreen *splash, bool restorePlugins, bool skipVersionC
     int blue = settings.value( "/qgis/default_canvas_color_blue", 255 ).toInt();
     this->m_MapCanvas->setCanvasColor(QColor(red, green, blue));
 
+    m_WelcomePage = new QgsWelcomePage(skipVersionCheck);
+
     this->m_CentralContainer = new QStackedWidget();
     this->m_CentralContainer->insertWidget(0, this->m_MapCanvas);
+    this->m_CentralContainer->insertWidget(1, this->m_WelcomePage);
     centralLayout->addWidget(this->m_CentralContainer, 0, 0, 2, 1);
 
     connect(this->m_MapCanvas, SIGNAL(layersChanged()), this, SLOT(showMapCanvas()));
@@ -537,7 +541,7 @@ SWGISApp::~SWGISApp()
     delete m_Maptip;
     delete m_OverviewMapCursor;
     delete m_VectorLayerTools;
-
+    delete m_WelcomePage;
     removeAnnotationItems();
 
     QgsApplication::setFileOpenEventReceiver(nullptr);
@@ -850,6 +854,16 @@ bool SWGISApp::openLayer(const QString &fileName, bool allowInteractive)
         QgsMessageLog::logMessage(tr("Unable to load %1").arg(fileName));
     }
     return ok;
+}
+
+void SWGISApp::openProject(const QString &fileName)
+{
+    // possibly save any pending work before opening a different project
+    if(saveDirty())
+        // error handling and reporting is in addProject() function
+        addProject(fileName);
+    return;
+
 }
 
 bool SWGISApp::addProject(const QString &projectFile)
@@ -1997,6 +2011,12 @@ QgsPluginLayer *SWGISApp::addPluginLayer(const QString &uri, const QString &base
     return layer;
 }
 
+void SWGISApp::addWfsLayer(const QString &uri, const QString &typeName)
+{
+    // TODO: this should be eventually moved to a more reasonable place
+    addVectorLayer( uri, typeName, "WFS" );
+}
+
 void SWGISApp::updateProjectFromTemplates()
 {
     // get list of project files in template dir
@@ -2377,13 +2397,22 @@ void SWGISApp::setupLayerTreeViewFromSettings()
 
 void SWGISApp::createActions()
 {
+    connect(ui->action_New_Project, SIGNAL(triggered()), this, SLOT(fileNew()));
+    connect(ui->action_Open_Project, SIGNAL(triggered()), this, SLOT(fileOpen()));
     connect(ui->action_Save_Project, SIGNAL(triggered()), this, SLOT(fileSave()));
+    connect(ui->action_Save_Project_As, SIGNAL(triggered()), this, SLOT(fileSaveAs()));
+    connect(ui->action_Save_as_Image, SIGNAL(triggered()), this, SLOT(saveMapAsImage()));
+
     connect(ui->action_Show_Composer_Manager, SIGNAL(triggered()), this, SLOT(showComposerManager()));
+    connect(ui->action_Labeling, SIGNAL(triggered()), this, SLOT(labeling()));
+
 
     connect(ui->action_Add_WMS_WMTS_Layer, SIGNAL(triggered()), this, SLOT(addWmsLayer()));
     connect(ui->action_Add_Vector_Layer, SIGNAL(triggered()), this, SLOT(addVectorLayer()));
+    connect(ui->action_Add_WFS_Layer, SIGNAL(triggered()), this, SLOT(addWfsLayer()));
     connect(ui->action_New_Shapefile_Layer, SIGNAL(triggered()), this, SLOT(newVectorLayer()));
 
+    connect(ui->action_Project_Properties, SIGNAL(triggered()), this, SLOT(projectProperties()));
     connect(ui->action_Options, SIGNAL(triggered()), this, SLOT(options()));
     connect(ui->action_Pan_Map, SIGNAL(triggered()), this, SLOT(pan()));
 //    connect( mActionPanToSelected, SIGNAL( triggered() ), this, SLOT( panToSelected() ) );
@@ -3019,6 +3048,94 @@ QgsRasterLayer *SWGISApp::addRasterLayerPrivate(const QString &uri, const QStrin
     return layer;
 }
 
+void SWGISApp::saveRecentProjectPath(const QString &projectPath, bool savePreviewImage)
+{
+    QSettings settings;
+
+    // Get canonical absolute path
+    QFileInfo myFileInfo( projectPath );
+    QgsWelcomePageItemsModel::RecentProjectData projectData;
+    projectData.path = myFileInfo.absoluteFilePath();
+    projectData.title = QgsProject::instance()->title();
+    if ( projectData.title.isEmpty() )
+        projectData.title = projectData.path;
+
+    projectData.crs = m_MapCanvas->mapSettings().destinationCrs().authid();
+
+    if ( savePreviewImage )
+    {
+        // Generate a unique file name
+        QString fileName( QCryptographicHash::hash(( projectData.path.toUtf8() ), QCryptographicHash::Md5 ).toHex() );
+        QString previewDir = QString( "%1/previewImages" ).arg( QgsApplication::qgisSettingsDirPath() );
+        projectData.previewImagePath = QString( "%1/%2.png" ).arg( previewDir, fileName );
+        QDir().mkdir( previewDir );
+
+        // Render the map canvas
+        QSize previewSize( 250, 177 ); // h = w / sqrt(2)
+        QRect previewRect( QPoint(( m_MapCanvas->width() - previewSize.width() ) / 2
+                                , ( m_MapCanvas->height() - previewSize.height() ) / 2 )
+                         , previewSize );
+
+        QPixmap previewImage( previewSize );
+        QPainter previewPainter( &previewImage );
+        m_MapCanvas->render( &previewPainter, QRect( QPoint(), previewSize ), previewRect );
+
+        // Save
+        previewImage.save( projectData.previewImagePath );
+    }
+    else
+    {
+        int idx = m_RecentProjects.indexOf( projectData );
+        if ( idx != -1 )
+            projectData.previewImagePath = m_RecentProjects.at( idx ).previewImagePath;
+    }
+
+    // If this file is already in the list, remove it
+    m_RecentProjects.removeAll( projectData );
+
+    // Prepend this file to the list
+    m_RecentProjects.prepend( projectData );
+
+    // Keep the list to 10 items by trimming excess off the bottom
+    // And remove the associated image
+    while ( m_RecentProjects.count() > 10 )
+    {
+        QFile( m_RecentProjects.takeLast().previewImagePath ).remove();
+    }
+
+    settings.remove( "/UI/recentProjects" );
+    int idx = 0;
+
+    // Persist the list
+    Q_FOREACH ( const QgsWelcomePageItemsModel::RecentProjectData& recentProject, m_RecentProjects )
+    {
+        ++idx;
+        settings.beginGroup( QString( "/UI/recentProjects/%1" ).arg( idx ) );
+        settings.setValue( "title", recentProject.title );
+        settings.setValue( "path", recentProject.path );
+        settings.setValue( "previewImage", recentProject.previewImagePath );
+        settings.setValue( "crs", recentProject.crs );
+        settings.endGroup();
+    }
+    // Update menu list of paths
+    updateRecentProjectPaths();
+}
+
+void SWGISApp::updateRecentProjectPaths()
+{
+    ui->menu_Recent_Project->clear();
+
+    Q_FOREACH ( const QgsWelcomePageItemsModel::RecentProjectData& recentProject, m_RecentProjects )
+    {
+      QAction* action = ui->menu_Recent_Project->addAction( QString( "%1 (%2)" ).arg( recentProject.title != recentProject.path ? recentProject.title : QFileInfo( recentProject.path ).baseName(), recentProject.path ) );
+      action->setEnabled( QFile::exists(( recentProject.path ) ) );
+      action->setData( recentProject.path );
+    }
+
+    if ( m_WelcomePage )
+      m_WelcomePage->setRecentProjects( m_RecentProjects );
+}
+
 /**
   Prompt and save if project has been modified.
   @return true if saved or discarded, false if cancelled
@@ -3340,8 +3457,172 @@ void SWGISApp::restoreWindowState()
 
 bool SWGISApp::fileSave()
 {
-    //LZS2851
+    // if we don't have a file name, then obviously we need to get one; note
+    // that the project file name is reset to null in fileNew()
+    QFileInfo fullPath;
+
+    if ( QgsProject::instance()->fileName().isNull() )
+    {
+        // Retrieve last used project dir from persistent settings
+        QSettings settings;
+        QString lastUsedDir = settings.value( "/UI/lastProjectDir", QDir::homePath() ).toString();
+
+        QString path = QFileDialog::getSaveFileName(
+                       this,
+                       tr( "Choose a QGIS project file" ),
+                       lastUsedDir + '/' + QgsProject::instance()->title(),
+                       tr( "QGIS files" ) + " (*.qgs *.QGS)" );
+        if ( path.isEmpty() )
+            return false;
+
+        fullPath.setFile( path );
+
+        // make sure we have the .qgs extension in the file name
+        if ( "qgs" != fullPath.suffix().toLower() )
+        {
+            fullPath.setFile( fullPath.filePath() + ".qgs" );
+        }
+
+
+        QgsProject::instance()->setFileName( fullPath.filePath() );
+    }
+    else
+    {
+        QFileInfo fi( QgsProject::instance()->fileName() );
+        fullPath = fi.absoluteFilePath();
+        if ( fi.exists() && !m_ProjectLastModified.isNull() && m_ProjectLastModified != fi.lastModified() )
+        {
+            if ( QMessageBox::warning( this,
+                                   tr( "Project file was changed" ),
+                                   tr( "The loaded project file on disk was meanwhile changed.  Do you want to overwrite the changes?\n"
+                                       "\nLast modification date on load was: %1"
+                                       "\nCurrent last modification date is: %2" )
+                                   .arg( m_ProjectLastModified.toString( Qt::DefaultLocaleLongDate ),
+                                         fi.lastModified().toString( Qt::DefaultLocaleLongDate ) ),
+                                   QMessageBox::Ok | QMessageBox::Cancel ) == QMessageBox::Cancel )
+            return false;
+        }
+
+        if ( fi.exists() && ! fi.isWritable() )
+        {
+            messageBar()->pushMessage( tr( "Insufficient permissions" ),
+                                   tr( "The project file is not writable." ),
+                                   QgsMessageBar::WARNING );
+            return false;
+        }
+    }
+
+    if ( QgsProject::instance()->write() )
+    {
+        setTitleBarText_( *this ); // update title bar
+        statusBar()->showMessage( tr( "Saved project to: %1" ).arg( QgsProject::instance()->fileName() ), 5000 );
+
+        saveRecentProjectPath( fullPath.filePath() );
+
+        QFileInfo fi( QgsProject::instance()->fileName() );
+        m_ProjectLastModified = fi.lastModified();
+    }
+    else
+    {
+        QMessageBox::critical( this,
+                             tr( "Unable to save project %1" ).arg( QgsProject::instance()->fileName() ),
+                             QgsProject::instance()->error() );
+        return false;
+    }
+
+    // run the saved project macro
+    if ( mTrustedMacros )
+        QgsPythonRunner::run( "qgis.utils.saveProjectMacro();" );
+
     return true;
+}
+
+void SWGISApp::fileSaveAs()
+{
+    // Retrieve last used project dir from persistent settings
+    QSettings settings;
+    QString lastUsedDir = settings.value("/UI/lastProjectDir", QDir::homePath()).toString();
+
+    QString path = QFileDialog::getSaveFileName(this,
+                   tr("Choose a file name to save the QGIS project file as"),
+                   lastUsedDir + '/' + QgsProject::instance()->title(),
+                   tr("QGIS files") + " (*.qgs *.QGS)");
+    if (path.isEmpty())
+      return;
+
+    QFileInfo fullPath(path);
+
+    settings.setValue("/UI/lastProjectDir", fullPath.path());
+
+    // make sure the .qgs extension is included in the path name. if not, add it...
+    if("qgs" != fullPath.suffix().toLower())
+    {
+        fullPath.setFile(fullPath.filePath() + ".qgs");
+    }
+
+    QgsProject::instance()->setFileName(fullPath.filePath());
+
+    if (QgsProject::instance()->write())
+    {
+        setTitleBarText_(*this); // update title bar
+        statusBar()->showMessage(tr( "Saved project to: %1").arg(QgsProject::instance()->fileName()), 5000);
+        // add this to the list of recently used project files
+        saveRecentProjectPath(fullPath.filePath());
+        m_ProjectLastModified = fullPath.lastModified();
+    }
+    else
+    {
+        QMessageBox::critical( this,
+                             tr( "Unable to save project %1" ).arg( QgsProject::instance()->fileName() ),
+                             QgsProject::instance()->error(),
+                             QMessageBox::Ok,
+                             Qt::NoButton );
+    }
+}
+
+void SWGISApp::saveMapAsImage()
+{
+    QPair< QString, QString> myFileNameAndFilter = QgisGui::getSaveAsImageName( this, tr( "Choose a file name to save the map image as" ) );
+    if ( myFileNameAndFilter.first != "" )
+    {
+        //save the mapview to the selected file
+        m_MapCanvas->saveAsImage( myFileNameAndFilter.first, nullptr, myFileNameAndFilter.second );
+        statusBar()->showMessage( tr( "Saved map image to %1" ).arg( myFileNameAndFilter.first ) );
+    }
+
+}
+
+void SWGISApp::fileOpen()
+{
+    // possibly save any pending work before opening a new project
+    if ( saveDirty() )
+    {
+        // Retrieve last used project dir from persistent settings
+        QSettings settings;
+        QString lastUsedDir = settings.value( "/UI/lastProjectDir", QDir::homePath() ).toString();
+        QString fullPath = QFileDialog::getOpenFileName( this,
+                         tr( "Choose a QGIS project file to open" ),
+                         lastUsedDir,
+                         tr( "QGIS files" ) + " (*.qgs *.QGS)" );
+        if ( fullPath.isNull() )
+            return;
+
+        // Fix by Tim - getting the dirPath from the dialog
+        // directly truncates the last node in the dir path.
+        // This is a workaround for that
+        QFileInfo myFI( fullPath );
+        QString myPath = myFI.path();
+        // Persist last used project dir
+        settings.setValue( "/UI/lastProjectDir", myPath );
+
+        // open the selected project
+        addProject( fullPath );
+    }
+}
+
+void SWGISApp::fileNew()
+{
+    fileNew( true ); // prompts whether to save project
 }
 
 void SWGISApp::fileNewBlank()
@@ -3779,6 +4060,11 @@ void SWGISApp::activateDeactivateLayerRelatedActions(QgsMapLayer *layer)
         if(enablePin && enableShowHide && enableMove && enableRotate && enableChange)
             break;
     }
+
+    if(!layer)
+    {
+        ui->action_Labeling->setEnabled(true);
+    }
     updateLayerModifiedActions();
 
 }
@@ -3910,6 +4196,37 @@ void SWGISApp::addWmsLayer()
              this, SLOT(addRasterLayer(QString const &, QString const &, QString const &)));
     wmss->exec();
     delete wmss;
+}
+
+void SWGISApp::addWfsLayer()
+{
+    if(!m_MapCanvas )
+        return;
+
+    QgsDebugMsg( "about to addWfsLayer" );
+
+    // TODO: QDialog for now, switch to QWidget in future
+    QDialog *wfss = dynamic_cast<QDialog*>(QgsProviderRegistry::instance()->selectWidget(QString("WFS"), this));
+    if(!wfss)
+    {
+        QMessageBox::warning( this, tr( "WFS" ), tr( "Cannot get WFS select dialog from provider." ) );
+        return;
+    }
+    connect(wfss, SIGNAL(addWfsLayer(QString, QString)), this, SLOT(addWfsLayer(QString, QString)));
+
+    //re-enable wfs with extent setting: pass canvas info to source select
+    wfss->setProperty("MapExtent", m_MapCanvas->extent().toString());
+    if(m_MapCanvas->mapSettings().hasCrsTransformEnabled())
+    {
+        //if "on the fly" reprojection is active, pass canvas CRS
+        wfss->setProperty("MapCRS", m_MapCanvas->mapSettings().destinationCrs().authid());
+    }
+
+    bool bkRenderFlag = m_MapCanvas->renderFlag();
+    m_MapCanvas->setRenderFlag(false);
+    wfss->exec();
+    m_MapCanvas->setRenderFlag(bkRenderFlag);
+    delete wfss;
 }
 
 void SWGISApp::zoomOut()
@@ -4219,5 +4536,3 @@ void SWGISApp::onLayerError(const QString &msg)
 
     m_InfoBar->pushCritical(tr( "Layer %1" ).arg(layer->name()), msg);
 }
-
-

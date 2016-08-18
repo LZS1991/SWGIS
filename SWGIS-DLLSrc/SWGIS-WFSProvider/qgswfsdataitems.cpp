@@ -179,7 +179,7 @@ void QgsWFSRootItem::connectionsChanged()
 void QgsWFSRootItem::newConnection()
 {
   SWGISNewHttpConnection nc( nullptr, "/Qgis/connections-wfs/" );
-  nc.setWindowTitle( tr( "Create a new WFS connection" ) );
+  nc.setWindowTitle(tr( "Create a new WFS connection" ) );
 
   if ( nc.exec() )
   {

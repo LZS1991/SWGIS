@@ -17,7 +17,7 @@
 
 #include "qgspaperitem.h"
 #include "qgscomposition.h"
-#include "../symbology-ng/qgsstylev2.h"
+#include "qgsstylev2.h"
 #include "qgslogger.h"
 #include <QGraphicsRectItem>
 #include <QGraphicsView>

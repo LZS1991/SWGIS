@@ -19,7 +19,7 @@
 #include "qgsdatasourceuri.h"
 #include "qgswfscapabilities.h"
 
-class  QgsWFSRootItem : public QgsDataCollectionItem
+class QgsWFSRootItem : public QgsDataCollectionItem
 {
     Q_OBJECT
   public:
@@ -37,9 +37,9 @@ class  QgsWFSRootItem : public QgsDataCollectionItem
     void newConnection();
 };
 
-class  QgsWFSConnection;
+class QgsWFSConnection;
 
-class  QgsWFSConnectionItem : public QgsDataCollectionItem
+class QgsWFSConnectionItem : public QgsDataCollectionItem
 {
     Q_OBJECT
   public:
@@ -67,7 +67,7 @@ class QgsWFSLayerItem : public QgsLayerItem
     Q_OBJECT
 
   public:
-    QgsWFSLayerItem( QgsDataItem* parent, QString name, QgsDataSourceURI uri, QString featureType, QString title, QString crsString );
+    QgsWFSLayerItem( QgsDataItem* parent, QString name, const QgsDataSourceURI &uri, QString featureType, QString title, QString crsString );
     ~QgsWFSLayerItem();
 
 };

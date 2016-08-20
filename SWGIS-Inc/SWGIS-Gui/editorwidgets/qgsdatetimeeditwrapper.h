@@ -18,7 +18,7 @@
 
 #include <QDateTimeEdit>
 
-#include "./core/qgseditorwidgetwrapper.h"
+#include "qgseditorwidgetwrapper.h"
 #include "qgsdatetimeedit.h"
 #include "qgsdatetimeeditfactory.h"
 
@@ -55,6 +55,7 @@ class SWGISGUI_EXPORT QgsDateTimeEditWrapper : public QgsEditorWidgetWrapper
     QWidget *createWidget( QWidget *parent ) override;
     void initWidget( QWidget *editor ) override;
     bool valid() const override;
+    virtual void showIndeterminateState() override;
 
   public slots:
     void setValue( const QVariant &value ) override;

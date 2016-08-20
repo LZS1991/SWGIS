@@ -13,17 +13,17 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./effects/qgspainteffectpropertieswidget.h"
+#include "qgspainteffectpropertieswidget.h"
 
 #include <QFile>
 #include <QStandardItem>
 #include <QKeyEvent>
 #include <QMessageBox>
 
-#include "./effects/qgspainteffectregistry.h"
-#include "./effects/qgspainteffect.h"
-#include "./effects/qgspainteffectwidget.h"
-#include "./effects/qgseffectstack.h"
+#include "qgspainteffectregistry.h"
+#include "qgspainteffect.h"
+#include "qgspainteffectwidget.h"
+#include "qgseffectstack.h"
 #include "qgsapplication.h"
 #include "qgslogger.h"
 

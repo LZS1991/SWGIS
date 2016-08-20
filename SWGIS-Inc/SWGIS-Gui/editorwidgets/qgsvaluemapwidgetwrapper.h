@@ -42,6 +42,7 @@ class SWGISGUI_EXPORT QgsValueMapWidgetWrapper : public QgsEditorWidgetWrapper
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;

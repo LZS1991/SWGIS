@@ -50,6 +50,7 @@ class SWGISGUI_EXPORT QgsRelationReferenceWidgetWrapper : public QgsEditorWidget
     virtual void initWidget( QWidget* editor ) override;
     virtual QVariant value() const override;
     bool valid() const override;
+    void showIndeterminateState() override;
 
   public slots:
     virtual void setValue( const QVariant& value ) override;
@@ -58,10 +59,25 @@ class SWGISGUI_EXPORT QgsRelationReferenceWidgetWrapper : public QgsEditorWidget
   private slots:
     void foreignKeyChanged( QVariant value );
 
+  protected:
+    /**
+     * This should update the widget with a visual cue if a constraint status
+     * changed.
+     *
+     * By default a stylesheet will be applied on the widget that changes the
+     * background color to red.
+     *
+     * This can be overwritten in subclasses to allow individual widgets to
+     * change the visual cue.
+     * @note added in QGIS 2.16
+     */
+    void updateConstraintWidgetStatus( bool constraintValid ) override;
+
   private:
     QgsRelationReferenceWidget* mWidget;
     QgsMapCanvas* mCanvas;
     QgsMessageBar* mMessageBar;
+    bool mIndeterminateState;
 };
 
 #endif // QGSRELATIONREFERENCEWIDGETWRAPPER_H

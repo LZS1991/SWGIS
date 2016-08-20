@@ -22,7 +22,7 @@
 #include "qgis.h"
 #include "qgspoint.h"
 #include "qgsrectangle.h"
-#include "./geometry/qgswkbptr.h"
+#include "qgswkbptr.h"
 
 #include <QVector>
 #include <QPolygonF>
@@ -87,7 +87,7 @@ class SWGISCORE_EXPORT QgsClipper
       @param wkb pointer to the start of the line wkb
       @param clipExtent clipping bounds
       @param line out: clipped line coordinates*/
-    static QgsConstWkbPtr clippedLineWKB( QgsConstWkbPtr wkb, const QgsRectangle& clipExtent, QPolygonF& line );
+    static QgsConstWkbPtr clippedLineWKB( QgsConstWkbPtr& wkb, const QgsRectangle& clipExtent, QPolygonF& line );
 
   private:
 

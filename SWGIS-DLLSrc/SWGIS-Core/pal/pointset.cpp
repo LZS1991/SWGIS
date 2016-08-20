@@ -31,7 +31,7 @@
 #include "util.h"
 #include "pal.h"
 #include "geomfunction.h"
-#include "../geometry/qgsgeos.h"
+#include "qgsgeos.h"
 #include "qgsmessagelog.h"
 #include <qglobal.h>
 

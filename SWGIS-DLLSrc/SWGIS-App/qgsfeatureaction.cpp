@@ -59,8 +59,10 @@ QgsAttributeDialog *QgsFeatureAction::newDialog( bool cloneFeature )
 
   context.setDistanceArea( myDa );
   context.setVectorLayerTools( SWGISApp::instance()->vectorLayerTools() );
+  context.setFormMode( QgsAttributeEditorContext::StandaloneDialog );
 
-  QgsAttributeDialog *dialog = new QgsAttributeDialog( mLayer, f, cloneFeature, nullptr, true, context );
+  QgsAttributeDialog *dialog = new QgsAttributeDialog( mLayer, f, cloneFeature, parentWidget(), true, context );
+  dialog->setWindowFlags( dialog->windowFlags() | Qt::Tool );
 
   if ( mLayer->actions()->size() > 0 )
   {
@@ -111,7 +113,7 @@ bool QgsFeatureAction::editFeature( bool showModal )
   QgsAttributeDialog *dialog = newDialog( false );
 
   if ( !mFeature->isValid() )
-    dialog->setIsAddDialog( true );
+    dialog->setMode( QgsAttributeForm::AddFeatureMode );
 
   if ( showModal )
   {
@@ -193,7 +195,7 @@ bool QgsFeatureAction::addFeature( const QgsAttributeMap& defaultAttributes, boo
   else
   {
     QgsAttributeDialog *dialog = newDialog( false );
-    dialog->setIsAddDialog( true );
+    dialog->setMode( QgsAttributeForm::AddFeatureMode );
     dialog->setEditCommandMessage( text() );
 
     connect( dialog->attributeForm(), SIGNAL( featureSaved( const QgsFeature & ) ), this, SLOT( onFeatureSaved( const QgsFeature & ) ) );

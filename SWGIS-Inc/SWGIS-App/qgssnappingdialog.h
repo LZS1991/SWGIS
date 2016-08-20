@@ -20,7 +20,7 @@
 
 #include "qgsmaplayer.h"
 #include "swgisappconfig.h"
-#include <QDockWidget>
+#include "qgsdockwidget.h"
 #include "ui_swgissnappingdialogbase.h"
 
 class QgsMapCanvas;
@@ -91,7 +91,7 @@ class SWGISAPP_EXPORT QgsSnappingDialog: public QDialog, private Ui::SnappingDia
     /** Used to query the loaded layers*/
     QgsMapCanvas* mMapCanvas;
 
-    QDockWidget *mDock;
+    QgsDockWidget *mDock;
 
     /** Set checkbox value based on project setting*/
     void setTopologicalEditingState();
@@ -103,7 +103,7 @@ class SWGISAPP_EXPORT QgsSnappingDialog: public QDialog, private Ui::SnappingDia
 };
 
 
-class QgsSnappingDock : public QDockWidget
+class QgsSnappingDock : public QgsDockWidget
 {
     Q_OBJECT
 

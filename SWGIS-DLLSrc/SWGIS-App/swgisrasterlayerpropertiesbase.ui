@@ -110,7 +110,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>:/images/themes/default/propertyicons/symbology.png</normaloff>:/images/themes/default/propertyicons/symbology.png</iconset>
+            <normaloff>:/images/themes/default/propertyicons/symbology.svg</normaloff>:/images/themes/default/propertyicons/symbology.svg</iconset>
           </property>
          </item>
          <item>
@@ -161,6 +161,15 @@
             <normaloff>:/images/themes/default/propertyicons/metadata.png</normaloff>:/images/themes/default/propertyicons/metadata.png</iconset>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>Legend</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>:/images/themes/default/legend.svg</normaloff>:/images/themes/default/legend.svg</iconset>
+          </property>
+         </item>
         </widget>
        </item>
       </layout>
@@ -200,7 +209,7 @@
           </sizepolicy>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>6</number>
          </property>
          <widget class="QWidget" name="mOptsPage_General">
           <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -229,8 +238,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>616</width>
-                <height>546</height>
+                <width>278</width>
+                <height>202</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -454,8 +463,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>480</width>
-                <height>448</height>
+                <width>616</width>
+                <height>546</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -818,7 +827,7 @@
                     </property>
                     <property name="icon">
                      <iconset>
-                      <normaloff>:/images/themes/default/mActionUndo.png</normaloff>:/images/themes/default/mActionUndo.png</iconset>
+                      <normaloff>:/images/themes/default/mActionUndo.svg</normaloff>:/images/themes/default/mActionUndo.svg</iconset>
                     </property>
                     <property name="toolButtonStyle">
                      <enum>Qt::ToolButtonTextBesideIcon</enum>
@@ -1085,8 +1094,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>411</width>
-                <height>352</height>
+                <width>616</width>
+                <height>546</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -1501,8 +1510,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>527</width>
-                <height>168</height>
+                <width>616</width>
+                <height>546</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1671,8 +1680,8 @@ p, li { white-space: pre-wrap; }
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>100</width>
-                <height>30</height>
+                <width>616</width>
+                <height>546</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -1730,7 +1739,7 @@ p, li { white-space: pre-wrap; }
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>322</width>
+                <width>599</width>
                 <height>551</height>
                </rect>
               </property>
@@ -2120,6 +2129,22 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="mOptsPage_Legend">
+          <layout class="QVBoxLayout" name="verticalLayout_18">
+           <item>
+            <widget class="QGroupBox" name="groupBox">
+             <property name="title">
+              <string>Embedded widgets in legend</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_17">
+              <item>
+               <widget class="QgsLayerTreeEmbeddedConfigWidget" name="mLegendConfigEmbeddedWidget" native="true"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -2170,6 +2195,11 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
+   <class>QgsScaleRangeWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsscalerangewidget.h</header>
+  </customwidget>
+  <customwidget>
    <class>QgsColorButtonV2</class>
    <extends>QToolButton</extends>
    <header>qgscolorbuttonv2.h</header>
@@ -2182,11 +2212,6 @@ p, li { white-space: pre-wrap; }
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsScaleRangeWidget</class>
-   <extends>QWidget</extends>
-   <header>qgsscalerangewidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>QgsBlendModeComboBox</class>
    <extends>QComboBox</extends>
    <header>qgsblendmodecombobox.h</header>
@@ -2195,6 +2220,12 @@ p, li { white-space: pre-wrap; }
    <class>QgsProjectionSelectionWidget</class>
    <extends>QWidget</extends>
    <header location="global">qgsprojectionselectionwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsLayerTreeEmbeddedConfigWidget</class>
+   <extends>QWidget</extends>
+   <header>qgslayertreeembeddedconfigwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
@@ -2259,9 +2290,7 @@ p, li { white-space: pre-wrap; }
   <tabstop>mLayerLegendUrlFormatComboBox</tabstop>
   <tabstop>txtbMetadata</tabstop>
  </tabstops>
- <resources>
-  <include location="../../images/images.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>mOptionsListWidget</sender>

@@ -18,7 +18,7 @@
 
 #include "qgsfield.h"
 #include "qgsfeature.h"
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
 #include "qgscoordinatereferencesystem.h"

@@ -65,7 +65,7 @@
         <x>0</x>
         <y>0</y>
         <width>374</width>
-        <height>1282</height>
+        <height>1304</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="mainLayout">
@@ -111,7 +111,7 @@
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QComboBox" name="mMapComboBox"/>
+           <widget class="QgsComposerItemComboBox" name="mMapComboBox"/>
           </item>
           <item row="3" column="0">
            <widget class="QLabel" name="label">
@@ -130,7 +130,7 @@
           <item row="1" column="0">
            <widget class="QLabel" name="label_15">
             <property name="text">
-             <string>Title alignment:</string>
+             <string>Title alignment</string>
             </property>
            </widget>
           </item>
@@ -151,6 +151,13 @@
               <string>Right</string>
              </property>
             </item>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="2">
+           <widget class="QCheckBox" name="mCheckboxResizeContents">
+            <property name="text">
+             <string>Resize to fit contents</string>
+            </property>
            </widget>
           </item>
          </layout>
@@ -356,7 +363,7 @@
               </property>
               <property name="icon">
                <iconset>
-                <normaloff>:/images/themes/default/mActionSum.png</normaloff>:/images/themes/default/mActionSum.png</iconset>
+                <normaloff>:/images/themes/default/mActionSum.svg</normaloff>:/images/themes/default/mActionSum.svg</iconset>
               </property>
               <property name="iconSize">
                <size>
@@ -375,7 +382,7 @@
                <string>Filter Legend By Map Content</string>
               </property>
               <property name="icon">
-               <iconset>
+               <iconset resource="resource.qrc">
                 <normaloff>:/images/themes/default/mActionFilter2.svg</normaloff>:/images/themes/default/mActionFilter2.svg</iconset>
               </property>
               <property name="iconSize">
@@ -990,10 +997,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QgsCollapsibleGroupBoxBasic</class>
-   <extends>QGroupBox</extends>
-   <header>qgscollapsiblegroupbox.h</header>
-   <container>1</container>
+   <class>QgsDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qgsdoublespinbox.h</header>
   </customwidget>
   <customwidget>
    <class>QgsColorButtonV2</class>
@@ -1002,14 +1008,20 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsDoubleSpinBox</class>
-   <extends>QDoubleSpinBox</extends>
-   <header>qgsdoublespinbox.h</header>
-  </customwidget>
-  <customwidget>
    <class>QgsSpinBox</class>
    <extends>QSpinBox</extends>
    <header>qgsspinbox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsCollapsibleGroupBoxBasic</class>
+   <extends>QGroupBox</extends>
+   <header>qgscollapsiblegroupbox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsComposerItemComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgscomposeritemcombobox.h</header>
   </customwidget>
   <customwidget>
    <class>QgsLayerTreeView</class>
@@ -1029,6 +1041,7 @@
   <tabstop>mTitleAlignCombo</tabstop>
   <tabstop>mMapComboBox</tabstop>
   <tabstop>mWrapCharLineEdit</tabstop>
+  <tabstop>mCheckboxResizeContents</tabstop>
   <tabstop>mLegendItemColGroupBox</tabstop>
   <tabstop>mCheckBoxAutoUpdate</tabstop>
   <tabstop>mUpdateAllPushButton</tabstop>
@@ -1072,7 +1085,7 @@
   <tabstop>mColumnSpaceSpinBox</tabstop>
  </tabstops>
  <resources>
-  <include location="../../../images/images.qrc"/>
+  <include location="resource.qrc"/>
  </resources>
  <connections/>
 </ui>

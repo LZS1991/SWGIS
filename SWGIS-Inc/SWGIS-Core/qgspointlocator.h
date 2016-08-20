@@ -74,11 +74,11 @@ class SWGISCORE_EXPORT QgsPointLocator : public QObject
 
     enum Type
     {
-      Invalid = 0,
-      Vertex = 1,
-      Edge = 2,
-      Area = 4,
-      All = Vertex | Edge | Area
+      Invalid = 0, //!< Invalid
+      Vertex  = 1, //!< Snapped to a vertex. Can be a vertex of the geometry or an intersection.
+      Edge    = 2, //!< Snapped to an edge
+      Area    = 4, //!< Snapped to an area
+      All = Vertex | Edge | Area //!< Combination of vertex, edge and area
     };
 
     Q_DECLARE_FLAGS( Types, Type )
@@ -94,11 +94,23 @@ class SWGISCORE_EXPORT QgsPointLocator : public QObject
 
     struct Match
     {
-      //! consruct invalid match
-      Match() : mType( Invalid ), mDist( 0 ), mPoint(), mLayer( nullptr ), mFid( 0 ), mVertexIndex( 0 ) {}
+      //! construct invalid match
+      Match()
+          : mType( Invalid )
+          , mDist( 0 )
+          , mPoint()
+          , mLayer( nullptr )
+          , mFid( 0 )
+          , mVertexIndex( 0 )
+      {}
 
       Match( Type t, QgsVectorLayer* vl, QgsFeatureId fid, double dist, const QgsPoint& pt, int vertexIndex = 0, QgsPoint* edgePoints = nullptr )
-          : mType( t ), mDist( dist ), mPoint( pt ), mLayer( vl ), mFid( fid ), mVertexIndex( vertexIndex )
+          : mType( t )
+          , mDist( dist )
+          , mPoint( pt )
+          , mLayer( vl )
+          , mFid( fid )
+          , mVertexIndex( vertexIndex )
       {
         if ( edgePoints )
         {

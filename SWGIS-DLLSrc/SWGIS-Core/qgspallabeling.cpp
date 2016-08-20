@@ -52,12 +52,13 @@
 #include <qgsvectordataprovider.h>
 #include <qgsvectorlayerdiagramprovider.h>
 #include <qgsvectorlayerlabelprovider.h>
-#include <./geometry/qgsgeometry.h>
+#include <qgsgeometry.h>
 #include <qgsmaprenderer.h>
-#include <./symbology-ng/qgsmarkersymbollayerv2.h>
+#include <qgsmarkersymbollayerv2.h>
 #include <qgsproject.h>
-#include "./symbology-ng/qgssymbolv2.h"
-#include "./symbology-ng/qgssymbollayerv2utils.h"
+#include "qgssymbolv2.h"
+#include "qgssymbollayerv2utils.h"
+#include "qgsmaptopixelgeometrysimplifier.h"
 #include <QMessageBox>
 
 
@@ -727,7 +728,7 @@ void QgsPalLayerSettings::readDataDefinedProperty( QgsVectorLayer* layer,
       // Fix to migrate from old-style vector api, where returned QMap keys possibly
       //   had 'holes' in sequence of field indices, e.g. 0,2,3
       // QgsAttrPalIndexNameHash provides a means of access field name in sequences from
-      //   providers that procuded holes (e.g. PoSTGIS skipped geom column), otherwise it is empty
+      //   providers that procuded holes (e.g. PostGIS skipped geom column), otherwise it is empty
       QgsAttrPalIndexNameHash oldIndicesToNames = layer->dataProvider()->palAttributeIndexNames();
 
       if ( !oldIndicesToNames.isEmpty() )
@@ -1243,9 +1244,8 @@ void QgsPalLayerSettings::writeToLayer( QgsVectorLayer* layer )
   layer->setCustomProperty( "labeling/zIndex", zIndex );
 
   writeDataDefinedPropertyMap( layer, nullptr, dataDefinedProperties );
+  layer->emitStyleChanged();
 }
-
-
 
 void QgsPalLayerSettings::readXml( QDomElement& elem )
 {
@@ -2093,12 +2093,10 @@ void QgsPalLayerSettings::calculateLabelSize( const QFontMetricsF* fm, QString t
 #endif
 }
 
-void QgsPalLayerSettings::registerFeature( QgsFeature& f, QgsRenderContext &context, const QString& dxfLayer, QgsLabelFeature** labelFeature , QgsGeometry* obstacleGeometry )
+void QgsPalLayerSettings::registerFeature( QgsFeature& f, QgsRenderContext &context, QgsLabelFeature** labelFeature , QgsGeometry* obstacleGeometry )
 {
   // either used in QgsPalLabeling (palLayer is set) or in QgsLabelingEngineV2 (labelFeature is set)
   Q_ASSERT( labelFeature );
-
-  Q_UNUSED( dxfLayer ); // now handled in QgsDxfLabelProvider
 
   QVariant exprVal; // value() is repeatedly nulled on data defined evaluation and replaced when successful
   mCurFeat = &f;
@@ -2114,7 +2112,7 @@ void QgsPalLayerSettings::registerFeature( QgsFeature& f, QgsRenderContext &cont
   {
     if ( isObstacle )
     {
-      registerObstacleFeature( f, context, QString(), labelFeature, obstacleGeometry );
+      registerObstacleFeature( f, context, labelFeature, obstacleGeometry );
     }
     return;
   }
@@ -2365,7 +2363,6 @@ void QgsPalLayerSettings::registerFeature( QgsFeature& f, QgsRenderContext &cont
     }
   }
 
-
   // NOTE: this should come AFTER any option that affects font metrics
   QScopedPointer<QFontMetricsF> labelFontMetrics( new QFontMetricsF( labelFont ) );
   double labelX, labelY; // will receive label size
@@ -2423,6 +2420,26 @@ void QgsPalLayerSettings::registerFeature( QgsFeature& f, QgsRenderContext &cont
   if ( !geom )
   {
     return;
+  }
+
+  // simplify?
+  const QgsVectorSimplifyMethod &simplifyMethod = context.vectorSimplifyMethod();
+  QScopedPointer<QgsGeometry> scopedClonedGeom;
+  if ( simplifyMethod.simplifyHints() != QgsVectorSimplifyMethod::NoSimplification && simplifyMethod.forceLocalOptimization() )
+  {
+    int simplifyHints = simplifyMethod.simplifyHints() | QgsMapToPixelSimplifier::SimplifyEnvelope;
+    QgsMapToPixelSimplifier::SimplifyAlgorithm simplifyAlgorithm = static_cast< QgsMapToPixelSimplifier::SimplifyAlgorithm >( simplifyMethod.simplifyAlgorithm() );
+    QgsGeometry* g = new QgsGeometry( *geom );
+
+    if ( QgsMapToPixelSimplifier::simplifyGeometry( g, simplifyHints, simplifyMethod.tolerance(), simplifyAlgorithm ) )
+    {
+      geom = g;
+      scopedClonedGeom.reset( g );
+    }
+    else
+    {
+      delete g;
+    }
   }
 
   // whether we're going to create a centroid for polygon
@@ -2500,7 +2517,8 @@ void QgsPalLayerSettings::registerFeature( QgsFeature& f, QgsRenderContext &cont
   }
 
   GEOSGeometry* geos_geom_clone;
-  if ( GEOSGeomTypeId_r( QgsGeometry::getGEOSHandler(), geos_geom ) == GEOS_POLYGON && repeatDistance > 0 && placement == Line )
+  GEOSGeomTypes geomType = ( GEOSGeomTypes ) GEOSGeomTypeId_r( QgsGeometry::getGEOSHandler(), geos_geom );
+  if (( geomType == GEOS_POLYGON || geomType == GEOS_MULTIPOLYGON ) && repeatDistance > 0 && placement == Line )
   {
     geos_geom_clone = GEOSBoundary_r( QgsGeometry::getGEOSHandler(), geos_geom );
   }
@@ -2900,7 +2918,7 @@ void QgsPalLayerSettings::registerFeature( QgsFeature& f, QgsRenderContext &cont
     {
       distance *= vectorScaleFactor;
     }
-    double d = qAbs( ptOne.x() - ptZero.x() ) * distance;
+    double d = ptOne.distance( ptZero ) * distance;
     ( *labelFeature )->setDistLabel( d );
   }
 
@@ -2966,10 +2984,8 @@ void QgsPalLayerSettings::registerFeature( QgsFeature& f, QgsRenderContext &cont
   lf->setDataDefinedValues( dataDefinedValues );
 }
 
-void QgsPalLayerSettings::registerObstacleFeature( QgsFeature& f, QgsRenderContext &context, const QString& dxfLayer, QgsLabelFeature** obstacleFeature, QgsGeometry* obstacleGeometry )
+void QgsPalLayerSettings::registerObstacleFeature( QgsFeature& f, QgsRenderContext &context, QgsLabelFeature** obstacleFeature, QgsGeometry* obstacleGeometry )
 {
-  Q_UNUSED( dxfLayer ); // now handled in QgsDxfLabelProvider
-
   mCurFeat = &f;
 
   const QgsGeometry* geom = nullptr;
@@ -2985,6 +3001,26 @@ void QgsPalLayerSettings::registerObstacleFeature( QgsFeature& f, QgsRenderConte
   if ( !geom )
   {
     return;
+  }
+
+  // simplify?
+  const QgsVectorSimplifyMethod &simplifyMethod = context.vectorSimplifyMethod();
+  QScopedPointer<QgsGeometry> scopedClonedGeom;
+  if ( simplifyMethod.simplifyHints() != QgsVectorSimplifyMethod::NoSimplification && simplifyMethod.forceLocalOptimization() )
+  {
+    int simplifyHints = simplifyMethod.simplifyHints() | QgsMapToPixelSimplifier::SimplifyEnvelope;
+    QgsMapToPixelSimplifier::SimplifyAlgorithm simplifyAlgorithm = static_cast< QgsMapToPixelSimplifier::SimplifyAlgorithm >( simplifyMethod.simplifyAlgorithm() );
+    QgsGeometry* g = new QgsGeometry( *geom );
+
+    if ( QgsMapToPixelSimplifier::simplifyGeometry( g, simplifyHints, simplifyMethod.tolerance(), simplifyAlgorithm ) )
+    {
+      geom = g;
+      scopedClonedGeom.reset( g );
+    }
+    else
+    {
+      delete g;
+    }
   }
 
   const GEOSGeometry* geos_geom = nullptr;
@@ -3020,7 +3056,9 @@ bool QgsPalLayerSettings::dataDefinedValEval( DataDefinedValueType valType,
 {
   if ( dataDefinedEvaluate( p, exprVal, &context, originalValue ) )
   {
-    QString dbgStr = QString( "exprVal %1:" ).arg( mDataDefinedNames.value( p ).first ) + "%1";
+#ifdef QGISDEBUG
+    QString dbgStr = QString( "exprVal %1:" ).arg( mDataDefinedNames.value( p ).first ) + "%1"; // clazy:exclude=unused-non-trivial-variable
+#endif
 
     switch ( valType )
     {
@@ -3324,7 +3362,7 @@ void QgsPalLayerSettings::parseTextStyle( QFont& labelFont,
       wordspace = wspacing;
     }
   }
-  labelFont.setWordSpacing( sizeToPixel( wordspace, context, fontunits, false, fontSizeMapUnitScale ) );
+  labelFont.setWordSpacing( scaleToPixelContext( wordspace, context, fontunits, false, fontSizeMapUnitScale ) );
 
   // data defined letter spacing?
   double letterspace = labelFont.letterSpacing();
@@ -3338,7 +3376,7 @@ void QgsPalLayerSettings::parseTextStyle( QFont& labelFont,
       letterspace = lspacing;
     }
   }
-  labelFont.setLetterSpacing( QFont::AbsoluteSpacing, sizeToPixel( letterspace, context, fontunits, false, fontSizeMapUnitScale ) );
+  labelFont.setLetterSpacing( QFont::AbsoluteSpacing, scaleToPixelContext( letterspace, context, fontunits, false, fontSizeMapUnitScale ) );
 
   // data defined font capitalization?
   QFont::Capitalization fontcaps = labelFont.capitalization();
@@ -3963,9 +4001,8 @@ int QgsPalLabeling::addDiagramLayer( QgsVectorLayer* layer, const QgsDiagramLaye
   return 0;
 }
 
-void QgsPalLabeling::registerFeature( const QString& layerID, QgsFeature& f, QgsRenderContext &context, const QString& dxfLayer )
+void QgsPalLabeling::registerFeature( const QString& layerID, QgsFeature& f, QgsRenderContext &context )
 {
-  Q_UNUSED( dxfLayer ); // now handled by QgsDxfLabelProvider
   if ( QgsVectorLayerLabelProvider* provider = mLabelProviders.value( layerID, nullptr ) )
     provider->registerFeature( f, context );
 }
@@ -3981,17 +4018,17 @@ bool QgsPalLabeling::geometryRequiresPreparation( const QgsGeometry* geometry, Q
   if ( ct )
     return true;
 
-  //requires fixing
-  if ( geometry->type() == QGis::Polygon && !geometry->isGeosValid() )
-    return true;
-
   //requires rotation
   const QgsMapToPixel& m2p = context.mapToPixel();
   if ( !qgsDoubleNear( m2p.mapRotation(), 0 ) )
     return true;
 
   //requires clip
-  if ( clipGeometry && !clipGeometry->contains( geometry ) )
+  if ( clipGeometry && !clipGeometry->boundingBox().contains( geometry->boundingBox() ) )
+    return true;
+
+  //requires fixing
+  if ( geometry->type() == QGis::Polygon && !geometry->isGeosValid() )
     return true;
 
   return false;
@@ -4098,7 +4135,9 @@ QgsGeometry* QgsPalLabeling::prepareGeometry( const QgsGeometry* geometry, QgsRe
     clonedGeometry.reset( geom );
   }
 
-  if ( clipGeometry && !clipGeometry->contains( geom ) )
+  if ( clipGeometry &&
+       (( qgsDoubleNear( m2p.mapRotation(), 0 ) && !clipGeometry->boundingBox().contains( geom->boundingBox() ) )
+        || ( !qgsDoubleNear( m2p.mapRotation(), 0 ) && !clipGeometry->contains( geom ) ) ) )
   {
     QgsGeometry* clipGeom = geom->intersection( clipGeometry ); // creates new geometry
     if ( !clipGeom )
@@ -4760,7 +4799,7 @@ void QgsPalLabeling::drawLabelBackground( QgsRenderContext& context,
       // add buffer to greatest dimension of label
       if ( labelWidth >= labelHeight )
         sizeOut = labelWidth;
-      else if ( labelHeight > labelWidth )
+      else
         sizeOut = labelHeight;
 
       // label size in map units, convert to shapeSizeUnits, if different

@@ -38,7 +38,7 @@
 #include "qgsapplication.h"
 #include "qgsrectangle.h" //just for debugging
 #include "qgslogger.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h" //for pointOnLineWithDistance
+#include "qgssymbollayerv2utils.h" //for pointOnLineWithDistance
 #include "qgsmaprenderer.h" //for getCompositionMode
 #include "qgsexpressioncontext.h"
 
@@ -154,7 +154,6 @@ QgsComposerItem::~QgsComposerItem()
 
 void QgsComposerItem::setSelected( bool s )
 {
-  QgsDebugMsg( "entered." );
   QGraphicsRectItem::setSelected( s );
   //inform model that id data has changed
   if ( mComposition )

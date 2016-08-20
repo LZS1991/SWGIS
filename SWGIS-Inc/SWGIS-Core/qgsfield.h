@@ -20,7 +20,9 @@
 #include <QVariant>
 #include <QVector>
 #include <QSharedDataPointer>
+#include <iostream>
 #include "qgsconfig.h"
+
 typedef QList<int> QgsAttributeList;
 
 class QgsExpression;
@@ -153,6 +155,12 @@ class SWGISCORE_EXPORT QgsField
      */
     bool convertCompatible( QVariant& v ) const;
 
+    //! Allows direct construction of QVariants from fields.
+    operator QVariant() const
+    {
+      return QVariant::fromValue( *this );
+    }
+
   private:
 
     QSharedDataPointer<QgsFieldPrivate> d;
@@ -283,11 +291,143 @@ class SWGISCORE_EXPORT QgsFields
     bool operator==( const QgsFields& other ) const;
     //! @note added in 2.6
     bool operator!=( const QgsFields& other ) const { return !( *this == other ); }
-
     /** Returns an icon corresponding to a field index, based on the field's type and source
      * @note added in QGIS 2.14
      */
     QIcon iconForField( int fieldIdx ) const;
+
+    //! Allows direct construction of QVariants from fields.
+    operator QVariant() const
+    {
+      return QVariant::fromValue( *this );
+    }
+
+    ///@cond PRIVATE
+
+    class const_iterator;
+
+    class iterator
+    {
+      public:
+        QgsFields::Field* d;
+        typedef std::random_access_iterator_tag  iterator_category;
+        typedef qptrdiff difference_type;
+
+        inline iterator()
+            : d( nullptr )
+        {}
+        inline iterator( QgsFields::Field *n )
+            : d( n )
+        {}
+        inline QgsField& operator*() const { return d->field; }
+        inline QgsField* operator->() const { return &d->field; }
+        inline QgsField& operator[]( difference_type j ) const { return d[j].field; }
+        inline bool operator==( const iterator &o ) const { return d == o.d; }
+        inline bool operator!=( const iterator &o ) const  { return d != o.d; }
+        inline bool operator<( const iterator& other ) const  { return d < other.d; }
+        inline bool operator<=( const iterator& other ) const  { return d <= other.d; }
+        inline bool operator>( const iterator& other ) const  { return d > other.d; }
+        inline bool operator>=( const iterator& other ) const  { return d >= other.d; }
+
+        inline iterator& operator++() { ++d; return *this; }
+        inline iterator operator++( int ) { QgsFields::Field* n = d; ++d; return n; }
+        inline iterator& operator--() { d--; return *this; }
+        inline iterator operator--( int ) { QgsFields::Field* n = d; d--; return n; }
+        inline iterator& operator+=( difference_type j ) { d += j; return *this; }
+        inline iterator& operator-=( difference_type j ) { d -= j; return *this; }
+        inline iterator operator+( difference_type j ) const { return iterator( d + j ); }
+        inline iterator operator-( difference_type j ) const { return iterator( d -j ); }
+        inline int operator-( iterator j ) const { return int( d - j.d ); }
+    };
+    friend class iterator;
+
+    class const_iterator
+    {
+      public:
+        const QgsFields::Field* d;
+
+        typedef std::random_access_iterator_tag  iterator_category;
+        typedef qptrdiff difference_type;
+
+        inline const_iterator()
+            : d( nullptr ) {}
+        inline const_iterator( const QgsFields::Field* f )
+            : d( f ) {}
+        inline const_iterator( const const_iterator &o )
+            : d( o.d ) {}
+        inline explicit const_iterator( const iterator &o )
+            : d( o.d ) {}
+        inline const QgsField& operator*() const { return d->field; }
+        inline const QgsField* operator->() const { return &d->field; }
+        inline const QgsField& operator[]( difference_type j ) const  { return d[j].field; }
+        inline bool operator==( const const_iterator &o ) const  { return d == o.d; }
+        inline bool operator!=( const const_iterator &o ) const  { return d != o.d; }
+        inline bool operator<( const const_iterator& other ) const  { return d < other.d; }
+        inline bool operator<=( const const_iterator& other ) const  { return d <= other.d; }
+        inline bool operator>( const const_iterator& other ) const  { return d > other.d; }
+        inline bool operator>=( const const_iterator& other ) const  { return d >= other.d; }
+        inline const_iterator& operator++() { ++d; return *this; }
+        inline const_iterator operator++( int ) { const QgsFields::Field* n = d; ++d; return n; }
+        inline const_iterator& operator--() { d--; return *this; }
+        inline const_iterator operator--( int ) { const QgsFields::Field* n = d; --d; return n; }
+        inline const_iterator& operator+=( difference_type j ) { d += j; return *this; }
+        inline const_iterator& operator-=( difference_type j ) { d -= j; return *this; }
+        inline const_iterator operator+( difference_type j ) const { return const_iterator( d + j ); }
+        inline const_iterator operator-( difference_type j ) const { return const_iterator( d -j ); }
+        inline int operator-( const_iterator j ) const { return int( d - j.d ); }
+    };
+    friend class const_iterator;
+    ///@endcond
+
+
+    /**
+     * Returns a const STL-style iterator pointing to the first item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    const_iterator constBegin() const ;
+
+    /**
+     * Returns a const STL-style iterator pointing to the imaginary item after the last item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    const_iterator constEnd() const ;
+
+    /**
+     * Returns a const STL-style iterator pointing to the first item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    const_iterator begin() const ;
+
+    /**
+     * Returns a const STL-style iterator pointing to the imaginary item after the last item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    const_iterator end() const ;
+
+    /**
+     * Returns an STL-style iterator pointing to the first item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    iterator begin();
+
+
+    /**
+     * Returns an STL-style iterator pointing to the imaginary item after the last item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    iterator end();
 
   private:
 

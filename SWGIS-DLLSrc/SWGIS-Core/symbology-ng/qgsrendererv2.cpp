@@ -25,16 +25,16 @@
 
 #include "qgsrendercontext.h"
 #include "qgsclipper.h"
-#include "../geometry/qgsgeometry.h"
-#include "../geometry/qgsgeometrycollectionv2.h"
+#include "qgsgeometry.h"
+#include "qgsgeometrycollectionv2.h"
 #include "qgsfeature.h"
 #include "qgslogger.h"
 #include "qgsvectorlayer.h"
-#include "../effects/qgspainteffect.h"
-#include "../effects/qgseffectstack.h"
-#include "../effects/qgspainteffectregistry.h"
-#include "../geometry/qgswkbptr.h"
-#include "../geometry/qgspointv2.h"
+#include "qgspainteffect.h"
+#include "qgseffectstack.h"
+#include "qgspainteffectregistry.h"
+#include "qgswkbptr.h"
+#include "qgspointv2.h"
 
 #include <QDomElement>
 #include <QDomDocument>
@@ -42,17 +42,17 @@
 
 
 
-QgsConstWkbPtr QgsFeatureRendererV2::_getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr wkbPtr )
+QgsConstWkbPtr QgsFeatureRendererV2::_getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr& wkbPtr )
 {
   return QgsSymbolV2::_getPoint( pt, context, wkbPtr );
 }
 
-QgsConstWkbPtr QgsFeatureRendererV2::_getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr wkbPtr, bool clipToExtent )
+QgsConstWkbPtr QgsFeatureRendererV2::_getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr& wkbPtr, bool clipToExtent )
 {
   return QgsSymbolV2::_getLineString( pts, context, wkbPtr, clipToExtent );
 }
 
-QgsConstWkbPtr QgsFeatureRendererV2::_getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr wkbPtr, bool clipToExtent )
+QgsConstWkbPtr QgsFeatureRendererV2::_getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr& wkbPtr, bool clipToExtent )
 {
   return QgsSymbolV2::_getPolygon( pts, holes, context, wkbPtr, clipToExtent );
 }
@@ -151,6 +151,11 @@ QSet< QString > QgsFeatureRendererV2::legendKeysForFeature( QgsFeature& feature,
 void QgsFeatureRendererV2::startRender( QgsRenderContext& context, const QgsVectorLayer* vlayer )
 {
   startRender( context, vlayer->fields() );
+}
+
+bool QgsFeatureRendererV2::filterNeedsGeometry() const
+{
+  return false;
 }
 
 bool QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext& context, int layer, bool selected, bool drawVertexMarker )

@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QPainter>
 #include <QUrl>
+#include <QVariant>
 #include "qgsconfig.h"
 /**
  * @brief The QWebFrame class is a collection of stubs to mimic the API of a QWebFrame on systems
@@ -70,6 +71,11 @@ class SWGISCORE_EXPORT QWebFrame : public QObject
     void addToJavaScriptWindowObject( const QString&, QObject* )
     {
 
+    }
+
+    QVariant evaluateJavaScript( const QString & )
+    {
+      return QVariant();
     }
 
   signals:

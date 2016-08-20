@@ -70,6 +70,12 @@ QgsPolygonV2* QgsPolygonV2::clone() const
   return new QgsPolygonV2( *this );
 }
 
+void QgsPolygonV2::clear()
+{
+  QgsCurvePolygonV2::clear();
+  mWkbType = QgsWKBTypes::Polygon;
+}
+
 bool QgsPolygonV2::fromWkb( QgsConstWkbPtr wkbPtr )
 {
   clear();
@@ -239,4 +245,16 @@ void QgsPolygonV2::setExteriorRing( QgsCurveV2* ring )
 QgsPolygonV2* QgsPolygonV2::surfaceToPolygon() const
 {
   return clone();
+}
+
+QgsAbstractGeometryV2* QgsPolygonV2::toCurveType() const
+{
+  QgsCurvePolygonV2* curvePolygon = new QgsCurvePolygonV2();
+  curvePolygon->setExteriorRing( mExteriorRing->clone() );
+  int nInteriorRings = mInteriorRings.size();
+  for ( int i = 0; i < nInteriorRings; ++i )
+  {
+    curvePolygon->addInteriorRing( mInteriorRings.at( i )->clone() );
+  }
+  return curvePolygon;
 }

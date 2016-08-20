@@ -16,9 +16,10 @@
 #ifndef QGSCLASSIFICATIONWIDGETWRAPPERFACTORY_H
 #define QGSCLASSIFICATIONWIDGETWRAPPERFACTORY_H
 
-#include "./core/qgseditorwidgetfactory.h"
+#include "qgseditorwidgetfactory.h"
 
-/** \class QgsClassificationWidgetWrapperFactory
+/** \ingroup gui
+ * \class QgsClassificationWidgetWrapperFactory
  * \note not available in Python bindings
  */
 

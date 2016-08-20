@@ -95,7 +95,7 @@ void QgsLogger::debug( const QString& msg, int debuglevel, const char* file, con
     }
 
 #ifndef _MSC_VER
-    m.prepend( file + sPrefixLength );
+    m.prepend( file + ( file[0] == '/' ? sPrefixLength : 0 ) );
 #else
     m.prepend( file );
 #endif
@@ -103,7 +103,7 @@ void QgsLogger::debug( const QString& msg, int debuglevel, const char* file, con
 
   if ( sLogFile.isEmpty() )
   {
-    qDebug( "%s", m.toLocal8Bit().constData() );
+    qDebug( "%s", m.toUtf8().constData() );
   }
   else
   {

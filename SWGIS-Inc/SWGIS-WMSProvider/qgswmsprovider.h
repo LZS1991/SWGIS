@@ -20,7 +20,7 @@
 #ifndef QGSWMSPROVIDER_H
 #define QGSWMSPROVIDER_H
 
-#include "raster/qgsrasterdataprovider.h"
+#include "qgsrasterdataprovider.h"
 #include "qgsnetworkreplyparser.h"
 #include "qgswmscapabilities.h"
 #include "wmsproviderconfig.h"
@@ -222,6 +222,9 @@ class QgsWmsProvider : public QgsRasterDataProvider
      */
     QStringList subLayerStyles() const override;
 
+    /** \brief Returns whether the provider supplies a legend graphic */
+    bool supportsLegendGraphic() const override { return true; }
+
 
     /**
      * \brief Get GetLegendGraphic if service is available otherwise QImage()
@@ -275,7 +278,7 @@ class QgsWmsProvider : public QgsRasterDataProvider
      */
     QString metadata() override;
 
-    QgsRasterIdentifyResult identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent = QgsRectangle(), int theWidth = 0, int theHeight = 0 ) override;
+    QgsRasterIdentifyResult identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent = QgsRectangle(), int theWidth = 0, int theHeight = 0, int theDpi = 96 ) override;
 
     /**
      * \brief   Returns the caption error text for the last error in this provider
@@ -600,7 +603,11 @@ class QgsWmsTiledImageDownloadHandler : public QObject
 
     struct TileRequest
     {
-      TileRequest( const QUrl& u, const QRectF& r, int i ) : url( u ), rect( r ), index( i ) {}
+      TileRequest( const QUrl& u, const QRectF& r, int i )
+          : url( u )
+          , rect( r )
+          , index( i )
+      {}
       QUrl url;
       QRectF rect;
       int index;
@@ -649,7 +656,11 @@ class QgsWmsStatistics
   public:
     struct Stat
     {
-      Stat() : errors( 0 ), cacheHits( 0 ), cacheMisses( 0 ) {}
+      Stat()
+          : errors( 0 )
+          , cacheHits( 0 )
+          , cacheMisses( 0 )
+      {}
       int errors;
       int cacheHits;
       int cacheMisses;

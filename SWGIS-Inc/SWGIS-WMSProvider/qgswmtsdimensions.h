@@ -37,7 +37,7 @@ class SWGISWMSPROVIDER_EXPORT QgsWmtsDimensions : public QDialog, private Ui::Wm
 
   public:
     //! Constructor
-    QgsWmtsDimensions( const QgsWmtsTileLayer &layer, QWidget *parent = nullptr, Qt::WindowFlags fl = QgisGui::ModalDialogFlags );
+    QgsWmtsDimensions( const QgsWmtsTileLayer &layer, QWidget *parent = nullptr, Qt::WindowFlags fl = nullptr );
     //! Destructor
     ~QgsWmtsDimensions();
 

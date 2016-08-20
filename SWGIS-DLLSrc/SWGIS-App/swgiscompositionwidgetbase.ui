@@ -61,7 +61,7 @@
         <x>0</x>
         <y>0</y>
         <width>326</width>
-        <height>942</height>
+        <height>964</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -432,6 +432,35 @@
           <string>Export settings</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
+          <item row="2" column="0" colspan="2">
+           <widget class="QCheckBox" name="mPrintAsRasterCheckBox">
+            <property name="text">
+             <string>Print as raster</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QCheckBox" name="mGenerateWorldFileCheckBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>If checked, a separate world file which georeferences exported images will be created</string>
+            </property>
+            <property name="text">
+             <string>Save world file</string>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="1">
            <widget class="QgsSpinBox" name="mResolutionSpinBox">
             <property name="suffix">
@@ -448,46 +477,30 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QCheckBox" name="mPrintAsRasterCheckBox">
-            <property name="text">
-             <string>Print as raster</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QComboBox" name="mWorldFileMapComboBox">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="editable">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QCheckBox" name="mGenerateWorldFileCheckBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>World file on</string>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_9">
             <property name="text">
              <string>Export resolution</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>Reference map</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QgsComposerItemComboBox" name="mWorldFileMapComboBox">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="toolTip">
+             <string>Specifies the map which is used to georeference composer exports</string>
+            </property>
+            <property name="editable">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -648,6 +661,11 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
+   <class>QgsDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qgsdoublespinbox.h</header>
+  </customwidget>
+  <customwidget>
    <class>QgsCollapsibleGroupBox</class>
    <extends>QGroupBox</extends>
    <header>qgscollapsiblegroupbox.h</header>
@@ -660,25 +678,25 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsDataDefinedButton</class>
-   <extends>QToolButton</extends>
-   <header>qgsdatadefinedbutton.h</header>
-  </customwidget>
-  <customwidget>
-   <class>QgsDoubleSpinBox</class>
-   <extends>QDoubleSpinBox</extends>
-   <header>qgsdoublespinbox.h</header>
-  </customwidget>
-  <customwidget>
    <class>QgsSpinBox</class>
    <extends>QSpinBox</extends>
    <header>qgsspinbox.h</header>
   </customwidget>
   <customwidget>
+   <class>QgsDataDefinedButton</class>
+   <extends>QToolButton</extends>
+   <header>qgsdatadefinedbutton.h</header>
+  </customwidget>
+  <customwidget>
    <class>QgsCollapsibleGroupBoxBasic</class>
    <extends>QGroupBox</extends>
-   <header location="global">qgscollapsiblegroupbox.h</header>
+   <header>qgscollapsiblegroupbox.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsComposerItemComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgscomposeritemcombobox.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -704,7 +722,6 @@
   <tabstop>mResolutionSpinBox</tabstop>
   <tabstop>mPrintAsRasterCheckBox</tabstop>
   <tabstop>mGenerateWorldFileCheckBox</tabstop>
-  <tabstop>mWorldFileMapComboBox</tabstop>
   <tabstop>mSnapToGridGroupCheckBox</tabstop>
   <tabstop>mGridResolutionSpinBox</tabstop>
   <tabstop>mOffsetXSpinBox</tabstop>

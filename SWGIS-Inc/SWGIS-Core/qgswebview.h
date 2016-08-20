@@ -42,6 +42,7 @@ class SWGISCORE_EXPORT QgsWebView : public QWebView
 };
 #else
 #include "qgswebpage.h"
+#include <QTextBrowser>
 
 /**
  * @brief The QgsWebView class is a collection of stubs to mimic the API of QWebView on systems where the real
@@ -51,17 +52,18 @@ class SWGISCORE_EXPORT QgsWebView : public QWebView
  * WITH_QTWEBKIT=OFF then this will be an empty QWidget. If you miss methods in here that you would like to use,
  * please add additional stubs.
  */
-class SWGISCORE_EXPORT QgsWebView : public QWidget
+class SWGISCORE_EXPORT QgsWebView : public QTextBrowser
 {
 
 /// @cond NOT_STABLE_API
     Q_OBJECT
   public:
     explicit QgsWebView( QWidget *parent = 0 )
-        : QWidget( parent )
+        : QTextBrowser( parent )
         , mSettings( new QWebSettings() )
-        , mPage( new QWebPage() )
+        , mPage( new QWebPage( this ) )
     {
+      connect( this, SIGNAL( anchorClicked( const QUrl & ) ), this, SIGNAL( linkClicked( const QUrl & ) ) );
     }
 
     ~QgsWebView()
@@ -72,13 +74,12 @@ class SWGISCORE_EXPORT QgsWebView : public QWidget
 
     void setUrl( const QUrl& url )
     {
-      Q_UNUSED( url );
-
+      setSource( url );
     }
 
     void load( const QUrl& url )
     {
-      Q_UNUSED( url );
+      setSource( url );
     }
 
     QWebPage* page() const
@@ -89,11 +90,6 @@ class SWGISCORE_EXPORT QgsWebView : public QWidget
     QWebSettings* settings() const
     {
       return mSettings;
-    }
-
-    void setHtml( const QString& html )
-    {
-      Q_UNUSED( html );
     }
 
     virtual QgsWebView* createWindow( QWebPage::WebWindowType )
@@ -112,12 +108,11 @@ class SWGISCORE_EXPORT QgsWebView : public QWidget
     }
 
   signals:
-
-  public slots:
+    void linkClicked( const QUrl &link );
 
   private:
-    QWebSettings* mSettings;
-    QWebPage* mPage;
+    QWebSettings *mSettings;
+    QWebPage *mPage;
 
 /// @endcond
 };

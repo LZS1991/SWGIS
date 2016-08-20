@@ -21,7 +21,7 @@
 #include "qgsmaplayerrenderer.h"
 #include "qgspallabeling.h"
 #include "qgsvectorlayer.h"
-#include "./symbology-ng/qgsrendererv2.h"
+#include "qgsrendererv2.h"
 
 #define LABELING_V2
 
@@ -71,10 +71,11 @@ void QgsMapRendererCustomPainterJob::start()
 
   mPainter->setRenderHint( QPainter::Antialiasing, mSettings.testFlag( QgsMapSettings::Antialiasing ) );
 
+#ifndef QT_NO_DEBUG
   QPaintDevice* thePaintDevice = mPainter->device();
-
   QString errMsg = QString( "pre-set DPI not equal to painter's DPI (%1 vs %2)" ).arg( thePaintDevice->logicalDpiX() ).arg( mSettings.outputDpi() );
-  Q_ASSERT_X( thePaintDevice->logicalDpiX() == mSettings.outputDpi(), "Job::startRender()", errMsg.toLatin1().data() );
+  Q_ASSERT_X( qgsDoubleNear( thePaintDevice->logicalDpiX(), mSettings.outputDpi() ), "Job::startRender()", errMsg.toLatin1().data() );
+#endif
 
   delete mLabelingEngine;
   mLabelingEngine = nullptr;
@@ -96,6 +97,14 @@ void QgsMapRendererCustomPainterJob::start()
   }
 
   mLayerJobs = prepareJobs( mPainter, mLabelingEngine, mLabelingEngineV2 );
+  // prepareJobs calls mapLayer->createMapRenderer may involve cloning a RasterDataProvider,
+  // whose constructor may need to download some data (i.e. WMS, AMS) and doing so runs a
+  // QEventLoop waiting for the network request to complete. If unluckily someone calls
+  // mapCanvas->refresh() while this is happening, QgsMapRendererCustomPainterJob::cancel is
+  // called, deleting the QgsMapRendererCustomPainterJob while this function is running.
+  // Hence we need to check whether the job is still active before proceeding
+  if ( !isActive() )
+    return;
 
   QgsDebugMsg( "Rendering prepared in (seconds): " + QString( "%1" ).arg( prepareTime.elapsed() / 1000.0 ) );
 
@@ -223,7 +232,7 @@ void QgsMapRendererCustomPainterJob::staticRender( QgsMapRendererCustomPainterJo
   catch ( std::exception & e )
   {
     Q_UNUSED( e );
-    QgsDebugMsg( "Caught unhandled std::exception: " + QString::fromAscii( e.what() ) );
+    QgsDebugMsg( "Caught unhandled std::exception: " + QString::fromLatin1( e.what() ) );
   }
   catch ( ... )
   {
@@ -293,9 +302,10 @@ void QgsMapRendererJob::drawLabeling( const QgsMapSettings& settings, QgsRenderC
   renderContext.setPainter( painter );
   renderContext.setLabelingEngine( labelingEngine );
 
+#if !defined(QGIS_DISABLE_DEPRECATED)
   // old labeling - to be removed at some point...
   drawOldLabeling( settings, renderContext );
-
+#endif
   drawNewLabeling( settings, renderContext, labelingEngine );
 
   if ( labelingEngine2 )
@@ -332,7 +342,7 @@ void QgsMapRendererJob::drawOldLabeling( const QgsMapSettings& settings, QgsRend
 
     // only make labels if the layer is visible
     // after scale dep viewing settings are checked
-    if ( ml->hasScaleBasedVisibility() && ( settings.scale() < ml->minimumScale() || settings.scale() > ml->maximumScale() ) )
+    if ( !ml->isInScaleRange( settings.scale() ) )
       continue;
 
     const QgsCoordinateTransform* ct = nullptr;

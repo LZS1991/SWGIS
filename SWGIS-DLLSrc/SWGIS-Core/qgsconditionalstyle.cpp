@@ -17,8 +17,8 @@
 #include "qgsconditionalstyle.h"
 #include "qgsexpression.h"
 #include "qgsfontutils.h"
-#include "./symbology-ng/qgssymbollayerv2utils.h"
-#include "./symbology-ng/qgsmarkersymbollayerv2.h"
+#include "qgssymbollayerv2utils.h"
+#include "qgsmarkersymbollayerv2.h"
 
 QgsConditionalLayerStyles::QgsConditionalLayerStyles()
     : mRowStyles( QList<QgsConditionalStyle>() )

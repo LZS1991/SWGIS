@@ -73,6 +73,9 @@ class SWGISGUI_EXPORT QgsCodeEditor : public QsciScintilla
 
     bool isFixedPitch( const QFont& font );
 
+    void focusOutEvent( QFocusEvent *event ) override;
+    void keyPressEvent( QKeyEvent * event ) override;
+
     QFont getMonospaceFont();
 
   private:

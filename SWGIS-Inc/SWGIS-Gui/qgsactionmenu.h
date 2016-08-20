@@ -19,7 +19,7 @@
 #include <QMenu>
 #include <QSignalMapper>
 
-#include "qgsattributeaction.h"
+#include "qgsactionmanager.h"
 #include "qgsmaplayeractionregistry.h"
 #include "stgisguiconfig.h"
 
@@ -120,7 +120,7 @@ class SWGISGUI_EXPORT QgsActionMenu : public QMenu
     const QgsFeature* feature();
 
     QgsVectorLayer* mLayer;
-    QgsAttributeAction* mActions;
+    QgsActionManager* mActions;
     const QgsFeature* mFeature;
     QgsFeatureId mFeatureId;
     bool mOwnsFeature;

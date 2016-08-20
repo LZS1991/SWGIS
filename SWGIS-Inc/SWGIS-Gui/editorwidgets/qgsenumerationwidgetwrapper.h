@@ -16,11 +16,12 @@
 #ifndef QGSENUMERATIONWIDGETWRAPPER_H
 #define QGSENUMERATIONWIDGETWRAPPER_H
 
-#include "./core/qgseditorwidgetwrapper.h"
+#include "qgseditorwidgetwrapper.h"
 
 #include <QComboBox>
 
-/** \class QgsEnumerationWidgetWrapper
+/** \ingroup gui
+ * \class QgsEnumerationWidgetWrapper
  * \note not available in Python bindings
  */
 
@@ -33,6 +34,7 @@ class SWGISGUI_EXPORT QgsEnumerationWidgetWrapper : public QgsEditorWidgetWrappe
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;

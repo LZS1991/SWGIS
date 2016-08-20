@@ -19,7 +19,8 @@
 #include "./core/qgseditorconfigwidget.h"
 #include "ui_swgisdatetimeeditconfig.h"
 
-/** \class QgsDateTimeEditConfig
+/** \ingroup gui
+ * \class QgsDateTimeEditConfig
  * \note not available in Python bindings
  */
 

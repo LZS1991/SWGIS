@@ -15,7 +15,7 @@
 #ifndef QGSGEOMETRYCACHE_H
 #define QGSGEOMETRYCACHE_H
 
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgsfeature.h"
 #include "qgsrectangle.h"
 

@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
     QgsApplication::setMaxThreads(QSettings().value("/qgis/max_threads", -1).toInt());
 
     SWGISApp *swgis = new SWGISApp(mypSplash, myRestorePlugins, mySkipVersionCheck); // "QgisApp" used to find canonical instance
-    swgis->setObjectName("QgisApp");
+    swgis->setObjectName("SWGISApp");
 
     myApp.connect(&myApp,
                   SIGNAL(preNotify(QObject *, QEvent *, bool *)),

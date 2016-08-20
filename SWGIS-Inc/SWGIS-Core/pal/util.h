@@ -33,7 +33,7 @@
 #include "pal.h"
 #include "rtree.hpp"
 #include "pointset.h"
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 
 namespace pal
 {

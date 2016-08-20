@@ -17,14 +17,19 @@
 
 #include <QObject>
 
-#include "./layertree/qgslayertreeview.h"
+#include "qgslayertreeview.h"
 #include "qgsmaplayer.h"
+
 class QAction;
 
 struct LegendLayerAction
 {
   LegendLayerAction( QAction* a, const QString& m, const QString& i, bool all )
-      : action( a ), menu( m ), id( i ), allLayers( all ) {}
+      : action( a )
+      , menu( m )
+      , id( i )
+      , allLayers( all )
+  {}
   QAction* action;
   QString menu;
   QString id;

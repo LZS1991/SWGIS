@@ -15,19 +15,19 @@
 
 #include <QImage>
 
-#include "symbology-ng/qgsmarkersymbollayerv2.h"
-#include "symbology-ng/qgslinesymbollayerv2.h"
+#include "qgsmarkersymbollayerv2.h"
+#include "qgslinesymbollayerv2.h"
 
 #include "qgscoordinatetransform.h"
-#include "symbology-ng/qgsfillsymbollayerv2.h"
-#include "geometry/qgsgeometry.h"
+#include "qgsfillsymbollayerv2.h"
+#include "qgsgeometry.h"
 #include "qgshighlight.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayer.h"
 #include "qgsmaprenderer.h"
 #include "qgsrendercontext.h"
-#include "symbology-ng/qgssymbollayerv2.h"
-#include "symbology-ng/qgssymbolv2.h"
+#include "qgssymbollayerv2.h"
+#include "qgssymbolv2.h"
 #include "qgsvectorlayer.h"
 
 /* Few notes about highligting (RB):

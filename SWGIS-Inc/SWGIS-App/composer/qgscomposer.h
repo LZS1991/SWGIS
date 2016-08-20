@@ -19,11 +19,12 @@
 #include "ui_swgiscomposerbase.h"
 #include "qgscomposermap.h"
 #include "qgscontexthelp.h"
-#include <QDockWidget>
-#include <QMainWindow>
+#include "qgsdockwidget.h"
 
 class SWGISApp;
 class QgsComposerArrow;
+class QgsComposerPolygon;
+class QgsComposerPolyline;
 class QgsComposerFrame;
 class QgsComposerHtml;
 class QgsComposerLabel;
@@ -100,9 +101,12 @@ class QgsComposer: public QMainWindow, private Ui::ComposerBase
     const QString& title() const {return mTitle;}
     void setTitle( const QString& title );
 
-    //! Load template into current or blank composer
-    //! @param newComposer whether to create a new composer first
-    void loadTemplate( const bool newComposer );
+    /** Loads the contents of a template document into the composer's composition.
+     * @param templateDoc template document to load
+     * @param clearExisting set to true to remove all existing composition settings and items before loading template
+     * @returns true if template load was successful
+     */
+    bool loadFromTemplate( const QDomDocument& templateDoc, bool clearExisting );
 
   protected:
     //! Move event
@@ -188,6 +192,11 @@ class QgsComposer: public QMainWindow, private Ui::ComposerBase
     void on_mActionAddTriangle_triggered();
 
     void on_mActionAddEllipse_triggered();
+
+    //! Nodes based shape
+    void on_mActionEditNodesItem_triggered();
+    void on_mActionAddPolygon_triggered();
+    void on_mActionAddPolyline_triggered();
 
     //! Add attribute table
     void on_mActionAddTable_triggered();
@@ -376,6 +385,12 @@ class QgsComposer: public QMainWindow, private Ui::ComposerBase
 
     /** Add a composer arrow to the item/widget map and creates a configuration widget for it*/
     void addComposerArrow( QgsComposerArrow* arrow );
+
+    /** Add a composer polygon to the item/widget map and creates a configuration widget for it*/
+    void addComposerPolygon( QgsComposerPolygon* polygon );
+
+    /** Add a composer polyline to the item/widget map and creates a configuration widget for it*/
+    void addComposerPolyline( QgsComposerPolyline* polyline );
 
     /** Add a composer map to the item/widget map and creates a configuration widget for it*/
     void addComposerMap( QgsComposerMap* map );
@@ -580,11 +595,11 @@ class QgsComposer: public QMainWindow, private Ui::ComposerBase
     //! We load composer map content from project xml only on demand. Therefore we need to store the real preview mode type
     QMap< QgsComposerMap*, int > mMapsToRestore;
 
-    QDockWidget* mItemDock;
-    QDockWidget* mUndoDock;
-    QDockWidget* mGeneralDock;
-    QDockWidget* mAtlasDock;
-    QDockWidget* mItemsDock;
+    QgsDockWidget* mItemDock;
+    QgsDockWidget* mUndoDock;
+    QgsDockWidget* mGeneralDock;
+    QgsDockWidget* mAtlasDock;
+    QgsDockWidget* mItemsDock;
 
     QTreeView* mItemsTreeView;
 
@@ -604,7 +619,10 @@ class QgsComposer: public QMainWindow, private Ui::ComposerBase
 
     struct PanelStatus
     {
-      PanelStatus( bool visible = true, bool active = false ) : isVisible( visible ), isActive( active ) {}
+      PanelStatus( bool visible = true, bool active = false )
+          : isVisible( visible )
+          , isActive( active )
+      {}
       bool isVisible;
       bool isActive;
     };

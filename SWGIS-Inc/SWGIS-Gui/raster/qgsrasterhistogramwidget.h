@@ -18,6 +18,7 @@
 #define QGSRASTERHISTOGRAMWIDGET_H
 
 #include "ui_swgisrasterhistogramwidgetbase.h"
+#include "qgsmaplayerconfigwidget.h"
 #include "stgisguiconfig.h"
 class QgsRasterLayer;
 class QgsRasterRendererWidget;
@@ -34,7 +35,7 @@ typedef QPointF QwtDoublePoint;
   *@author Etienne Tourigny
   */
 
-class SWGISGUI_EXPORT QgsRasterHistogramWidget : public QWidget, private Ui::RasterHistogramWidgetBase
+class SWGISGUI_EXPORT QgsRasterHistogramWidget : public QgsMapLayerConfigWidget, private Ui::RasterHistogramWidgetBase
 {
     Q_OBJECT
 
@@ -65,6 +66,8 @@ class SWGISGUI_EXPORT QgsRasterHistogramWidget : public QWidget, private Ui::Ras
     void refreshHistogram();
     /** This slot lets you save the histogram as an image to disk */
     void on_mSaveAsImageButton_clicked();
+
+    void apply() override;
 
   private slots:
     /** Used when the histogram band selector changes, or when tab is loaded. */

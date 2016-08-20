@@ -21,10 +21,10 @@
 #include "qgslayertree.h"
 #include "qgslayertreemodel.h"
 #include "qgslegendsettings.h"
-#include "../raster/qgsrasterlayer.h"
-#include "../symbology-ng/qgsrendererv2.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
-#include "../effects/qgsimageoperation.h"
+#include "qgsrasterlayer.h"
+#include "qgsrendererv2.h"
+#include "qgssymbollayerv2utils.h"
+#include "qgsimageoperation.h"
 #include "qgsvectorlayer.h"
 
 
@@ -615,7 +615,7 @@ const QImage& QgsWMSLegendNode::getLegendGraphic() const
       connect( mFetcher.data(), SIGNAL( error( const QString& ) ), this, SLOT( getLegendGraphicErrored( const QString& ) ) );
       connect( mFetcher.data(), SIGNAL( progress( qint64, qint64 ) ), this, SLOT( getLegendGraphicProgress( qint64, qint64 ) ) );
       mFetcher->start();
-    } // else QgsDebugMsg("XXX No legend supported ?");
+    } // else QgsDebugMsg("XXX No legend supported?");
 
   }
 

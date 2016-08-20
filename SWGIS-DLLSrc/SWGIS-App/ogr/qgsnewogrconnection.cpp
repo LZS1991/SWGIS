@@ -17,11 +17,11 @@
 #include <QSettings>
 #include <QMessageBox>
 
-#include "./ogr/qgsnewogrconnection.h"
+#include "qgsnewogrconnection.h"
 #include "qgscontexthelp.h"
 #include "qgslogger.h"
 #include "qgsproviderregistry.h"
-#include "./ogr/qgsogrhelperfunctions.h"
+#include "qgsogrhelperfunctions.h"
 #include <ogr_api.h>
 #include <cpl_error.h>
 

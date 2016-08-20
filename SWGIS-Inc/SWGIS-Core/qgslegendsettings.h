@@ -21,7 +21,7 @@
 #include "qgsconfig.h"
 class QRectF;
 
-#include "./composer/qgscomposerlegendstyle.h"
+#include "qgscomposerlegendstyle.h"
 
 class QgsComposerLegendItem;
 

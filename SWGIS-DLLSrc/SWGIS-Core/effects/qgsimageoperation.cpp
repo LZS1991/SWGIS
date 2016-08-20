@@ -17,7 +17,7 @@
 
 #include "qgsimageoperation.h"
 #include "qgis.h"
-#include "../symbology-ng/qgsvectorcolorrampv2.h"
+#include "qgsvectorcolorrampv2.h"
 #include "qgslogger.h"
 #include <QtConcurrentMap>
 #include <QColor>
@@ -29,6 +29,8 @@
 #define BLOCK_THREADS 16
 
 #define INF 1E20
+
+/// @cond PRIVATE
 
 template <typename PixelOperation>
 void QgsImageOperation::runPixelOperation( QImage &image, PixelOperation& operation )
@@ -172,6 +174,8 @@ void QgsImageOperation::runBlockOperationInThreads( QImage &image, BlockOperatio
   QtConcurrent::blockingMap( blocks, operation );
 }
 
+
+///@endcond
 
 //
 //operation specific code

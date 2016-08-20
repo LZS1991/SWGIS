@@ -22,7 +22,7 @@
 #include <QIcon>
 #include <QObject>
 
-#include "../raster/qgsrasterdataprovider.h" // for QgsImageFetcher dtor visibility
+#include "qgsrasterdataprovider.h" // for QgsImageFetcher dtor visibility
 
 class QgsLayerTreeLayer;
 class QgsLayerTreeModel;
@@ -135,9 +135,9 @@ class SWGISCORE_EXPORT QgsLayerTreeModelLegendNode : public QObject
     QString mUserLabel;
 };
 
-#include "./symbology-ng/qgslegendsymbolitemv2.h"
+#include "qgslegendsymbolitemv2.h"
 
-/**
+/** \ingroup core
  * Implementation of legend node interface for displaying preview of vector symbols and their labels
  * and allowing interaction with the symbol / renderer.
  *

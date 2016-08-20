@@ -30,7 +30,7 @@
 #ifndef _PAL_GEOMETRY_H
 #define _PAL_GEOMETRY_H
 
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 
 namespace pal
 {

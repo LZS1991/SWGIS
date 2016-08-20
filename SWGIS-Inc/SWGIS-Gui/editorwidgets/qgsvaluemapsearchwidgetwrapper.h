@@ -34,6 +34,14 @@ class SWGISGUI_EXPORT QgsValueMapSearchWidgetWrapper : public QgsSearchWidgetWra
     bool applyDirectly() override;
     QString expression() override;
     bool valid() const override;
+    FilterFlags supportedFlags() const override;
+    FilterFlags defaultFlags() const override;
+    virtual QString createExpression( FilterFlags flags ) const override;
+
+  public slots:
+
+    virtual void clearWidget() override;
+    virtual void setEnabled( bool enabled ) override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;

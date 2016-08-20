@@ -14,14 +14,14 @@
  ***************************************************************************/
 
 
-#include "./effects/qgspainteffectwidget.h"
+#include "qgspainteffectwidget.h"
 #include "qgslogger.h"
-#include "./effects/qgspainteffect.h"
-#include "./effects/qgsshadoweffect.h"
-#include "./effects/qgsblureffect.h"
-#include "./effects/qgsgloweffect.h"
-#include "./effects/qgstransformeffect.h"
-#include "./effects/qgscoloreffect.h"
+#include "qgspainteffect.h"
+#include "qgsshadoweffect.h"
+#include "qgsblureffect.h"
+#include "qgsgloweffect.h"
+#include "qgstransformeffect.h"
+#include "qgscoloreffect.h"
 #include "qgsstylev2.h"
 #include "qgsvectorcolorrampv2.h"
 

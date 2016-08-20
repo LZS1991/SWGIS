@@ -36,7 +36,7 @@
 //
 
 // Version string
-const char* QGis::QGIS_VERSION = VERSION;
+QString QGis::QGIS_VERSION( QString::fromUtf8( VERSION ) );
 
 // development version
 const char* QGis::QGIS_DEV_VERSION = QGSVERSION;
@@ -46,7 +46,7 @@ const char* QGis::QGIS_DEV_VERSION = QGSVERSION;
 const int QGis::QGIS_VERSION_INT = VERSION_INT;
 
 // Release name
-const char* QGis::QGIS_RELEASE_NAME = RELEASE_NAME;
+QString QGis::QGIS_RELEASE_NAME( QString::fromUtf8( RELEASE_NAME ) );
 
 #if GDAL_VERSION_NUM >= 1800
 const QString GEOPROJ4 = "+proj=longlat +datum=WGS84 +no_defs";
@@ -86,6 +86,8 @@ const QColor QGis::DEFAULT_HIGHLIGHT_COLOR = QColor( 255, 0, 0, 128 );
 double QGis::DEFAULT_HIGHLIGHT_BUFFER_MM = 0.5;
 
 double QGis::DEFAULT_HIGHLIGHT_MIN_WIDTH_MM = 1.0;
+
+double QGis::SCALE_PRECISION = 0.9999999999;
 
 // description strings for units
 // Order must match enum indices
@@ -160,16 +162,22 @@ QGis::WkbType QGis::fromNewWkbType( QgsWKBTypes::Type type )
     case QgsWKBTypes::NoGeometry:
       return QGis::WKBNoGeometry;
     case QgsWKBTypes::PointZ:
+    case QgsWKBTypes::Point25D:
       return QGis::WKBPoint25D;
     case QgsWKBTypes::LineStringZ:
+    case QgsWKBTypes::LineString25D:
       return QGis::WKBLineString25D;
     case QgsWKBTypes::PolygonZ:
+    case QgsWKBTypes::Polygon25D:
       return QGis::WKBPolygon25D;
     case QgsWKBTypes::MultiPointZ:
+    case QgsWKBTypes::MultiPoint25D:
       return QGis::WKBMultiPoint25D;
     case QgsWKBTypes::MultiLineStringZ:
+    case QgsWKBTypes::MultiLineString25D:
       return QGis::WKBMultiLineString25D;
     case QgsWKBTypes::MultiPolygonZ:
+    case QgsWKBTypes::MultiPolygon25D:
       return QGis::WKBMultiPolygon25D;
     default:
       break;

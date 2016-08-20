@@ -16,9 +16,9 @@
 #include "qgs25drenderer.h"
 #include "qgsgeometrygeneratorsymbollayerv2.h"
 #include "qgsfillsymbollayerv2.h"
-#include "../effects/qgspainteffect.h"
-#include "../effects/qgseffectstack.h"
-#include "../effects/qgsgloweffect.h"
+#include "qgspainteffect.h"
+#include "qgseffectstack.h"
+#include "qgsgloweffect.h"
 
 #define ROOF_EXPRESSION \
   "translate(" \
@@ -92,7 +92,7 @@ Qgs25DRenderer::Qgs25DRenderer()
 
   // These methods must only be used after the above initialization!
 
-  setRoofColor( QColor( "#fdbf6f" ) );
+  setRoofColor( QColor( "#b1a97c" ) );
   setWallColor( QColor( "#777777" ) );
 
   wallLayer()->setDataDefinedProperty( "color", new QgsDataDefined( QString( WALL_SHADING_EXPRESSION ) ) );

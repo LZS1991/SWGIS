@@ -45,6 +45,8 @@ class SWGISGUI_EXPORT QgsRelationReferenceFactory : public QgsEditorWidgetFactor
      */
     virtual QgsEditorWidgetWrapper* create( QgsVectorLayer* vl, int fieldIdx, QWidget* editor, QWidget* parent ) const override;
 
+    QgsSearchWidgetWrapper* createSearchWidget( QgsVectorLayer* vl, int fieldIdx, QWidget* parent ) const override;
+
     /**
      * Override this in your implementation.
      * Create a new configuration widget for this widget type.
@@ -78,6 +80,10 @@ class SWGISGUI_EXPORT QgsRelationReferenceFactory : public QgsEditorWidgetFactor
      * @param fieldIdx      The field on the layer for which this configuration applies
      */
     virtual void writeConfig( const QgsEditorWidgetConfig& config, QDomElement& configElement, QDomDocument& doc, const QgsVectorLayer* layer, int fieldIdx ) override;
+
+    virtual QString representValue( QgsVectorLayer* vl, int fieldIdx, const QgsEditorWidgetConfig& config, const QVariant& cache, const QVariant& value ) const override;
+
+    virtual QVariant sortValue( QgsVectorLayer *vl, int fieldIdx, const QgsEditorWidgetConfig &config, const QVariant &cache, const QVariant &value ) const override;
 
     virtual QMap<const char*, int> supportedWidgetTypes() override;
 

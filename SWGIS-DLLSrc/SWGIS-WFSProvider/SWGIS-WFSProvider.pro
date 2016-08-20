@@ -14,7 +14,9 @@ include(../SWGISSrcSetting.pri)
 
 INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Core \
                $$SWGISINC_PATH/SWGIS-Core/geometry \
+               $$SWGISINC_PATH/SWGIS-Core/symbology-ng \
                $$SWGISINC_PATH/SWGIS-Gui \
+               $$SWGISINC_PATH/SWGIS-Gui/symbology-ng \
                $$SWGISINC_PATH/SWGIS-WFSProvider \
                $$SWGIS_BUILD_PATH/SWGIS-Gui
 
@@ -59,7 +61,15 @@ SOURCES += \
     qgswfsdataitems.cpp \
     qgswfsfeatureiterator.cpp \
     qgswfsprovider.cpp \
-    qgswfssourceselect.cpp
+    qgswfssourceselect.cpp \
+    qgswfsconnection.cpp \
+    qgswfsconstants.cpp \
+    qgswfsdatasourceuri.cpp \
+    qgswfsdescribefeaturetype.cpp \
+    qgswfsrequest.cpp \
+    qgswfsshareddata.cpp \
+    qgswfstransactionrequest.cpp \
+    qgswfsutils.cpp
 
 HEADERS += \
     $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfscapabilities.h \
@@ -67,7 +77,15 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfsfeatureiterator.h \
     $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfsprovider.h \
     $$SWGISINC_PATH/SWGIS-WFSProvider/qgswfssourceselect.h \
-    $$SWGISINC_PATH/SWGIS-WFSProvider/wfsproviderconfig.h
+    $$SWGISINC_PATH/SWGIS-WFSProvider/wfsproviderconfig.h \
+    ../../SWGIS-Inc/SWGIS-WFSProvider/qgswfsconnection.h \
+    ../../SWGIS-Inc/SWGIS-WFSProvider/qgswfsconstants.h \
+    ../../SWGIS-Inc/SWGIS-WFSProvider/qgswfsdatasourceuri.h \
+    ../../SWGIS-Inc/SWGIS-WFSProvider/qgswfsdescribefeaturetype.h \
+    ../../SWGIS-Inc/SWGIS-WFSProvider/qgswfsrequest.h \
+    ../../SWGIS-Inc/SWGIS-WFSProvider/qgswfsshareddata.h \
+    ../../SWGIS-Inc/SWGIS-WFSProvider/qgswfstransactionrequest.h \
+    ../../SWGIS-Inc/SWGIS-WFSProvider/qgswfsutils.h
 
 FORMS += \
     swgiswfssourceselectbase.ui

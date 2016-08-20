@@ -42,6 +42,8 @@ class SWGISAPP_EXPORT QgsJoinDialog: public QDialog, private Ui::JoinDialogBase
   private slots:
     void joinedLayerChanged( QgsMapLayer* layer );
 
+    void checkDefinitionValid();
+
   private:
     /** Target layer*/
     QgsVectorLayer* mLayer;

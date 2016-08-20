@@ -27,7 +27,7 @@
 #include "qgsticksscalebarstyle.h"
 #include "qgsrectangle.h"
 #include "qgsproject.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
+#include "qgssymbollayerv2utils.h"
 #include "qgsfontutils.h"
 #include "qgsunittypes.h"
 #include <QDomDocument>

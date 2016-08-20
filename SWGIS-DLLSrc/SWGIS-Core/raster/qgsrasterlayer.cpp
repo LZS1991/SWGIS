@@ -646,7 +646,7 @@ void QgsRasterLayer::setDataProvider( QString const & provider )
   // set the layer name (uppercase first character)
   if ( ! mLayerName.isEmpty() )   // XXX shouldn't this happen in parent?
   {
-    setLayerName( mLayerName );
+    setName( mLayerName );
   }
 
   //mBandCount = 0;
@@ -679,8 +679,7 @@ void QgsRasterLayer::setDataProvider( QString const & provider )
   QgsRectangle mbr = mDataProvider->extent();
 
   // show the extent
-  QString s = mbr.toString();
-  QgsDebugMsgLevel( "Extent of layer: " + s, 4 );
+  QgsDebugMsgLevel( "Extent of layer: " + mbr.toString(), 4 );
   // store the extent
   setExtent( mbr );
 
@@ -693,14 +692,10 @@ void QgsRasterLayer::setDataProvider( QString const & provider )
   // Setup source CRS
   setCrs( QgsCoordinateReferenceSystem( mDataProvider->crs() ) );
 
-  QString mySourceWkt = crs().toWkt();
-
-  QgsDebugMsgLevel( "using wkt:\n" + mySourceWkt, 4 );
+  QgsDebugMsgLevel( "using wkt:\n" + crs().toWkt(), 4 );
 
   //defaults - Needs to be set after the Contrast list has been build
   //Try to read the default contrast enhancement from the config file
-
-  QSettings myQSettings;
 
   //decide what type of layer this is...
   //TODO Change this to look at the color interp and palette interp to decide which type of layer it is
@@ -941,6 +936,7 @@ void QgsRasterLayer::setContrastEnhancement( QgsContrastEnhancement::ContrastEnh
   qDeleteAll( myEnhancements );
 
   emit repaintRequested();
+  emit styleChanged();
 }
 
 void QgsRasterLayer::setDefaultContrastEnhancement()
@@ -1081,6 +1077,7 @@ void QgsRasterLayer::setRenderer( QgsRasterRenderer* theRenderer )
   if ( !theRenderer ) { return; }
   mPipe.set( theRenderer );
   emit rendererChanged();
+  emit styleChanged();
 }
 
 void QgsRasterLayer::showProgress( int theValue )
@@ -1313,6 +1310,11 @@ bool QgsRasterLayer::readSymbology( const QDomNode& layer_node, QString& errorMe
   }
 
   return true;
+}
+
+bool QgsRasterLayer::readStyle( const QDomNode &node, QString &errorMessage )
+{
+  return readSymbology( node, errorMessage );
 } //readSymbology
 
 /**
@@ -1487,6 +1489,12 @@ bool QgsRasterLayer::writeSymbology( QDomNode & layer_node, QDomDocument & docum
   layer_node.appendChild( blendModeElement );
 
   return true;
+}
+
+bool QgsRasterLayer::writeStyle( QDomNode &node, QDomDocument &doc, QString &errorMessage ) const
+{
+  return writeSymbology( node, doc, errorMessage );
+
 } // bool QgsRasterLayer::writeSymbology
 
 /*
@@ -1528,8 +1536,8 @@ bool QgsRasterLayer::writeXml( QDomNode & layer_node,
     {
       QDomElement noDataRange =  document.createElement( "noDataRange" );
 
-      noDataRange.setAttribute( "min", range.min() );
-      noDataRange.setAttribute( "max", range.max() );
+      noDataRange.setAttribute( "min", QgsRasterBlock::printValue( range.min() ) );
+      noDataRange.setAttribute( "max", QgsRasterBlock::printValue( range.max() ) );
       noDataRangeList.appendChild( noDataRange );
     }
 

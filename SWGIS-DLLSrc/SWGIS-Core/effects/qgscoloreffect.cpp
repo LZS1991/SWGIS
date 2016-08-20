@@ -17,7 +17,7 @@
 
 #include "qgscoloreffect.h"
 #include "qgsimageoperation.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
+#include "qgssymbollayerv2utils.h"
 
 QgsPaintEffect *QgsColorEffect::create( const QgsStringMap &map )
 {

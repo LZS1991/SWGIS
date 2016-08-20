@@ -21,8 +21,7 @@
 #include <QString>
 #include <QDir>
 #include <QLibrary>
-#include <QDebug>
-#include <QMessageBox>
+
 #include "qgis.h"
 #include "qgsdataprovider.h"
 #include "qgslogger.h"
@@ -49,10 +48,11 @@ typedef QString protocolDrivers_t();
 
 QgsProviderRegistry *QgsProviderRegistry::instance( const QString& pluginPath )
 {
-
-  static QgsProviderRegistry* sInstance( new QgsProviderRegistry(pluginPath));
+  static QgsProviderRegistry* sInstance( new QgsProviderRegistry( pluginPath ) );
   return sInstance;
 } // QgsProviderRegistry::instance
+
+
 
 QgsProviderRegistry::QgsProviderRegistry( const QString& pluginPath )
 {
@@ -336,6 +336,8 @@ QDir const & QgsProviderRegistry::libraryDirectory() const
   return mLibraryDirectory;
 }
 
+
+
 // typedef for the QgsDataProvider class factory
 typedef QgsDataProvider * classFactoryFunction_t( const QString * );
 
@@ -367,7 +369,7 @@ QgsDataProvider *QgsProviderRegistry::provider( QString const & providerKey, QSt
   }
   else
   {
-    QgsDebugMsg( "dlopen suceeded" );
+    QgsDebugMsg( "dlopen succeeded" );
     dlclose( handle );
   }
 
@@ -426,18 +428,19 @@ QWidget* QgsProviderRegistry::selectWidget( const QString & providerKey,
 {
   selectFactoryFunction_t * selectFactory =
     reinterpret_cast< selectFactoryFunction_t * >( cast_to_fptr( function( providerKey, "selectWidget" ) ) );
+
   if ( !selectFactory )
     return nullptr;
 
   return selectFactory( parent, fl );
 }
 
+#if QT_VERSION >= 0x050000
 QFunctionPointer QgsProviderRegistry::function( QString const & providerKey,
     QString const & functionName )
 {
   QLibrary myLib( library( providerKey ) );
 
-  qDebug() << myLib.fileName();
   QgsDebugMsg( "Library name is " + myLib.fileName() );
 
   if ( myLib.load() )
@@ -450,6 +453,25 @@ QFunctionPointer QgsProviderRegistry::function( QString const & providerKey,
     return 0;
   }
 }
+#else
+void *QgsProviderRegistry::function( QString const & providerKey,
+                                     QString const & functionName )
+{
+  QLibrary myLib( library( providerKey ) );
+
+  QgsDebugMsg( "Library name is " + myLib.fileName() );
+
+  if ( myLib.load() )
+  {
+    return myLib.resolve( functionName.toLatin1().data() );
+  }
+  else
+  {
+    QgsDebugMsg( "Cannot load library: " + myLib.errorString() );
+    return nullptr;
+  }
+}
+#endif
 
 QLibrary *QgsProviderRegistry::providerLibrary( QString const & providerKey ) const
 {

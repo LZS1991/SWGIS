@@ -22,6 +22,7 @@
 #include "qgsrasterlayer.h"
 #include "qgsrectangle.h"
 #include "stgisguiconfig.h"
+class QgsMapCanvas;
 class SWGISGUI_EXPORT QgsRasterMinMaxWidget: public QWidget, private Ui::RasterMinMaxWidgetBase
 {
     Q_OBJECT
@@ -31,7 +32,31 @@ class SWGISGUI_EXPORT QgsRasterMinMaxWidget: public QWidget, private Ui::RasterM
 
     void setExtent( const QgsRectangle & theExtent ) { mExtent = theExtent; }
 
+    /** Sets the map canvas associated with the widget. This allows the widget to retrieve the current
+     * map extent from the canvas. If a canvas is set it will take precedence over any extent
+     * set from calling setExtent().
+     * @param canvas map canvas
+     * @see mapCanvas()
+     * @note added in QGIS 2.16
+     */
+    void setMapCanvas( QgsMapCanvas* canvas );
+
+    /** Returns the map canvas associated with the widget.
+     * @see setMapCanvas()
+     * @see canvasExtent()
+     * @note added in QGIS 2.16
+     */
+    QgsMapCanvas* mapCanvas();
+
     void setBands( const QList<int> & theBands ) { mBands = theBands; }
+
+    /** Return the extent selected by the user.
+     * Either an empty extent for 'full' or the current visible extent.
+    */
+    QgsRectangle extent();
+
+    /** Return the selected sample size. */
+    int sampleSize() { return cboAccuracy->currentIndex() == 0 ? 250000 : 0; }
 
     // Load programmaticaly with current values
     void load() { on_mLoadPushButton_clicked(); }
@@ -46,6 +71,8 @@ class SWGISGUI_EXPORT QgsRasterMinMaxWidget: public QWidget, private Ui::RasterM
     QgsRasterLayer* mLayer;
     QList<int> mBands;
     QgsRectangle mExtent;
+
+    QgsMapCanvas* mCanvas;
 };
 
 #endif // QGSRASTERMINMAXWIDGET_H

@@ -24,6 +24,7 @@
 #include "qgsfieldcombobox.h"
 
 #include <QStandardItemModel>
+#include <QPushButton>
 
 QgsJoinDialog::QgsJoinDialog( QgsVectorLayer* layer, QList<QgsMapLayer*> alreadyJoinedLayers, QWidget * parent, Qt::WindowFlags f )
     : QDialog( parent, f )
@@ -53,6 +54,12 @@ QgsJoinDialog::QgsJoinDialog( QgsVectorLayer* layer, QList<QgsMapLayer*> already
     mJoinFieldComboBox->setLayer( joinLayer );
     joinedLayerChanged( joinLayer );
   }
+
+  connect( mJoinLayerComboBox, SIGNAL( layerChanged( QgsMapLayer* ) ), this, SLOT( checkDefinitionValid() ) );
+  connect( mJoinFieldComboBox, SIGNAL( fieldChanged( QString ) ), this, SLOT( checkDefinitionValid() ) );
+  connect( mTargetFieldComboBox, SIGNAL( fieldChanged( QString ) ), this, SLOT( checkDefinitionValid() ) );
+
+  checkDefinitionValid();
 }
 
 QgsJoinDialog::~QgsJoinDialog()
@@ -98,7 +105,8 @@ void QgsJoinDialog::setJoinInfo( const QgsVectorJoinInfo& joinInfo )
 QgsVectorJoinInfo QgsJoinDialog::joinInfo() const
 {
   QgsVectorJoinInfo info;
-  info.joinLayerId = mJoinLayerComboBox->currentLayer()->id();
+  if ( mJoinLayerComboBox->currentLayer() )
+    info.joinLayerId = mJoinLayerComboBox->currentLayer()->id();
   info.joinFieldName = mJoinFieldComboBox->currentField();
   info.targetFieldName = mTargetFieldComboBox->currentField();
   info.memoryCache = mCacheInMemoryCheckBox->isChecked();
@@ -146,10 +154,9 @@ void QgsJoinDialog::joinedLayerChanged( QgsMapLayer* layer )
 
   mUseJoinFieldsSubset->setChecked( false );
   QStandardItemModel* subsetModel = new QStandardItemModel( this );
-  const QgsFields& layerFields = vLayer->fields();
-  for ( int idx = 0; idx < layerFields.count(); ++idx )
+  Q_FOREACH ( const QgsField& field, vLayer->fields() )
   {
-    QStandardItem* subsetItem = new QStandardItem( layerFields[idx].name() );
+    QStandardItem* subsetItem = new QStandardItem( field.name() );
     subsetItem->setCheckable( true );
     //subsetItem->setFlags( subsetItem->flags() | Qt::ItemIsUserCheckable );
     subsetModel->appendRow( subsetItem );
@@ -172,4 +179,11 @@ void QgsJoinDialog::joinedLayerChanged( QgsMapLayer* layer )
   {
     mCustomPrefix->setText( layer->name() + '_' );
   }
+}
+
+void QgsJoinDialog::checkDefinitionValid()
+{
+  buttonBox->button( QDialogButtonBox::Ok )->setEnabled( mJoinLayerComboBox->currentIndex() != -1
+      && mJoinFieldComboBox->currentIndex() != -1
+      && mTargetFieldComboBox->currentIndex() != -1 );
 }

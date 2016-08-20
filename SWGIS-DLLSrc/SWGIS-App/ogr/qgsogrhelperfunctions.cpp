@@ -16,7 +16,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./ogr/qgsogrhelperfunctions.h"
+#include "qgsogrhelperfunctions.h"
 #include "qgslogger.h"
 #include <QRegExp>
 

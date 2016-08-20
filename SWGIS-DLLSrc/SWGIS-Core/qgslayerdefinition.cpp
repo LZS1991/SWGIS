@@ -21,7 +21,7 @@
 #include "qgslogger.h"
 #include "qgsmaplayer.h"
 #include "qgsvectorlayer.h"
-#include "./layertree/qgslayertree.h"
+#include "qgslayertree.h"
 #include "qgsmaplayerregistry.h"
 #include "qgslayerdefinition.h"
 
@@ -284,20 +284,22 @@ void QgsLayerDefinition::DependencySorter::init( const QDomDocument& doc )
       }
       else
       {
-        it++;
+        ++it;
       }
     }
   }
 }
 
-QgsLayerDefinition::DependencySorter::DependencySorter( const QDomDocument& doc ) :
-    mHasCycle( false ), mHasMissingDependency( false )
+QgsLayerDefinition::DependencySorter::DependencySorter( const QDomDocument& doc )
+    : mHasCycle( false )
+    , mHasMissingDependency( false )
 {
   init( doc );
 }
 
-QgsLayerDefinition::DependencySorter::DependencySorter( const QString& fileName ) :
-    mHasCycle( false ), mHasMissingDependency( false )
+QgsLayerDefinition::DependencySorter::DependencySorter( const QString& fileName )
+    : mHasCycle( false )
+    , mHasMissingDependency( false )
 {
   QDomDocument doc;
   QFile pFile( fileName );

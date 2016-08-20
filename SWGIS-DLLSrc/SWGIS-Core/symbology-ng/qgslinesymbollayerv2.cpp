@@ -14,9 +14,9 @@
  ***************************************************************************/
 
 #include "qgslinesymbollayerv2.h"
-#include "../geometry/qgscurvev2.h"
-#include "../geometry/qgscurvepolygonv2.h"
-#include "../dxf/qgsdxfexport.h"
+#include "qgscurvev2.h"
+#include "qgscurvepolygonv2.h"
+#include "qgsdxfexport.h"
 #include "qgssymbollayerv2utils.h"
 #include "qgsexpression.h"
 #include "qgsrendercontext.h"
@@ -417,7 +417,7 @@ void QgsSimpleLineSymbolLayerV2::toSld( QDomDocument &doc, QDomElement &element,
   if ( !qgsDoubleNear( mOffset, 0.0 ) )
   {
     QDomElement perpOffsetElem = doc.createElement( "se:PerpendicularOffset" );
-    perpOffsetElem.appendChild( doc.createTextNode( QString::number( mOffset ) ) );
+    perpOffsetElem.appendChild( doc.createTextNode( qgsDoubleToString( mOffset ) ) );
     symbolizerElem.appendChild( perpOffsetElem );
   }
 }
@@ -655,7 +655,11 @@ double QgsSimpleLineSymbolLayerV2::dxfOffset( const QgsDxfExport& e, QgsSymbolV2
 class MyLine
 {
   public:
-    MyLine( QPointF p1, QPointF p2 ) : mVertical( false ), mIncreasing( false ), mT( 0.0 ), mLength( 0.0 )
+    MyLine( QPointF p1, QPointF p2 )
+        : mVertical( false )
+        , mIncreasing( false )
+        , mT( 0.0 )
+        , mLength( 0.0 )
     {
       if ( p1 == p2 )
         return; // invalid
@@ -807,6 +811,11 @@ void QgsMarkerLineSymbolLayerV2::setColor( const QColor& color )
 {
   mMarker->setColor( color );
   mColor = color;
+}
+
+QColor QgsMarkerLineSymbolLayerV2::color() const
+{
+  return mMarker ? mMarker->color() : mColor;
 }
 
 void QgsMarkerLineSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
@@ -1054,7 +1063,7 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, 
       {
         //transform
         x = vPoint.x(), y = vPoint.y();
-        z = vPoint.z();
+        z = 0.0;
         if ( ct )
         {
           ct->transformInPlace( x, y, z );
@@ -1404,7 +1413,7 @@ void QgsMarkerLineSymbolLayerV2::toSld( QDomDocument &doc, QDomElement &element,
         symbolizerElem.appendChild( QgsSymbolLayerV2Utils::createVendorOptionElement( doc, "placement", "points" ) );
         break;
       default:
-        gap = QString::number( mInterval );
+        gap = qgsDoubleToString( mInterval );
         break;
     }
 
@@ -1444,7 +1453,7 @@ void QgsMarkerLineSymbolLayerV2::toSld( QDomDocument &doc, QDomElement &element,
     if ( !qgsDoubleNear( mOffset, 0.0 ) )
     {
       QDomElement perpOffsetElem = doc.createElement( "se:PerpendicularOffset" );
-      perpOffsetElem.appendChild( doc.createTextNode( QString::number( mOffset ) ) );
+      perpOffsetElem.appendChild( doc.createTextNode( qgsDoubleToString( mOffset ) ) );
       symbolizerElem.appendChild( perpOffsetElem );
     }
   }

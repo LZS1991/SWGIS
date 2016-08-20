@@ -118,6 +118,8 @@ class SWGISCORE_EXPORT QgsSimpleFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 
     double dxfWidth( const QgsDxfExport& e, QgsSymbolV2RenderContext& context ) const override;
     QColor dxfColor( QgsSymbolV2RenderContext& context ) const override;
+    double dxfAngle( QgsSymbolV2RenderContext& context ) const override;
+
     Qt::PenStyle dxfPenStyle() const override;
     QColor dxfBrushColor( QgsSymbolV2RenderContext &context ) const override;
     Qt::BrushStyle dxfBrushStyle() const override;
@@ -562,14 +564,15 @@ class SWGISCORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayerV2
     void setOutputUnit( QgsSymbolV2::OutputUnit unit ) override;
     QgsSymbolV2::OutputUnit outputUnit() const override;
 
-    void setMapUnitScale( const QgsMapUnitScale& scale ) override;
+    void setMapUnitScale( const QgsMapUnitScale &scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
 
     virtual double estimateMaxBleed() const override;
 
-    virtual double dxfWidth( const QgsDxfExport& e, QgsSymbolV2RenderContext& context ) const override;
-    virtual QColor dxfColor( QgsSymbolV2RenderContext& context ) const override;
-    virtual Qt::PenStyle dxfPenStyle() const override;
+    double dxfWidth( const QgsDxfExport& e, QgsSymbolV2RenderContext& context ) const override;
+    QColor dxfColor( QgsSymbolV2RenderContext& context ) const override;
+
+    Qt::PenStyle dxfPenStyle() const override;
 
     QSet<QString> usedAttributes() const override;
 
@@ -896,7 +899,7 @@ class SWGISCORE_EXPORT QgsLinePatternFillSymbolLayer: public QgsImageFillSymbolL
     void setLineWidth( double w );
     double lineWidth() const { return mLineWidth; }
     void setColor( const QColor& c ) override;
-    QColor color() const override { return mColor; }
+    QColor color() const override;
     void setOffset( double offset ) { mOffset = offset; }
     double offset() const { return mOffset; }
 
@@ -1026,6 +1029,8 @@ class SWGISCORE_EXPORT QgsPointPatternFillSymbolLayer: public QgsImageFillSymbol
     QgsMapUnitScale mapUnitScale() const override;
 
     virtual QSet<QString> usedAttributes() const override;
+    void setColor( const QColor& c ) override;
+    virtual QColor color() const override;
 
   protected:
     QgsMarkerSymbolV2* mMarkerSymbol;
@@ -1077,6 +1082,7 @@ class SWGISCORE_EXPORT QgsCentroidFillSymbolLayerV2 : public QgsFillSymbolLayerV
     void toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap& props ) const override;
 
     void setColor( const QColor& color ) override;
+    QColor color() const override;
 
     QgsSymbolV2* subSymbol() override;
     bool setSubSymbol( QgsSymbolV2* symbol ) override;
@@ -1092,9 +1098,20 @@ class SWGISCORE_EXPORT QgsCentroidFillSymbolLayerV2 : public QgsFillSymbolLayerV
     void setPointOnSurface( bool pointOnSurface ) { mPointOnSurface = pointOnSurface; }
     bool pointOnSurface() const { return mPointOnSurface; }
 
+    /** Sets whether a point is drawn for all parts or only on the biggest part of multi-part features.
+     * @note added in 2.16 */
+    void setPointOnAllParts( bool pointOnAllParts ) { mPointOnAllParts = pointOnAllParts; }
+    /** Returns whether a point is drawn for all parts or only on the biggest part of multi-part features.
+     * @note added in 2.16 */
+    bool pointOnAllParts() const { return mPointOnAllParts; }
+
   protected:
     QgsMarkerSymbolV2* mMarker;
     bool mPointOnSurface;
+    bool mPointOnAllParts;
+
+    QgsFeatureId mCurrentFeatureId;
+    int mBiggestPartIndex;
 };
 
 #endif

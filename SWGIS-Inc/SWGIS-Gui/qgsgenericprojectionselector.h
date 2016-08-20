@@ -24,9 +24,9 @@
 # define SWGISGUI_EXPORT Q_DECL_IMPORT
 #endif
 
-//#include <qgisgui.h>
+#include <qgisgui.h>
 #include <QSet>
-#include "../../SWGIS-Build/SWGIS-Gui/ui_stgisgenericprojectionselectorbase.h"
+#include "ui_stgisgenericprojectionselectorbase.h"
 #include "qgscontexthelp.h"
 /**
  * \ingroup gui

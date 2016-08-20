@@ -33,7 +33,7 @@
 #include "feature.h"
 #include "geomfunction.h"
 #include "labelposition.h"
-#include "../geometry/qgsgeos.h"
+#include "qgsgeos.h"
 #include "qgsmessagelog.h"
 #include <cmath>
 #include <cfloat>

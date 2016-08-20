@@ -200,6 +200,7 @@ class SWGISGUI_EXPORT QgsSimpleMarkerSymbolLayerV2Widget : public QgsSymbolLayer
   private slots:
 
     void updateAssistantSymbol();
+    void penJoinStyleChanged();
 
   private:
 
@@ -239,6 +240,60 @@ class SWGISGUI_EXPORT QgsSimpleFillSymbolLayerV2Widget : public QgsSymbolLayerV2
     QgsSimpleFillSymbolLayerV2* mLayer;
 };
 
+
+///////////
+
+#include "ui_widget_filledmarker.h"
+
+class QgsFilledMarkerSymbolLayer;
+
+/** \ingroup gui
+ * \class QgsFilledMarkerSymbolLayerWidget
+ * \brief Widget for configuring QgsFilledMarkerSymbolLayer symbol layers.
+ * \note Added in version 2.16
+ */
+class SWGISGUI_EXPORT QgsFilledMarkerSymbolLayerWidget : public QgsSymbolLayerV2Widget, private Ui::WidgetFilledMarker
+{
+    Q_OBJECT
+
+  public:
+
+    /** Constructor for QgsFilledMarkerSymbolLayerWidget.
+     * @param vl associated vector layer
+     * @param parent parent widget
+     */
+    QgsFilledMarkerSymbolLayerWidget( const QgsVectorLayer* vl, QWidget* parent = nullptr );
+
+    ~QgsFilledMarkerSymbolLayerWidget();
+
+    /** Creates a new QgsFilledMarkerSymbolLayerWidget.
+     * @param vl associated vector layer
+     */
+    static QgsSymbolLayerV2Widget* create( const QgsVectorLayer* vl ) { return new QgsFilledMarkerSymbolLayerWidget( vl ); }
+
+    // from base class
+    virtual void setSymbolLayer( QgsSymbolLayerV2* layer ) override;
+    virtual QgsSymbolLayerV2* symbolLayer() override;
+
+  protected:
+    QgsFilledMarkerSymbolLayer* mLayer;
+
+  private slots:
+
+    void updateAssistantSymbol();
+    void setShape();
+    void setSize();
+    void setAngle();
+    void setOffset();
+    void on_mSizeUnitWidget_changed();
+    void on_mOffsetUnitWidget_changed();
+    void on_mHorizontalAnchorComboBox_currentIndexChanged( int index );
+    void on_mVerticalAnchorComboBox_currentIndexChanged( int index );
+
+  private:
+
+    QgsMarkerSymbolV2* mAssistantPreviewSymbol;
+};
 
 ///////////
 
@@ -570,12 +625,18 @@ class SWGISGUI_EXPORT QgsFontMarkerSymbolLayerV2Widget : public QgsSymbolLayerV2
   public slots:
     void setFontFamily( const QFont& font );
     void setColor( const QColor& color );
+
+    /** Set outline color.
+     * @note added in 2.16 */
+    void setColorBorder( const QColor& color );
     void setSize( double size );
     void setAngle( double angle );
     void setCharacter( QChar chr );
     void setOffset();
     void on_mSizeUnitWidget_changed();
     void on_mOffsetUnitWidget_changed();
+    void on_mBorderWidthUnitWidget_changed();
+    void on_mBorderWidthSpinBox_valueChanged( double d );
     void on_mHorizontalAnchorComboBox_currentIndexChanged( int index );
     void on_mVerticalAnchorComboBox_currentIndexChanged( int index );
 
@@ -585,6 +646,7 @@ class SWGISGUI_EXPORT QgsFontMarkerSymbolLayerV2Widget : public QgsSymbolLayerV2
 
   private slots:
 
+    void penJoinStyleChanged();
     void updateAssistantSymbol();
 
   private:
@@ -618,6 +680,7 @@ class SWGISGUI_EXPORT QgsCentroidFillSymbolLayerV2Widget : public QgsSymbolLayer
 
   private slots:
     void on_mDrawInsideCheckBox_stateChanged( int state );
+    void on_mDrawAllPartsCheckBox_stateChanged( int state );
 
 };
 

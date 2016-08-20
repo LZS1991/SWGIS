@@ -97,7 +97,7 @@ class SWGISCORE_EXPORT QgsRectangle
     //! return true when rectangle contains a point
     bool contains( const QgsPoint &p ) const;
     //! expand the rectangle so that covers both the original rectangle and the given rectangle
-    void combineExtentWith( QgsRectangle *rect );
+    void combineExtentWith( const QgsRectangle& rect );
     //! expand the rectangle so that covers both the original rectangle and the given point
     void combineExtentWith( double x, double y );
     //! test if rectangle is empty.
@@ -146,7 +146,7 @@ class SWGISCORE_EXPORT QgsRectangle
   protected:
 
     // These are protected instead of private so that things like
-    // the QgsPoSTGISBox3d can get at them.
+    // the QgsPostGisBox3d can get at them.
 
     double xmin;
     double ymin;

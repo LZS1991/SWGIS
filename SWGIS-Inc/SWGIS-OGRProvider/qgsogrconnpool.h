@@ -19,6 +19,7 @@
 #include "qgsconnectionpool.h"
 #include <ogr_api.h>
 #include "ogrproviderconfig.h"
+
 struct QgsOgrConn
 {
   QString path;
@@ -34,7 +35,8 @@ inline QString qgsConnectionPool_ConnectionToName( QgsOgrConn* c )
 inline void qgsConnectionPool_ConnectionCreate( QString connInfo, QgsOgrConn*& c )
 {
   c = new QgsOgrConn;
-  c->ds = OGROpen( connInfo.toUtf8().constData(), false, nullptr );
+  QString filePath = connInfo.left( connInfo.indexOf( "|" ) );
+  c->ds = OGROpen( filePath.toUtf8().constData(), false, nullptr );
   c->path = connInfo;
   c->valid = true;
 }
@@ -60,7 +62,10 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrConnPoolGroup : public QObject, public QgsCo
     Q_OBJECT
 
   public:
-    explicit QgsOgrConnPoolGroup( QString name ) : QgsConnectionPoolGroup<QgsOgrConn*>( name ), mRefCount( 0 ) { initTimer( this ); }
+    explicit QgsOgrConnPoolGroup( QString name )
+        : QgsConnectionPoolGroup<QgsOgrConn*>( name )
+        , mRefCount( 0 )
+    { initTimer( this ); }
     void ref() { ++mRefCount; }
     bool unref()
     {

@@ -36,6 +36,8 @@ INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Core \
                $$SWGISINC_PATH/SWGIS-WMSProvider \
                $$SWGISINC_PATH/SWGIS-App \
                $$SWGISINC_PATH/SWGIS-App/composer \
+               $$SWGISINC_PATH/SWGIS-App/ogr \
+               $$SWGISINC_PATH/SWGIS-Plugins \
                $$SWGIS_BUILD_PATH/SWGIS-Gui
 INCLUDEPATH += $$THIRDPARTY_PATH \
                $$THIRDPARTY_PATH/GDAL/win_msvc_x64/include \
@@ -128,7 +130,6 @@ FORMS += \
     swgiscustomizationdialogbase.ui \
     swgisattributeactiondialogbase.ui \
     swgisidentifyresultsbase.ui \
-    swgislabelingrulepropsdialog.ui \
     swgisopenvectorlayerdialogbase.ui \
     swgisnewogrconnectionbase.ui \
     swgismeasurebase.ui \
@@ -154,7 +155,10 @@ FORMS += \
     swgissvgexportoptions.ui \
     swgisdisplayanglebase.ui \
     swgiscomposertablebackgroundstyles.ui \
-    swgiscomposermanagerbase.ui
+    swgiscomposermanagerbase.ui \
+    swgisattributeactionpropertiesdialogbase.ui \
+    swgiscomposerpolygonwidgetbase.ui \
+    swgiscomposerpolylinewidgetbase.ui
 
 SOURCES += \
     qgsapplayertreeviewmenuprovider.cpp \
@@ -242,10 +246,13 @@ SOURCES += \
     qgsvariantdelegate.cpp \
     composer/qgscomposertablebackgroundcolorsdialog.cpp \
     composer/qgscomposermanager.cpp \
-    qgscursors.cpp \
     qgswelcomepageitemsmodel.cpp \
     qgswelcomepage.cpp \
-    qgsversioninfo.cpp
+    qgsversioninfo.cpp \
+    qgsattributeactionpropertiesdialog.cpp \
+    composer/qgscomposerpolygonwidget.cpp \
+    composer/qgscomposerpolylinewidget.cpp \
+    swgiscursors.cpp
 
 HEADERS += \
     $$SWGISINC_PATH/SWGIS-App/swgisappconfig.h \
@@ -300,46 +307,49 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-App/qgsshortcutsmanager.h \
     $$SWGISINC_PATH/SWGIS-App/qgsfeatureaction.h \
     $$SWGISINC_PATH/SWGIS-App/qgsidentifyresultsdialog.h \
-    ../../SWGIS-Inc/SWGIS-App/ogr/qgsopenvectorlayerdialog.h \
-    ../../SWGIS-Inc/SWGIS-App/ogr/qgsnewogrconnection.h \
-    ../../SWGIS-Inc/SWGIS-App/ogr/qgsogrhelperfunctions.h \
-    ../../SWGIS-Inc/SWGIS-App/qgstipfactory.h \
-    ../../SWGIS-Inc/SWGIS-App/qgslabelpreview.h \
-    ../../SWGIS-Inc/SWGIS-App/ui_defaults.h \
-    ../../SWGIS-Inc/SWGIS-App/swgisapp.h \
-    ../../SWGIS-Inc/SWGIS-App/qgsmeasuredialog.h \
-    ../../SWGIS-Inc/SWGIS-App/qgsmeasuretool.h \
-    ../../SWGIS-Inc/SWGIS-App/qgsoptions.h \
-    ../../SWGIS-Inc/SWGIS-App/qgisappstylesheet.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposer.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscompositionwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgsatlascompositionwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerarrowwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerattributetablewidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerhtmlwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerlabelwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerlegendwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposeritemwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerlegenditemdialog.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerlegendlayersdialog.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposermapwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerpicturewidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerscalebarwidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposershapewidget.h \
-    ../../SWGIS-Inc/SWGIS-App/qgsvisibilitypresets.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposertablewidget.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgsattributeselectiondialog.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposerimageexportoptionsdialog.h \
-    ../../SWGIS-Inc/SWGIS-App/qgsmaptoolmeasureangle.h \
-    ../../SWGIS-Inc/SWGIS-App/qgsdisplayangle.h \
-    ../../SWGIS-Inc/SWGIS-App/qgssettingstree.h \
-    ../../SWGIS-Inc/SWGIS-App/qgsvariantdelegate.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposertablebackgroundcolorsdialog.h \
-    ../../SWGIS-Inc/SWGIS-App/composer/qgscomposermanager.h \
-    ../../SWGIS-Inc/SWGIS-App/qgscursors.h \
-    ../../SWGIS-Inc/SWGIS-App/qgswelcomepageitemsmodel.h \
-    ../../SWGIS-Inc/SWGIS-App/qgswelcomepage.h \
-    ../../SWGIS-Inc/SWGIS-App/qgsversioninfo.h
+    $$SWGISINC_PATH/SWGIS-App/ogr/qgsopenvectorlayerdialog.h \
+    $$SWGISINC_PATH/SWGIS-App/ogr/qgsnewogrconnection.h \
+    $$SWGISINC_PATH/SWGIS-App/ogr/qgsogrhelperfunctions.h \
+    $$SWGISINC_PATH/SWGIS-App/qgstipfactory.h \
+    $$SWGISINC_PATH/SWGIS-App/qgslabelpreview.h \
+    $$SWGISINC_PATH/SWGIS-App/ui_defaults.h \
+    $$SWGISINC_PATH/SWGIS-App/swgisapp.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsmeasuredialog.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsmeasuretool.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsoptions.h \
+    $$SWGISINC_PATH/SWGIS-App/qgisappstylesheet.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposer.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscompositionwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgsatlascompositionwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerarrowwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerattributetablewidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerhtmlwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerlabelwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerlegendwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposeritemwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerlegenditemdialog.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerlegendlayersdialog.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposermapwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerpicturewidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerscalebarwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposershapewidget.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsvisibilitypresets.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposertablewidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgsattributeselectiondialog.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerimageexportoptionsdialog.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsmaptoolmeasureangle.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsdisplayangle.h \
+    $$SWGISINC_PATH/SWGIS-App/qgssettingstree.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsvariantdelegate.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposertablebackgroundcolorsdialog.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposermanager.h \
+    $$SWGISINC_PATH/SWGIS-App/qgswelcomepageitemsmodel.h \
+    $$SWGISINC_PATH/SWGIS-App/qgswelcomepage.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsversioninfo.h \
+    $$SWGISINC_PATH/SWGIS-App/qgsattributeactionpropertiesdialog.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerpolygonwidget.h \
+    $$SWGISINC_PATH/SWGIS-App/composer/qgscomposerpolylinewidget.h \
+    $$SWGISINC_PATH/SWGIS-App/swgiscursors.h
 
 RESOURCES += \
     resource.qrc

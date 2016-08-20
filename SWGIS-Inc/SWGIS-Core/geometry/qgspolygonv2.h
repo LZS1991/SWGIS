@@ -36,6 +36,7 @@ class SWGISCORE_EXPORT QgsPolygonV2: public QgsCurvePolygonV2
 
     virtual QString geometryType() const override { return "Polygon"; }
     virtual QgsPolygonV2* clone() const override;
+    void clear() override;
 
     virtual bool fromWkb( QgsConstWkbPtr wkb ) override;
 
@@ -49,6 +50,10 @@ class SWGISCORE_EXPORT QgsPolygonV2: public QgsCurvePolygonV2
     // inherited: QString asJSON( int precision = 17 ) const;
 
     QgsPolygonV2* surfaceToPolygon() const override;
+
+    /** Returns the geometry converted to the more generic curve type QgsCurvePolygonV2
+     @return the converted geometry. Caller takes ownership*/
+    QgsAbstractGeometryV2* toCurveType() const override;
 
     void addInteriorRing( QgsCurveV2* ring ) override;
     //overridden to handle LineString25D rings

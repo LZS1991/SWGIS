@@ -203,4 +203,3 @@ const char *sampler_cursor[] =
   "           .....",
   "            ... "
 };
-

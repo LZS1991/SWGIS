@@ -118,6 +118,10 @@ class SWGISGUI_EXPORT QgsGraduatedSymbolRendererV2Widget : public QgsRendererV2W
     void on_methodComboBox_currentIndexChanged( int );
     void refreshRanges( bool reset = false );
 
+  private slots:
+    void cleanUpSymbolSelector( QgsPanelWidget* container );
+    void updateSymbolsFromWidget();
+
   protected:
     void updateUiFromRenderer( bool updateCount = true );
     void connectUpdateHandlers();

@@ -13,12 +13,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./layertree/qgslayertreeviewdefaultactions.h"
+#include "qgslayertreeviewdefaultactions.h"
 
 #include "qgsapplication.h"
-#include "./layertree/qgslayertree.h"
-#include "./layertree/qgslayertreemodel.h"
-#include "./layertree/qgslayertreeview.h"
+#include "qgslayertree.h"
+#include "qgslayertreemodel.h"
+#include "qgslayertreeview.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsvectorlayer.h"
@@ -197,14 +197,18 @@ void QgsLayerTreeViewDefaultActions::zoomToLayer()
 {
   QAction* s = qobject_cast<QAction*>( sender() );
   QgsMapCanvas* canvas = reinterpret_cast<QgsMapCanvas*>( s->data().value<void*>() );
+  QApplication::setOverrideCursor( Qt::WaitCursor );
   zoomToLayer( canvas );
+  QApplication::restoreOverrideCursor();
 }
 
 void QgsLayerTreeViewDefaultActions::zoomToGroup()
 {
   QAction* s = qobject_cast<QAction*>( sender() );
   QgsMapCanvas* canvas = reinterpret_cast<QgsMapCanvas*>( s->data().value<void*>() );
+  QApplication::setOverrideCursor( Qt::WaitCursor );
   zoomToGroup( canvas );
+  QApplication::restoreOverrideCursor();
 }
 
 
@@ -238,7 +242,7 @@ void QgsLayerTreeViewDefaultActions::zoomToLayers( QgsMapCanvas* canvas, const Q
     if ( canvas->hasCrsTransformEnabled() )
       layerExtent = canvas->mapSettings().layerExtentToOutputExtent( layer, layerExtent );
 
-    extent.combineExtentWith( &layerExtent );
+    extent.combineExtentWith( layerExtent );
   }
 
   if ( extent.isNull() )

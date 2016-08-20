@@ -16,9 +16,9 @@
  ***************************************************************************/
 
 
-#include "./core/qgseditorwidgetfactory.h"
-#include "./core/qgseditorwidgetregistry.h"
-#include "./core/qgseditorwidgetwrapper.h"
+#include "qgseditorwidgetfactory.h"
+#include "qgseditorwidgetregistry.h"
+#include "qgseditorwidgetwrapper.h"
 
 #include "qgsattributeeditor.h"
 #include "qgsattributeeditorcontext.h"

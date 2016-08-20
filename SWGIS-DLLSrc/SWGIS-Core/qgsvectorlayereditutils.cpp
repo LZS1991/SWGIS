@@ -17,12 +17,13 @@
 #include "qgsvectordataprovider.h"
 #include "qgsgeometrycache.h"
 #include "qgsvectorlayereditbuffer.h"
+#include "qgslinestringv2.h"
 #include "qgslogger.h"
+#include "qgspointv2.h"
+#include "qgsgeometryfactory.h"
 #include "qgis.h"
-#include "./geometry/qgswkbtypes.h"
-#include "./geometry/qgspointv2.h"
-#include "./geometry/qgsgeometryfactory.h"
-#include "./geometry/qgslinestringv2.h"
+#include "qgswkbtypes.h"
+
 #include <limits>
 
 

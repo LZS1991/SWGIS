@@ -14,6 +14,10 @@ include(../SWGISSrcSetting.pri)
 
 INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Core \
                $$SWGISINC_PATH/SWGIS-Gui \
+               $$SWGISINC_PATH/SWGIS-Core/geometry \
+               $$SWGISINC_PATH/SWGIS-Core/symbology-ng \
+               $$SWGISINC_PATH/SWGIS-OGRProvider \
+
                $$SWGISINC_PATH/SWGIS-OGRProvider
 INCLUDEPATH += $$THIRDPARTY_PATH \
                $$THIRDPARTY_PATH/GDAL/win_msvc_x64/include \

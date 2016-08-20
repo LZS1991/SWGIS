@@ -235,18 +235,18 @@ class SWGISCORE_EXPORT QgsSymbolLayerV2
      */
     virtual QVariant evaluateDataDefinedProperty( const QString& property, const QgsSymbolV2RenderContext& context, const QVariant& defaultVal = QVariant(), bool *ok = nullptr ) const;
 
-    virtual bool writeDxf( QgsDxfExport& e,
-                           double mmMapUnitScaleFactor,
-                           const QString& layerName,
-                           QgsSymbolV2RenderContext* context,
-                           const QgsFeature* f,
-                           QPointF shift = QPointF( 0.0, 0.0 ) ) const;
+    //! write as DXF
+    virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolV2RenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
 
     virtual double dxfWidth( const QgsDxfExport& e, QgsSymbolV2RenderContext& context ) const;
     virtual double dxfOffset( const QgsDxfExport& e, QgsSymbolV2RenderContext& context ) const;
 
     virtual QColor dxfColor( QgsSymbolV2RenderContext& context ) const;
 
+    //! get angle
+    virtual double dxfAngle( QgsSymbolV2RenderContext& context ) const;
+
+    //! get dash pattern
     virtual QVector<qreal> dxfCustomDashPattern( QgsSymbolV2::OutputUnit& unit ) const;
     virtual Qt::PenStyle dxfPenStyle() const;
     virtual QColor dxfBrushColor( QgsSymbolV2RenderContext& context ) const;
@@ -395,20 +395,25 @@ class SWGISCORE_EXPORT QgsMarkerSymbolLayerV2 : public QgsSymbolLayerV2
 
     enum HorizontalAnchorPoint
     {
-      Left,
-      HCenter,
-      Right
+      Left, /*!< Align to left side of symbol */
+      HCenter, /*!< Align to horizontal center of symbol */
+      Right, /*!< Align to right side of symbol */
     };
 
     enum VerticalAnchorPoint
     {
-      Top,
-      VCenter,
-      Bottom
+      Top, /*!< Align to top of symbol */
+      VCenter, /*!< Align to vertical center of symbol */
+      Bottom, /*!< Align to bottom of symbol */
     };
 
     void startRender( QgsSymbolV2RenderContext& context ) override;
 
+    /** Renders a marker at the specified point. Derived classes must implement this to
+     * handle drawing the point.
+     * @param point position at which to render point, in painter units
+     * @param context symbol render context
+     */
     virtual void renderPoint( QPointF point, QgsSymbolV2RenderContext& context ) = 0;
 
     void drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size ) override;
@@ -427,40 +432,115 @@ class SWGISCORE_EXPORT QgsMarkerSymbolLayerV2 : public QgsSymbolLayerV2
     void setSize( double size ) { mSize = size; }
     double size() const { return mSize; }
 
+    /** Sets the units for the symbol's size.
+     * @param unit size units
+     * @see sizeUnit()
+     * @see setSize()
+     * @see setSizeMapUnitScale()
+     */
+    void setSizeUnit( QgsSymbolV2::OutputUnit unit ) { mSizeUnit = unit; }
+
+    /** Returns the units for the symbol's size.
+     * @see setSizeUnit()
+     * @see size()
+     * @see sizeMapUnitScale()
+     */
+    QgsSymbolV2::OutputUnit sizeUnit() const { return mSizeUnit; }
+
+    /** Sets the map unit scale for the symbol's size.
+     * @param scale size map unit scale
+     * @see sizeMapUnitScale()
+     * @see setSize()
+     * @see setSizeUnit()
+     */
+    void setSizeMapUnitScale( const QgsMapUnitScale& scale ) { mSizeMapUnitScale = scale; }
+
+    /** Returns the map unit scale for the symbol's size.
+     * @see setSizeMapUnitScale()
+     * @see size()
+     * @see sizeUnit()
+     */
+    const QgsMapUnitScale& sizeMapUnitScale() const { return mSizeMapUnitScale; }
+
+    /** Sets the method to use for scaling the marker's size.
+     * @param scaleMethod scale method
+     * @see scaleMethod()
+     */
     void setScaleMethod( QgsSymbolV2::ScaleMethod scaleMethod ) { mScaleMethod = scaleMethod; }
     QgsSymbolV2::ScaleMethod scaleMethod() const { return mScaleMethod; }
 
     void setOffset( QPointF offset ) { mOffset = offset; }
     QPointF offset() const { return mOffset; }
 
-    virtual void toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap& props ) const override;
-
-    virtual void writeSldMarker( QDomDocument &doc, QDomElement &element, const QgsStringMap& props ) const
-    { Q_UNUSED( props ); element.appendChild( doc.createComment( QString( "QgsMarkerSymbolLayerV2 %1 not implemented yet" ).arg( layerType() ) ) ); }
-
+    /** Sets the units for the symbol's offset.
+     * @param unit offset units
+     * @see offsetUnit()
+     * @see setOffset()
+     * @see setOffsetMapUnitScale()
+     */
     void setOffsetUnit( QgsSymbolV2::OutputUnit unit ) { mOffsetUnit = unit; }
+
+    /** Returns the units for the symbol's offset.
+     * @see setOffsetUnit()
+     * @see offset()
+     * @see offsetMapUnitScale()
+     */
     QgsSymbolV2::OutputUnit offsetUnit() const { return mOffsetUnit; }
 
+    /** Sets the map unit scale for the symbol's offset.
+     * @param scale offset map unit scale
+     * @see offsetMapUnitScale()
+     * @see setOffset()
+     * @see setOffsetUnit()
+     */
     void setOffsetMapUnitScale( const QgsMapUnitScale& scale ) { mOffsetMapUnitScale = scale; }
     const QgsMapUnitScale& offsetMapUnitScale() const { return mOffsetMapUnitScale; }
 
-    void setSizeUnit( QgsSymbolV2::OutputUnit unit ) { mSizeUnit = unit; }
-    QgsSymbolV2::OutputUnit sizeUnit() const { return mSizeUnit; }
+    /** Sets the horizontal anchor point for positioning the symbol.
+     * @param h anchor point. Symbol will be drawn so that the horizontal anchor point is aligned with
+     * the marker's desired location.
+     * @see horizontalAnchorPoint()
+     * @see setVerticalAnchorPoint()
+     */
+    void setHorizontalAnchorPoint( HorizontalAnchorPoint h ) { mHorizontalAnchorPoint = h; }
 
-    void setSizeMapUnitScale( const QgsMapUnitScale& scale ) { mSizeMapUnitScale = scale; }
-    const QgsMapUnitScale& sizeMapUnitScale() const { return mSizeMapUnitScale; }
+    /** Returns the horizontal anchor point for positioning the symbol. The symbol will be drawn so that
+     * the horizontal anchor point is aligned with the marker's desired location.
+     * @see setHorizontalAnchorPoint()
+     * @see verticalAnchorPoint()
+     */
+    HorizontalAnchorPoint horizontalAnchorPoint() const { return mHorizontalAnchorPoint; }
+
+    /** Sets the vertical anchor point for positioning the symbol.
+     * @param v anchor point. Symbol will be drawn so that the vertical anchor point is aligned with
+     * the marker's desired location.
+     * @see verticalAnchorPoint()
+     * @see setHorizontalAnchorPoint()
+     */
+    void setVerticalAnchorPoint( VerticalAnchorPoint v ) { mVerticalAnchorPoint = v; }
+
+    /** Returns the vertical anchor point for positioning the symbol. The symbol will be drawn so that
+     * the vertical anchor point is aligned with the marker's desired location.
+     * @see setVerticalAnchorPoint()
+     * @see horizontalAnchorPoint()
+     */
+    VerticalAnchorPoint verticalAnchorPoint() const { return mVerticalAnchorPoint; }
+
+    virtual void toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap& props ) const override;
+
+    /** Writes the symbol layer definition as a SLD XML element.
+     * @param doc XML document
+     * @param element parent XML element
+     * @param props symbol layer definition (see properties())
+     */
+    virtual void writeSldMarker( QDomDocument &doc, QDomElement &element, const QgsStringMap& props ) const
+    { Q_UNUSED( props ); element.appendChild( doc.createComment( QString( "QgsMarkerSymbolLayerV2 %1 not implemented yet" ).arg( layerType() ) ) ); }
 
     void setOutputUnit( QgsSymbolV2::OutputUnit unit ) override;
     QgsSymbolV2::OutputUnit outputUnit() const override;
 
     void setMapUnitScale( const QgsMapUnitScale& scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
-
-    void setHorizontalAnchorPoint( HorizontalAnchorPoint h ) { mHorizontalAnchorPoint = h; }
-    HorizontalAnchorPoint horizontalAnchorPoint() const { return mHorizontalAnchorPoint; }
-
-    void setVerticalAnchorPoint( VerticalAnchorPoint v ) { mVerticalAnchorPoint = v; }
-    VerticalAnchorPoint verticalAnchorPoint() const { return mVerticalAnchorPoint; }
 
     /** Returns the approximate bounding box of the marker symbol layer, taking into account
      * any data defined overrides and offsets which are set for the marker layer.

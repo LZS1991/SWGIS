@@ -38,7 +38,6 @@
 #include "qgspalettedrendererwidget.h"
 #include "qgsproject.h"
 #include "qgsrasterbandstats.h"
-//#include "qwt_plot.h"
 #include "qgsrasterhistogramwidget.h"
 #include "qgsrasteridentifyresult.h"
 #include "qgsrasterlayer.h"
@@ -51,6 +50,7 @@
 #include "qgssinglebandgrayrendererwidget.h"
 #include "qgssinglebandpseudocolorrendererwidget.h"
 #include "qgshuesaturationfilter.h"
+#include "qgshillshaderendererwidget.h"
 
 #include <QTableWidgetItem>
 #include <QHeaderView>
@@ -184,6 +184,16 @@ QgsRasterLayerProperties::QgsRasterLayerProperties( QgsMapLayer* lyr, QgsMapCanv
     {
       cboResamplingMethod->addItem( method.second, method.first );
     }
+
+    // keep it in sync with qgsrasterpyramidsoptionwidget.cpp
+    QString prefix = provider->name() + "/driverOptions/_pyramids/";
+    QSettings mySettings;
+    QString defaultMethod = mySettings.value( prefix + "resampling", "AVERAGE" ).toString();
+    int idx = cboResamplingMethod->findData( defaultMethod );
+    if ( idx >= 0 )
+      cboResamplingMethod->setCurrentIndex( idx );
+
+
     // build pyramid list
     QList< QgsRasterPyramid > myPyramidList = provider->buildPyramidList();
     QList< QgsRasterPyramid >::iterator myRasterPyramidIterator;
@@ -240,7 +250,7 @@ QgsRasterLayerProperties::QgsRasterLayerProperties( QgsMapLayer* lyr, QgsMapCanv
                                  pyramidSentence3,
                                  pyramidSentence4,
                                  pyramidSentence5 ) );
-  tableTransparency->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
+  tableTransparency->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch );
     //LZS2851, because tabletransparency is not initalizing the count of qheaderview,so can not set the index
 //  tableTransparency->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::Stretch );
 
@@ -357,6 +367,7 @@ QgsRasterLayerProperties::QgsRasterLayerProperties( QgsMapLayer* lyr, QgsMapCanv
   QgsRasterRendererRegistry::instance()->insertWidgetFunction( "multibandcolor", QgsMultiBandColorRendererWidget::create );
   QgsRasterRendererRegistry::instance()->insertWidgetFunction( "singlebandpseudocolor", QgsSingleBandPseudoColorRendererWidget::create );
   QgsRasterRendererRegistry::instance()->insertWidgetFunction( "singlebandgray", QgsSingleBandGrayRendererWidget::create );
+  QgsRasterRendererRegistry::instance()->insertWidgetFunction( "hillshade", QgsHillshadeRendererWidget::create );
 
   //fill available renderers into combo box
   QgsRasterRendererRegistryEntry entry;
@@ -417,7 +428,7 @@ QgsRasterLayerProperties::QgsRasterLayerProperties( QgsMapLayer* lyr, QgsMapCanv
                        mOptStackedWidget->indexOf( mOptsPage_Style ) );
   }
 
-  mResetColorRenderingBtn->setIcon( QgsApplication::getThemeIcon( "/mActionUndo.png" ) );
+  mResetColorRenderingBtn->setIcon( QgsApplication::getThemeIcon( "/mActionUndo.svg" ) );
 
   QString title = QString( tr( "Layer Properties - %1" ) ).arg( lyr->name() );
   restoreOptionsBaseUi( title );
@@ -434,7 +445,6 @@ QgsRasterLayerProperties::~QgsRasterLayerProperties()
 
 void QgsRasterLayerProperties::setupTransparencyTable( int nBands )
 {
-  QgsDebugMsg( "Entered" );
   tableTransparency->clear();
   tableTransparency->setColumnCount( 0 );
   tableTransparency->setRowCount( 0 );
@@ -473,7 +483,6 @@ void QgsRasterLayerProperties::setupTransparencyTable( int nBands )
 
 void QgsRasterLayerProperties::populateTransparencyTable( QgsRasterRenderer* renderer )
 {
-  QgsDebugMsg( "entering." );
   if ( !mRasterLayer )
   {
     return;
@@ -540,6 +549,7 @@ void QgsRasterLayerProperties::setRendererWidget( const QString& rendererName )
       // Current canvas extent (used to calc min/max) in layer CRS
       QgsRectangle myExtent = mMapCanvas->mapSettings().outputExtentToLayerExtent( mRasterLayer, mMapCanvas->extent() );
       mRendererWidget = rendererEntry.widgetCreateFunction( mRasterLayer, myExtent );
+      mRendererWidget->setMapCanvas( mMapCanvas );
       mRendererStackedWidget->addWidget( mRendererWidget );
       if ( oldWidget )
       {
@@ -786,6 +796,12 @@ void QgsRasterLayerProperties::sync()
 
   mLayerLegendUrlLineEdit->setText( mRasterLayer->legendUrl() );
   mLayerLegendUrlFormatComboBox->setCurrentIndex( mLayerLegendUrlFormatComboBox->findText( mRasterLayer->legendUrlFormat() ) );
+
+  /*
+   * Legend Tab
+   */
+  mLegendConfigEmbeddedWidget->setLayer( mRasterLayer );
+
 } // QgsRasterLayerProperties::sync()
 
 /*
@@ -795,6 +811,11 @@ void QgsRasterLayerProperties::sync()
  */
 void QgsRasterLayerProperties::apply()
 {
+  /*
+   * Legend Tab
+   */
+  mLegendConfigEmbeddedWidget->applyToLayer();
+
   QgsDebugMsg( "apply processing symbology tab" );
   /*
    * Symbology Tab
@@ -883,7 +904,7 @@ void QgsRasterLayerProperties::apply()
   /*
    * General Tab
    */
-  mRasterLayer->setLayerName( mLayerOrigNameLineEd->text() );
+  mRasterLayer->setName( mLayerOrigNameLineEd->text() );
 
   // set up the scale based layer visibility stuff....
   mRasterLayer->setScaleBasedVisibility( chkUseScaleDependentRendering->isChecked() );
@@ -965,7 +986,7 @@ void QgsRasterLayerProperties::apply()
   mRasterLayer->triggerRepaint();
 
   // notify the project we've made a change
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }//apply
 
 void QgsRasterLayerProperties::on_mLayerOrigNameLineEd_textEdited( const QString& text )
@@ -989,6 +1010,13 @@ void QgsRasterLayerProperties::on_buttonBuildPyramids_clicked()
     //mark to be pyramided
     myPyramidList[myCounterInt].build = myItem->isSelected() || myPyramidList[myCounterInt].exists;
   }
+
+  // keep it in sync with qgsrasterpyramidsoptionwidget.cpp
+  QString prefix = provider->name() + "/driverOptions/_pyramids/";
+  QSettings mySettings;
+  QString resamplingMethod( cboResamplingMethod->itemData( cboResamplingMethod->currentIndex() ).toString() );
+  mySettings.setValue( prefix + "resampling", resamplingMethod );
+
   //
   // Ask raster layer to build the pyramids
   //
@@ -997,7 +1025,7 @@ void QgsRasterLayerProperties::on_buttonBuildPyramids_clicked()
   QApplication::setOverrideCursor( Qt::WaitCursor );
   QString res = provider->buildPyramids(
                   myPyramidList,
-                  cboResamplingMethod->itemData( cboResamplingMethod->currentIndex() ).toString(),
+                  resamplingMethod,
                   ( QgsRaster::RasterPyramidsFormat ) cbxPyramidsFormat->currentIndex() );
   QApplication::restoreOverrideCursor();
   mPyramidProgress->setValue( 0 );
@@ -1090,7 +1118,13 @@ void QgsRasterLayerProperties::on_pbnAddValuesFromDisplay_clicked()
     mMapCanvas->setMapTool( mPixelSelectorTool );
     //Need to work around the modality of the dialog but can not just hide() it.
     setModal( false );
-    lower();
+
+    showMinimized();
+
+    //Q_ASSERT( parentWidget()->parentWidget() );
+    parentWidget()->activateWindow();
+    parentWidget()->raise();
+    //lower();
   }
 }
 
@@ -1125,7 +1159,6 @@ void QgsRasterLayerProperties::on_mCrsSelector_crsChanged( const QgsCoordinateRe
 
 void QgsRasterLayerProperties::on_pbnDefaultValues_clicked()
 {
-  QgsDebugMsg( "Entered" );
   if ( !mRendererWidget )
   {
     return;

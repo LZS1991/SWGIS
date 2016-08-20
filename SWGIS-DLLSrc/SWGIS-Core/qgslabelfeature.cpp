@@ -13,8 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgslabelfeature.h"
-
-#include "./pal/feature.h"
+#include "feature.h"
 
 
 QgsLabelFeature::QgsLabelFeature( QgsFeatureId id, GEOSGeometry* geometry, QSizeF size )

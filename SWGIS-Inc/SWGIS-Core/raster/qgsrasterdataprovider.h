@@ -60,8 +60,9 @@ class SWGISCORE_EXPORT QgsImageFetcher : public QObject
 {
     Q_OBJECT
   public:
-
-    QgsImageFetcher() {}
+    /** Constructor */
+    QgsImageFetcher( QObject* parent = 0 ) : QObject( parent ) {}
+    /** Destructor */
     virtual ~QgsImageFetcher() {}
 
     // Make sure to connect to "finish" and "error" before starting
@@ -232,6 +233,9 @@ class SWGISCORE_EXPORT QgsRasterDataProvider : public QgsDataProvider, public Qg
       return QStringList();
     }
 
+    /** \brief Returns whether the provider supplies a legend graphic */
+    virtual bool supportsLegendGraphic() const { return false; }
+
     /** \brief Returns the legend rendered as pixmap
      *
      *  useful for that layer that need to get legend layer remotely as WMS
@@ -322,7 +326,7 @@ class SWGISCORE_EXPORT QgsRasterDataProvider : public QgsDataProvider, public Qg
      *         Empty if failed or there are no results (TODO: better error reporting).
      */
     //virtual QMap<int, QVariant> identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent = QgsRectangle(), int theWidth = 0, int theHeight = 0 );
-    virtual QgsRasterIdentifyResult identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent = QgsRectangle(), int theWidth = 0, int theHeight = 0 );
+    virtual QgsRasterIdentifyResult identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent = QgsRectangle(), int theWidth = 0, int theHeight = 0, int theDpi = 96 );
 
     /**
      * \brief   Returns the caption error text for the last error in this provider

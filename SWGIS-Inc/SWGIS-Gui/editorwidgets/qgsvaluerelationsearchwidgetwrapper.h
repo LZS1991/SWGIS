@@ -46,13 +46,23 @@ class SWGISGUI_EXPORT QgsValueRelationSearchWidgetWrapper : public QgsSearchWidg
     QString expression() override;
     bool valid() const override;
     QVariant value() const;
+    FilterFlags supportedFlags() const override;
+    FilterFlags defaultFlags() const override;
+    virtual QString createExpression( FilterFlags flags ) const override;
+
+  public slots:
+
+    virtual void clearWidget() override;
+    virtual void setEnabled( bool enabled ) override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;
     void initWidget( QWidget* editor ) override;
 
   public slots:
-    void valueChanged();
+
+    //! Called when current value of search widget changes
+    void onValueChanged();
 
   protected slots:
     void setExpression( QString exp ) override;

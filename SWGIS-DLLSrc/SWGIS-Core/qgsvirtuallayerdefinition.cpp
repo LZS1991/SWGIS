@@ -23,10 +23,10 @@ email                : hugo dot mercier at oslandia dot com
 #include "qgsvectorlayer.h"
 #include "qgsvectordataprovider.h"
 
-QgsVirtualLayerDefinition::QgsVirtualLayerDefinition( const QString& filePath ) :
-    mFilePath( filePath ),
-    mGeometryWkbType( QgsWKBTypes::Unknown ),
-    mGeometrySrid( 0 )
+QgsVirtualLayerDefinition::QgsVirtualLayerDefinition( const QString& filePath )
+    : mFilePath( filePath )
+    , mGeometryWkbType( QgsWKBTypes::Unknown )
+    , mGeometrySrid( 0 )
 {
 }
 
@@ -204,9 +204,8 @@ QUrl QgsVirtualLayerDefinition::toUrl() const
       urlQuery.addQueryItem( "geometry", geometryField() );
   }
 
-  for ( int i = 0; i < fields().count(); i++ )
+  Q_FOREACH ( const QgsField& f, fields() )
   {
-    const QgsField& f = fields()[i];
     if ( f.type() == QVariant::Int )
       urlQuery.addQueryItem( "field", f.name() + ":int" );
     else if ( f.type() == QVariant::Double )

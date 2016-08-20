@@ -18,7 +18,7 @@
 #define QGSMESSAGEVIEWER_H
 
 #include "../../SWGIS-Build/SWGIS-Gui/ui_stgismessageviewer.h"
-//#include <qgisgui.h>
+#include <qgisgui.h>
 #include "qgsmessageoutput.h"
 #include "stgisguiconfig.h"
 #include <QString>
@@ -31,8 +31,7 @@ class SWGISGUI_EXPORT QgsMessageViewer: public QDialog, public QgsMessageOutput,
 {
     Q_OBJECT
   public:
-//    QgsMessageViewer( QWidget *parent = nullptr, const Qt::WindowFlags& fl = QgisGui::ModalDialogFlags, bool deleteOnClose = true );
-    QgsMessageViewer( QWidget *parent = nullptr, const Qt::WindowFlags& fl = nullptr, bool deleteOnClose = true );
+    QgsMessageViewer( QWidget *parent = nullptr, const Qt::WindowFlags& fl = QgisGui::ModalDialogFlags, bool deleteOnClose = true );
     ~QgsMessageViewer();
 
     virtual void setMessage( const QString& message, MessageType msgType ) override;

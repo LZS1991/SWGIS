@@ -17,12 +17,13 @@
 #ifndef QGSEXTERNALRESOURCEWIDGETFACTORY_H
 #define QGSEXTERNALRESOURCEWIDGETFACTORY_H
 
-#include "./core/qgseditorwidgetfactory.h"
+#include "qgseditorwidgetfactory.h"
 #include "qgsexternalresourceconfigdlg.h"
 #include "qgsexternalresourcewidgetwrapper.h"
 
 
-/** \class QgsExternalResourceWidgetFactory
+/** \ingroup gui
+ * \class QgsExternalResourceWidgetFactory
  * \note not available in Python bindings
  */
 

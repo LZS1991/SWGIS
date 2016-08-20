@@ -8,7 +8,7 @@
 #include <QDomDocument>
 
 #include "qgsfeature.h"
-#include "./symbology-ng/qgssymbolv2.h"
+#include "qgssymbolv2.h"
 
 class QgsConditionalStyle;
 

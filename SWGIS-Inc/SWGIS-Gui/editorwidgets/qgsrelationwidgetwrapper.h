@@ -16,7 +16,7 @@
 #ifndef QGSRELATIONWIDGETWRAPPER_H
 #define QGSRELATIONWIDGETWRAPPER_H
 
-#include "./core/qgswidgetwrapper.h"
+#include "qgswidgetwrapper.h"
 
 class QgsRelationEditorWidget;
 
@@ -38,6 +38,12 @@ class SWGISGUI_EXPORT QgsRelationWidgetWrapper : public QgsWidgetWrapper
 
   public slots:
     void setFeature( const QgsFeature& feature ) override;
+
+    /** Sets the visibility of the wrapper's widget.
+     * @param visible set to true to show widget, false to hide widget
+     * @note added in QGIS 2.16
+     */
+    void setVisible( bool visible );
 
   private:
     QgsRelation mRelation;

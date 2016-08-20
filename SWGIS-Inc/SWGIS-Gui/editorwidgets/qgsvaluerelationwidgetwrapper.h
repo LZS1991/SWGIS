@@ -66,6 +66,7 @@ class SWGISGUI_EXPORT QgsValueRelationWidgetWrapper : public QgsEditorWidgetWrap
     QVariant value() const override;
     // TODO or have friend class :)
     static ValueRelationCache createCache( const QgsEditorWidgetConfig& config );
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;

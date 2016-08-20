@@ -17,7 +17,7 @@
 #ifndef QGSOPTIONSDIALOGBASE_H
 #define QGSOPTIONSDIALOGBASE_H
 
-//#include "qgisgui.h"
+#include "qgisgui.h"
 
 #include <QDialog>
 #include <QPointer>

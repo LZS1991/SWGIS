@@ -16,9 +16,10 @@
 #ifndef QGSPHOTOWIDGETFACTORY_H
 #define QGSPHOTOWIDGETFACTORY_H
 
-#include "./core/qgseditorwidgetfactory.h"
+#include "qgseditorwidgetfactory.h"
 
-/** \class QgsPhotoWidgetFactory
+/** \ingroup gui
+ * \class QgsPhotoWidgetFactory
  * \note not available in Python bindings
  */
 

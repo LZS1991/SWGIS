@@ -36,6 +36,8 @@ class SWGISGUI_EXPORT QgsMapToolZoom : public QgsMapTool
 
     ~QgsMapToolZoom();
 
+    virtual Flags flags() const override { return QgsMapTool::Transient; }
+
     //! Overridden mouse move event
     virtual void canvasMoveEvent( QgsMapMouseEvent* e ) override;
 
@@ -45,10 +47,6 @@ class SWGISGUI_EXPORT QgsMapToolZoom : public QgsMapTool
     //! Overridden mouse release event
     virtual void canvasReleaseEvent( QgsMapMouseEvent* e ) override;
 
-    //! indicates whether we're zooming in or out
-    virtual bool isTransient() override { return true; }
-
-    //! Flag to indicate a map canvas drag operation is taking place
     virtual void deactivate() override;
 
   protected:

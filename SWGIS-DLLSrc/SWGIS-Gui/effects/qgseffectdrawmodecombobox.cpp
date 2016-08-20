@@ -13,7 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./effects/qgseffectdrawmodecombobox.h"
+#include "qgseffectdrawmodecombobox.h"
 #include "qgsapplication.h"
 
 #include <QList>

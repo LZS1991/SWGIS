@@ -13,7 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./core/qgseditorconfigwidget.h"
+#include "qgseditorconfigwidget.h"
 
 
 QgsEditorConfigWidget::QgsEditorConfigWidget( QgsVectorLayer* vl, int fieldIdx, QWidget* parent )

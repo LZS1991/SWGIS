@@ -23,13 +23,13 @@
 #include <QTextCodec>
 
 #include "qgslogger.h"
-#include "./ogr/qgsopenvectorlayerdialog.h"
+#include "qgsopenvectorlayerdialog.h"
 #include "qgsvectordataprovider.h"
 
 #include <ogr_api.h>
 #include "qgsproviderregistry.h"
-#include "./ogr/qgsnewogrconnection.h"
-#include "./ogr/qgsogrhelperfunctions.h"
+#include "qgsnewogrconnection.h"
+#include "qgsogrhelperfunctions.h"
 #include "qgscontexthelp.h"
 
 QgsOpenVectorLayerDialog::QgsOpenVectorLayerDialog( QWidget* parent, Qt::WindowFlags fl )

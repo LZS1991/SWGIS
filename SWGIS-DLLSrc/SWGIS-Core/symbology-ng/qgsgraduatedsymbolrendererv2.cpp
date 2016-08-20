@@ -20,8 +20,8 @@
 #include "qgsvectorcolorrampv2.h"
 #include "qgspointdisplacementrenderer.h"
 #include "qgsinvertedpolygonrenderer.h"
-#include "../effects/qgspainteffect.h"
-#include "../effects/qgspainteffectregistry.h"
+#include "qgspainteffect.h"
+#include "qgspainteffectregistry.h"
 #include "qgsscaleexpression.h"
 #include "qgsdatadefined.h"
 
@@ -141,7 +141,7 @@ QString QgsRendererRangeV2::dump() const
   return QString( "%1 - %2::%3::%4\n" ).arg( mLowerValue ).arg( mUpperValue ).arg( mLabel, mSymbol.data() ? mSymbol->dump() : "(no symbol)" );
 }
 
-void QgsRendererRangeV2::toSld( QDomDocument &doc, QDomElement &element, QgsStringMap props ) const
+void QgsRendererRangeV2::toSld( QDomDocument &doc, QDomElement &element, QgsStringMap props, bool firstRange ) const
 {
   if ( !mSymbol.data() || props.value( "attribute", "" ).isEmpty() )
     return;
@@ -157,15 +157,17 @@ void QgsRendererRangeV2::toSld( QDomDocument &doc, QDomElement &element, QgsStri
 
   QDomElement descrElem = doc.createElement( "se:Description" );
   QDomElement titleElem = doc.createElement( "se:Title" );
-  QString descrStr = QString( "range: %1 - %2" ).arg( mLowerValue ).arg( mUpperValue );
+  QString descrStr = QString( "range: %1 - %2" ).arg( qgsDoubleToString( mLowerValue ), qgsDoubleToString( mUpperValue ) );
   titleElem.appendChild( doc.createTextNode( !mLabel.isEmpty() ? mLabel : descrStr ) );
   descrElem.appendChild( titleElem );
   ruleElem.appendChild( descrElem );
 
   // create the ogc:Filter for the range
-  QString filterFunc = QString( "%1 > %2 AND %1 <= %3" )
-                       .arg( attrName.replace( '\"', "\"\"" ) )
-                       .arg( mLowerValue ).arg( mUpperValue );
+  QString filterFunc = QString( "%1 %2 %3 AND %1 <= %4" )
+                       .arg( attrName.replace( '\"', "\"\"" ),
+                             firstRange ? ">=" : ">",
+                             qgsDoubleToString( mLowerValue ),
+                             qgsDoubleToString( mUpperValue ) );
   QgsSymbolLayerV2Utils::createFunctionElement( doc, ruleElem, filterFunc );
 
   mSymbol->toSld( doc, ruleElem, props );
@@ -176,20 +178,20 @@ void QgsRendererRangeV2::toSld( QDomDocument &doc, QDomElement &element, QgsStri
 int QgsRendererRangeV2LabelFormat::MaxPrecision = 15;
 int QgsRendererRangeV2LabelFormat::MinPrecision = -6;
 
-QgsRendererRangeV2LabelFormat::QgsRendererRangeV2LabelFormat():
-    mFormat( " %1 - %2 " ),
-    mPrecision( 4 ),
-    mTrimTrailingZeroes( false ),
-    mNumberScale( 1.0 ),
-    mNumberSuffix( "" ),
-    mReTrailingZeroes( "[.,]?0*$" ),
-    mReNegativeZero( "^\\-0(?:[.,]0*)?$" )
+QgsRendererRangeV2LabelFormat::QgsRendererRangeV2LabelFormat()
+    : mFormat( " %1 - %2 " )
+    , mPrecision( 4 )
+    , mTrimTrailingZeroes( false )
+    , mNumberScale( 1.0 )
+    , mNumberSuffix( "" )
+    , mReTrailingZeroes( "[.,]?0*$" )
+    , mReNegativeZero( "^\\-0(?:[.,]0*)?$" )
 {
 }
 
-QgsRendererRangeV2LabelFormat::QgsRendererRangeV2LabelFormat( const QString& format, int precision, bool trimTrailingZeroes ):
-    mReTrailingZeroes( "[.,]?0*$" ),
-    mReNegativeZero( "^\\-0(?:[.,]0*)?$" )
+QgsRendererRangeV2LabelFormat::QgsRendererRangeV2LabelFormat( const QString& format, int precision, bool trimTrailingZeroes )
+    : mReTrailingZeroes( "[.,]?0*$" )
+    , mReNegativeZero( "^\\-0(?:[.,]0*)?$" )
 {
   setFormat( format );
   setPrecision( precision );
@@ -568,10 +570,12 @@ void QgsGraduatedSymbolRendererV2::toSld( QDomDocument& doc, QDomElement &elemen
     props[ "scale" ] = mSizeScale->expression();
 
   // create a Rule for each range
+  bool first = true;
   for ( QgsRangeList::const_iterator it = mRanges.constBegin(); it != mRanges.constEnd(); ++it )
   {
     QgsStringMap catProps( props );
-    it->toSld( doc, element, catProps );
+    it->toSld( doc, element, catProps, first );
+    first = false;
   }
 }
 
@@ -1628,7 +1632,6 @@ bool valueGreaterThan( const QgsRendererRangeV2 &r1, const QgsRendererRangeV2 &r
 
 void QgsGraduatedSymbolRendererV2::sortByValue( Qt::SortOrder order )
 {
-  QgsDebugMsg( "Entered" );
   if ( order == Qt::AscendingOrder )
   {
     qSort( mRanges.begin(), mRanges.end(), valueLessThan );

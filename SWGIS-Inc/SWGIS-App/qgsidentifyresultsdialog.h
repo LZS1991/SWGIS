@@ -41,7 +41,7 @@ class QgsVectorLayer;
 class QgsRasterLayer;
 class QgsHighlight;
 class QgsMapCanvas;
-class QDockWidget;
+class QgsDockWidget;
 
 class QwtPlotCurve;
 
@@ -56,7 +56,7 @@ class SWGISAPP_EXPORT QgsIdentifyResultsWebView : public QgsWebView
     QgsIdentifyResultsWebView( QWidget *parent = nullptr );
     QSize sizeHint() const override;
   public slots:
-    void print( void );
+    void print();
   protected:
     void contextMenuEvent( QContextMenuEvent* ) override;
     QgsWebView *createWindow( QWebPage::WebWindowType type ) override;
@@ -253,7 +253,7 @@ class SWGISAPP_EXPORT QgsIdentifyResultsDialog: public QDialog, private Ui::Iden
 
     void doMapLayerAction( QTreeWidgetItem *item, QgsMapLayerAction* action );
 
-    QDockWidget *mDock;
+    QgsDockWidget *mDock;
 
     QVector<QgsIdentifyPlotCurve *> mPlotCurves;
 };
@@ -263,8 +263,11 @@ class QgsIdentifyResultsDialogMapLayerAction : public QAction
     Q_OBJECT
 
   public:
-    QgsIdentifyResultsDialogMapLayerAction( const QString &name, QObject *parent, QgsMapLayerAction* action, QgsMapLayer* layer, QgsFeature * f ) :
-        QAction( name, parent ), mAction( action ), mFeature( f ), mLayer( layer )
+    QgsIdentifyResultsDialogMapLayerAction( const QString &name, QObject *parent, QgsMapLayerAction* action, QgsMapLayer* layer, QgsFeature * f )
+        : QAction( name, parent )
+        , mAction( action )
+        , mFeature( f )
+        , mLayer( layer )
     {}
 
   public slots:

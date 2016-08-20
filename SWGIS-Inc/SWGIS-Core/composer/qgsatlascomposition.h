@@ -18,7 +18,7 @@
 
 #include "qgscoordinatetransform.h"
 #include "qgsfeature.h"
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 
 #include <memory>
 #include <QString>

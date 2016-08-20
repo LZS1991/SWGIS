@@ -137,19 +137,9 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrProvider : public QgsVectorDataProvider
     /** Deletes a feature*/
     virtual bool deleteFeatures( const QgsFeatureIds & id ) override;
 
-    /**
-     * Adds new attributes
-     * @param attributes list of new attributes
-     * @return true in case of success and false in case of failure
-     */
     virtual bool addAttributes( const QList<QgsField> &attributes ) override;
-
-    /**
-     * Deletes existing attributes
-     * @param attributes a set containing names of attributes
-     * @return true in case of success and false in case of failure
-     */
     virtual bool deleteAttributes( const QgsAttributeIds &attributes ) override;
+    virtual bool renameAttributes( const QgsFieldNameMap& renamedAttributes ) override;
 
     /** Changes attribute values of existing features */
     virtual bool changeAttributeValues( const QgsChangedAttributesMap &attr_map ) override;
@@ -174,6 +164,9 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrProvider : public QgsVectorDataProvider
 
     virtual void setEncoding( const QString& e ) override;
 
+    virtual bool enterUpdateMode() override;
+
+    virtual bool leaveUpdateMode() override;
 
     /** Return vector file filter string
      *
@@ -271,6 +264,9 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrProvider : public QgsVectorDataProvider
      */
     void forceReload() override;
 
+    /** Closes and re-open the datasource */
+    void reloadData() override;
+
   protected:
     /** Loads fields from input file to member attributeFields */
     void loadFields();
@@ -287,7 +283,15 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrProvider : public QgsVectorDataProvider
     /** Clean shapefile from features which are marked as deleted */
     void repack();
 
-    void open();
+    enum OpenMode
+    {
+      OpenModeInitial,
+      OpenModeSameAsCurrent,
+      OpenModeForceReadOnly,
+      OpenModeForceUpdate,
+    };
+
+    void open( OpenMode mode );
     void close();
 
   private:
@@ -295,6 +299,7 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrProvider : public QgsVectorDataProvider
     QString ogrWkbGeometryTypeName( OGRwkbGeometryType type ) const;
     OGRwkbGeometryType ogrWkbGeometryTypeFromName( const QString& typeName ) const;
     QgsFields mAttributeFields;
+    bool mFirstFieldIsFid;
     OGRDataSourceH ogrDataSource;
     OGREnvelope* mExtent;
 
@@ -335,7 +340,7 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrProvider : public QgsVectorDataProvider
 
     bool mValid;
 
-    OGRwkbGeometryType geomType;
+    OGRwkbGeometryType mOGRGeomType;
     long mFeaturesCounted;
 
     mutable QStringList mSubLayerList;
@@ -355,18 +360,37 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrProvider : public QgsVectorDataProvider
     /** Whether the file is opened in write mode*/
     bool mWriteAccess;
 
+    /** Whether the file can potentially be opened in write mode (but not necessarily currently) */
+    bool mWriteAccessPossible;
+
+    /** Whether the open mode of the datasource changes w.r.t calls to enterUpdateMode() / leaveUpdateMode() */
+    bool mDynamicWriteAccess;
+
     bool mShapefileMayBeCorrupted;
+
+    /** Converts the geometry to the layer type if necessary. Takes ownership of the passed geometry */
+    OGRGeometryH ConvertGeometryIfNecessary( OGRGeometryH );
+
+    int mUpdateModeStackDepth;
+
+    void computeCapabilities();
+
+    int mCapabilities;
+
+    bool doInitialActionsForEdition();
 };
 
 
-class SWGISOGRPROVIDER_EXPORT QgsOgrUtils
+class SWGISOGRPROVIDER_EXPORT QgsOgrProviderUtils
 {
   public:
-    static void setRelevantFields( OGRLayerH ogrLayer, int fieldCount, bool fetchGeometry, const QgsAttributeList &fetchAttributes );
+    static void setRelevantFields( OGRLayerH ogrLayer, int fieldCount, bool fetchGeometry, const QgsAttributeList &fetchAttributes, bool firstAttrIsFid );
     static OGRLayerH setSubsetString( OGRLayerH layer, OGRDataSourceH ds, QTextCodec* encoding, const QString& subsetString );
     static QByteArray quotedIdentifier( QByteArray field, const QString& ogrDriverName );
 
     /** Quote a value for placement in a SQL string.
      */
     static QString quotedValue( const QVariant& value );
+
+    static OGRDataSourceH OGROpenWrapper( const char* pszPath, bool bUpdate, OGRSFDriverH *phDriver );
 };

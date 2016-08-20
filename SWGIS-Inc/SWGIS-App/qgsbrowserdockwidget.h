@@ -15,7 +15,7 @@
 #ifndef QGSBROWSERDOCKWIDGET_H
 #define QGSBROWSERDOCKWIDGET_H
 
-#include <QDockWidget>
+
 #include <ui_swgisbrowserdockwidgetbase.h>
 #include <ui_swgisbrowserlayerpropertiesbase.h>
 #include <ui_swgisbrowserdirectorypropertiesbase.h>
@@ -24,6 +24,7 @@
 #include "qgsdataitem.h"
 #include "qgsbrowsertreeview.h"
 #include "swgisappconfig.h"
+#include "qgsdockwidget.h"
 #include <QSortFilterProxyModel>
 
 class QgsBrowserModel;
@@ -101,7 +102,7 @@ class QgsBrowserPropertiesDialog : public QDialog , private Ui::BrowserPropertie
     QString mSettingsSection;
 };
 
-class SWGISAPP_EXPORT QgsBrowserDockWidget : public QDockWidget, private Ui::BrowserDockWidgetBase
+class SWGISAPP_EXPORT QgsBrowserDockWidget : public QgsDockWidget, private Ui::BrowserDockWidgetBase
 {
     Q_OBJECT
   public:

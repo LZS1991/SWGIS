@@ -17,7 +17,7 @@
 
 #include "qgscomposertable.h"
 #include "qgscomposertablecolumn.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
+#include "qgssymbollayerv2utils.h"
 #include "qgscomposerutils.h"
 #include "qgsfontutils.h"
 #include <QPainter>

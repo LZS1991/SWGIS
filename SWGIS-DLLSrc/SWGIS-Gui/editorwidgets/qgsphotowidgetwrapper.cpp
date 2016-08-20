@@ -20,6 +20,7 @@
 #include <QGridLayout>
 #include <QFileDialog>
 #include <QSettings>
+#include <QUrl>
 
 #include "qgsfilterlineedit.h"
 
@@ -56,6 +57,18 @@ void QgsPhotoWidgetWrapper::selectFileName()
 
 void QgsPhotoWidgetWrapper::loadPixmap( const QString& fileName )
 {
+  if ( fileName.isEmpty() )
+  {
+#ifdef WITH_QTWEBKIT
+    if ( mWebView )
+    {
+      mWebView->setUrl( QString() );
+    }
+#endif
+    clearPicture();
+    return;
+  }
+
   QString filePath = fileName;
 
   if ( QUrl( fileName ).isRelative() )
@@ -98,6 +111,24 @@ void QgsPhotoWidgetWrapper::loadPixmap( const QString& fileName )
       mPhotoLabel->setPixmap( pm );
     }
   }
+  else
+  {
+    clearPicture();
+  }
+}
+
+void QgsPhotoWidgetWrapper::clearPicture()
+{
+  if ( mPhotoLabel )
+  {
+    mPhotoLabel->clear();
+    mPhotoLabel->setMinimumSize( QSize( 0, 0 ) );
+
+    if ( mPhotoPixmapLabel )
+      mPhotoPixmapLabel->setPixmap( QPixmap() );
+    else
+      mPhotoLabel->setPixmap( QPixmap() );
+  }
 }
 
 QVariant QgsPhotoWidgetWrapper::value() const
@@ -115,19 +146,33 @@ QVariant QgsPhotoWidgetWrapper::value() const
   return v;
 }
 
+void QgsPhotoWidgetWrapper::showIndeterminateState()
+{
+  if ( mLineEdit )
+  {
+    whileBlocking( mLineEdit )->clear();
+  }
+  if ( mPhotoLabel )
+    mPhotoLabel->clear();
+  if ( mPhotoPixmapLabel )
+    mPhotoPixmapLabel->clear();
+}
+
 QWidget* QgsPhotoWidgetWrapper::createWidget( QWidget* parent )
 {
   QWidget* container = new QWidget( parent );
-  QGridLayout* layout = new QGridLayout( container );
-  QgsFilterLineEdit* le = new QgsFilterLineEdit( container );
-  QgsPixmapLabel* label = new QgsPixmapLabel( parent );
+  QGridLayout* layout = new QGridLayout();
+  QgsFilterLineEdit* le = new QgsFilterLineEdit();
+  QgsPixmapLabel* label = new QgsPixmapLabel();
   label->setObjectName( "PhotoLabel" );
-  QPushButton* pb = new QPushButton( tr( "..." ), container );
+  QPushButton* pb = new QPushButton( tr( "..." ) );
   pb->setObjectName( "FileChooserButton" );
 
   layout->addWidget( label, 0, 0, 1, 2 );
   layout->addWidget( le, 1, 0 );
   layout->addWidget( pb, 1, 1 );
+  layout->setMargin( 0 );
+  layout->setContentsMargins( 0, 0, 0, 0 );
 
   container->setLayout( layout );
 
@@ -200,7 +245,10 @@ void QgsPhotoWidgetWrapper::setValue( const QVariant& value )
   if ( mLineEdit )
   {
     if ( value.isNull() )
-      mLineEdit->setText( QSettings().value( "qgis/nullValue", "NULL" ).toString() );
+    {
+      whileBlocking( mLineEdit )->setText( QSettings().value( "qgis/nullValue", "NULL" ).toString() );
+      clearPicture();
+    }
     else
       mLineEdit->setText( value.toString() );
   }
@@ -217,4 +265,17 @@ void QgsPhotoWidgetWrapper::setEnabled( bool enabled )
 
   if ( mButton )
     mButton->setEnabled( enabled );
+}
+
+void QgsPhotoWidgetWrapper::updateConstraintWidgetStatus( bool constraintValid )
+{
+  if ( mLineEdit )
+  {
+    if ( constraintValid )
+      mLineEdit->setStyleSheet( QString() );
+    else
+    {
+      mLineEdit->setStyleSheet( "QgsFilterLineEdit { background-color: #dd7777; }" );
+    }
+  }
 }

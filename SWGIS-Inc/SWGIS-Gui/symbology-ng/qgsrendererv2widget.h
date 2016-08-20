@@ -17,9 +17,11 @@
 
 #include <QWidget>
 #include <QMenu>
+#include <QStackedWidget>
 #include "qgssymbolv2.h"
 #include "qgsdatadefined.h"
 #include "stgisguiconfig.h"
+#include "qgspanelwidget.h"
 class QgsVectorLayer;
 class QgsStyleV2;
 class QgsFeatureRendererV2;
@@ -36,7 +38,7 @@ WORKFLOW:
 - on any change of renderer type, create some default (dummy?) version and change the stacked widget
 - when clicked ok/apply, get the renderer from active widget and clone it for the layer
 */
-class SWGISGUI_EXPORT QgsRendererV2Widget : public QWidget
+class SWGISGUI_EXPORT QgsRendererV2Widget : public QgsPanelWidget
 {
     Q_OBJECT
   public:

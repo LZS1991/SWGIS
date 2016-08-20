@@ -9,7 +9,6 @@ CONFIG -= app_bundle
 TEMPLATE = lib
 DEFINES      += SWGISCORE_LIB
 
-#包含共有的一些属性
 include(../SWGISSrcSetting.pri)
 
 INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Core \
@@ -23,7 +22,9 @@ INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Core \
                $$SWGISINC_PATH/SWGIS-Core/pal \
                $$SWGISINC_PATH/SWGIS-Core/raster \
                $$SWGISINC_PATH/SWGIS-Core/symbology-ng \
+               $$SWGISINC_PATH/SWGIS-Core/simplify \
                $$SWGISINC_PATH/SWGIS-Core/gps/qextserialport
+
 INCLUDEPATH += $$THIRDPARTY_PATH \
                $$THIRDPARTY_PATH/GDAL/win_msvc_x64/include \
                $$THIRDPARTY_PATH/libspatialindex/win_msvc_x64/include
@@ -69,7 +70,6 @@ win32{
 SOURCES += \
     qgis.cpp \
     qgsapplication.cpp \
-    qgsattributeaction.cpp \
     qgsbrowsermodel.cpp \
     qgscachedfeatureiterator.cpp \
     qgscacheindex.cpp \
@@ -389,11 +389,39 @@ SOURCES += \
     symbology-ng/qgssymbolv2.cpp \
     symbology-ng/qgsvectorcolorrampv2.cpp \
     symbology-ng/qgsvectorfieldsymbollayer.cpp \
-    flex_qgsexpressionlexer.cpp \
     qgsexpressionparser.cpp \
-    geometry/qgsabstractgeometry.cpp
+    qgsaction.cpp \
+    qgsactionmanager.cpp \
+    qgsaggregatecalculator.cpp \
+    qgsattributetableconfig.cpp \
+    qgsdataprovider.cpp \
+    qgsdatetimestatisticalsummary.cpp \
+    qgsinterval.cpp \
+    qgsjsonutils.cpp \
+    qgsogrutils.cpp \
+    qgsruntimeprofiler.cpp \
+    qgssqliteexpressioncompiler.cpp \
+    qgssqlstatement.cpp \
+    qgsstringstatisticalsummary.cpp \
+    composer/qgscomposernodesitem.cpp \
+    composer/qgscomposerpolygon.cpp \
+    composer/qgscomposerpolyline.cpp \
+    composer/qgsgroupungroupitemscommand.cpp \
+    geometry/qgsabstractgeometryv2.cpp \
+    geometry/qgswkbsimplifierptr.cpp \
+    raster/qgshillshaderenderer.cpp \
+    symbology-ng/qgsarrowsymbollayer.cpp \
+    symbology-ng/qgsnullsymbolrenderer.cpp \
+    simplify/effectivearea.c \
+    flex_qgsexpressionlexer.cpp \
+    qgssqlstatementparser.cpp \
+    flex_qgssqlstatementlexer.cpp
 
 HEADERS += \
+    $$SWGISINC_PATH/SWGIS-Core/qgsexpressionlexer.ll \
+    $$SWGISINC_PATH/SWGIS-Core/qgsexpressionparser.yy \
+    $$SWGISINC_PATH/SWGIS-Core/qgssqlstatementlexer.ll \
+    $$SWGISINC_PATH/SWGIS-Core/qgssqlstatementparser.yy \
     $$SWGISINC_PATH/SWGIS-Core/qgis.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsapplication.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsattributeaction.h \
@@ -405,6 +433,7 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Core/qgscolorscheme.h \
     $$SWGISINC_PATH/SWGIS-Core/qgscolorschemeregistry.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsconditionalstyle.h \
+    $$SWGISINC_PATH/SWGIS-Core/qgsconfig.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsconnectionpool.h \
     $$SWGISINC_PATH/SWGIS-Core/qgscontexthelp.h \
     $$SWGISINC_PATH/SWGIS-Core/qgscoordinatereferencesystem.h \
@@ -432,6 +461,9 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Core/qgsexpression.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsexpressioncontext.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsexpressionfieldbuffer.h \
+    $$SWGISINC_PATH/SWGIS-Core/qgsexpressionlexer.ll \
+    $$SWGISINC_PATH/SWGIS-Core/qgsexpressionparser.hpp \
+    $$SWGISINC_PATH/SWGIS-Core/qgsexpressionparser.yy \
     $$SWGISINC_PATH/SWGIS-Core/qgsexpressionprivate.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsexpressionsorter.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsfeature.h \
@@ -545,6 +577,7 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Core/qgsvectorlayerrenderer.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsvectorlayerundocommand.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsvectorsimplifymethod.h \
+    $$SWGISINC_PATH/SWGIS-Core/qgsversion.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsvirtuallayerdefinition.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsvirtuallayerdefinitionutils.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsvisibilitypresetcollection.h \
@@ -552,6 +585,8 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Core/qgswebpage.h \
     $$SWGISINC_PATH/SWGIS-Core/qgswebview.h \
     $$SWGISINC_PATH/SWGIS-Core/qgsxmlutils.h \
+    $$SWGISINC_PATH/SWGIS-Core/composer/qgsaddremoveitemcommand.h \
+    $$SWGISINC_PATH/SWGIS-Core/composer/qgsaddremovemultiframecommand.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgsatlascomposition.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposerarrow.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposerattributetable.h \
@@ -564,9 +599,11 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposeritem.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposeritemcommand.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposeritemgroup.h \
+    $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposerlabel.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposerlegend.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposerlegenditem.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposerlegendstyle.h \
+    $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposermap.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposermapgrid.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposermapitem.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposermapoverview.h \
@@ -591,10 +628,6 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgsscalebarstyle.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgssingleboxscalebarstyle.h \
     $$SWGISINC_PATH/SWGIS-Core/composer/qgsticksscalebarstyle.h \
-    $$SWGISINC_PATH/SWGIS-Core/diagram/qgsdiagram.h \
-    $$SWGISINC_PATH/SWGIS-Core/diagram/qgshistogramdiagram.h \
-    $$SWGISINC_PATH/SWGIS-Core/diagram/qgspiediagram.h \
-    $$SWGISINC_PATH/SWGIS-Core/diagram/qgstextdiagram.h \
     $$SWGISINC_PATH/SWGIS-Core/dxf/qgsdxfexport.h \
     $$SWGISINC_PATH/SWGIS-Core/dxf/qgsdxfpaintdevice.h \
     $$SWGISINC_PATH/SWGIS-Core/dxf/qgsdxfpaintengine.h \
@@ -632,9 +665,6 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Core/geometry/qgssurfacev2.h \
     $$SWGISINC_PATH/SWGIS-Core/geometry/qgswkbptr.h \
     $$SWGISINC_PATH/SWGIS-Core/geometry/qgswkbtypes.h \
-    $$SWGISINC_PATH/SWGIS-Core/gps/qextserialport/qextserialenumerator.h \
-    $$SWGISINC_PATH/SWGIS-Core/gps/qextserialport/qextserialport.h \
-    $$SWGISINC_PATH/SWGIS-Core/gps/qextserialport/qwineventnotifier.h \
     $$SWGISINC_PATH/SWGIS-Core/gps/config.h \
     $$SWGISINC_PATH/SWGIS-Core/gps/context.h \
     $$SWGISINC_PATH/SWGIS-Core/gps/gmath.h \
@@ -743,12 +773,40 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Core/symbology-ng/qgssymbolv2.h \
     $$SWGISINC_PATH/SWGIS-Core/symbology-ng/qgsvectorcolorrampv2.h \
     $$SWGISINC_PATH/SWGIS-Core/symbology-ng/qgsvectorfieldsymbollayer.h \
-    $$SWGISINC_PATH/SWGIS-Core/qgsconfig.h \
-    $$SWGISINC_PATH/SWGIS-Core/qgsversion.h \
-    $$SWGISINC_PATH/SWGIS-Core/qgsexpressionparser.hpp \
-    $$SWGISINC_PATH/SWGIS-Core/qgsexpressionlexer.ll \
-    $$SWGISINC_PATH/SWGIS-Core/qgsexpressionparser.yy \
-    $$SWGISINC_PATH/SWGIS-Core/composer/qgsaddremoveitemcommand.h \
-    $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposermap.h \
-    $$SWGISINC_PATH/SWGIS-Core/composer/qgsaddremovemultiframecommand.h \
-    $$SWGISINC_PATH/SWGIS-Core/composer/qgscomposerlabel.h
+    ../../SWGIS-Inc/SWGIS-Core/qgsinterval.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsactionmanager.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsaction.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsaggregatecalculator.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsannotation.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsattributetableconfig.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgscoordinatereferencesystem_p.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsdatetimestatisticalsummary.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsjsonutils.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsogrutils.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsruntimeprofiler.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgssqliteexpressioncompiler.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgssqlstatement.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgsstringstatisticalsummary.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgstestutils.h \
+    ../../SWGIS-Inc/SWGIS-Core/simplify/effectivearea.h \
+    ../../SWGIS-Inc/SWGIS-Core/composer/qgscomposernodesitem.h \
+    ../../SWGIS-Inc/SWGIS-Core/composer/qgscomposerpolygon.h \
+    ../../SWGIS-Inc/SWGIS-Core/composer/qgscomposerpolyline.h \
+    ../../SWGIS-Inc/SWGIS-Core/composer/qgsgroupungroupitemscommand.h \
+    ../../SWGIS-Inc/SWGIS-Core/raster/qgshillshaderenderer.h \
+    ../../SWGIS-Inc/SWGIS-Core/geometry/qgswkbsimplifierptr.h \
+    ../../SWGIS-Inc/SWGIS-Core/symbology-ng/qgsarrowsymbollayer.h \
+    ../../SWGIS-Inc/SWGIS-Core/symbology-ng/qgsnullsymbolrenderer.h \
+    ../../SWGIS-Inc/SWGIS-Core/gps/qextserialport/qextserialport.h \
+    ../../SWGIS-Inc/SWGIS-Core/gps/qextserialport/qextserialenumerator.h \
+    ../../SWGIS-Inc/SWGIS-Core/gps/qextserialport/qwineventnotifier.h \
+    ../../SWGIS-Inc/SWGIS-Core/qgssqlstatementparser.hpp
+
+DISTFILES += \
+    Makefile \
+    Makefile.Debug \
+    Makefile.Release
+
+SUBDIRS += \
+    $$SWGISINC_PATH/SWGIS-Core/STGIS-Core.pro \
+    ../../SWGIS-Inc/SWGIS-Core/STGIS-Core.pro

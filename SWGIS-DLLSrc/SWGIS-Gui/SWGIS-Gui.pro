@@ -17,8 +17,11 @@ INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Gui \
                $$SWGISINC_PATH/SWGIS-Gui/symbology-ng \
                $$SWGISINC_PATH/SWGIS-Gui/raster \
                $$SWGISINC_PATH/SWGIS-Gui/editorwidgets \
+               $$SWGISINC_PATH/SWGIS-Gui/editorwidgets/core \
                $$SWGISINC_PATH/SWGIS-Gui/layertree \
+               $$SWGISINC_PATH/SWGIS-Gui/effects \
                $$SWGISINC_PATH/SWGIS-Core/symbology-ng \
+               $$SWGISINC_PATH/SWGIS-Core/effects \
                $$SWGISINC_PATH/SWGIS-Core/geometry \
                $$SWGISINC_PATH/SWGIS-Core/raster \
                $$SWGISINC_PATH/SWGIS-Core/layertree \
@@ -27,7 +30,8 @@ INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Gui \
 INCLUDEPATH += $$THIRDPARTY_PATH \
                $$THIRDPARTY_PATH/GDAL/win_msvc_x64/include \
                $$THIRDPARTY_PATH/libspatialindex/win_msvc_x64/include \
-               $$THIRDPARTY_PATH/QWT/win_msvc_x64/include
+               $$THIRDPARTY_PATH/QWT/win_msvc_x64/include \
+               $$THIRDPARTY_PATH/QScintilla2/win_msvc_x64/include
 
 LIBS += $$THIRDPARTY_PATH/GDAL/win_msvc_x64/lib/sqlite3_i.lib
 #LIBS += $$THIRDPARTY_PATH/QScintilla2/win_msvc_x64/lib/qscintilla2.lib
@@ -99,7 +103,6 @@ SOURCES += \
     qgsdatadefinedbutton.cpp \
     qgsexpressionbuilderdialog.cpp \
     qgscolorbuttonv2.cpp \
-    qgsdoublespinbox.cpp \
     qgsunitselectionwidget.cpp \
     qgsexpressionbuilderwidget.cpp \
     qgsexpressionhighlighter.cpp \
@@ -273,7 +276,34 @@ SOURCES += \
     qgscomposerview.cpp \
     qgsbusyindicatordialog.cpp \
     qgsnewnamedialog.cpp \
-    swgisnewhttpconnection.cpp
+    swgisnewhttpconnection.cpp \
+    qgspanelwidget.cpp \
+    qgstrackedvectorlayertools.cpp \
+    qgsattributeformeditorwidget.cpp \
+    editorwidgets/qgsmultiedittoolbutton.cpp \
+    editorwidgets/qgssearchwidgettoolbutton.cpp \
+    qgsgradientstopeditor.cpp \
+    qgsmaplayerconfigwidget.cpp \
+    editorwidgets/qgscheckboxsearchwidgetwrapper.cpp \
+    editorwidgets/qgsdatetimesearchwidgetwrapper.cpp \
+    editorwidgets/qgstexteditsearchwidgetwrapper.cpp \
+    editorwidgets/qgsrelationreferencesearchwidgetwrapper.cpp \
+    qgsdockwidget.cpp \
+    qgscompoundcolorwidget.cpp \
+    symbology-ng/qgsarrowsymbollayerwidget.cpp \
+    attributetable/qgsorganizetablecolumnsdialog.cpp \
+    qgssearchquerybuilder.cpp \
+    qgsexpressionselectiondialog.cpp \
+    symbology-ng/qgsnullsymbolrendererwidget.cpp \
+    layertree/qgslayertreeembeddedwidgetregistry.cpp \
+    layertree/qgslayertreeembeddedwidgetsimpl.cpp \
+    editorwidgets/qgsdoublespinbox.cpp \
+    qgssqlcomposerdialog.cpp \
+    raster/qgshillshaderendererwidget.cpp \
+    qgsmaplayerconfigwidgetfactory.cpp \
+    layertree/qgslayertreeembeddedconfigwidget.cpp \
+    qgscomposeritemcombobox.cpp \
+    qgstablewidgetitem.cpp
 
 HEADERS += \
     $$SWGISINC_PATH/SWGIS-Gui/stgisguiconfig.h \
@@ -494,7 +524,34 @@ HEADERS += \
     $$SWGISINC_PATH/SWGIS-Gui/qgscomposerview.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgsbusyindicatordialog.h \
     $$SWGISINC_PATH/SWGIS-Gui/qgsnewnamedialog.h \
-    $$SWGISINC_PATH/SWGIS-Gui/swgisnewhttpconnection.h
+    $$SWGISINC_PATH/SWGIS-Gui/swgisnewhttpconnection.h \
+    ../../SWGIS-Inc/SWGIS-Gui/layertree/qgslayertreeembeddedwidgetregistry.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgspanelwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgstrackedvectorlayertools.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsattributeformeditorwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/editorwidgets/qgsmultiedittoolbutton.h \
+    ../../SWGIS-Inc/SWGIS-Gui/editorwidgets/qgssearchwidgettoolbutton.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsgradientstopeditor.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsmaplayerconfigwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/editorwidgets/qgscheckboxsearchwidgetwrapper.h \
+    ../../SWGIS-Inc/SWGIS-Gui/editorwidgets/qgsdatetimesearchwidgetwrapper.h \
+    ../../SWGIS-Inc/SWGIS-Gui/editorwidgets/qgstexteditsearchwidgetwrapper.h \
+    ../../SWGIS-Inc/SWGIS-Gui/editorwidgets/qgsrelationreferencesearchwidgetwrapper.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsdockwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgscompoundcolorwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/symbology-ng/qgsarrowsymbollayerwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/attributetable/qgsorganizetablecolumnsdialog.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgssearchquerybuilder.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsexpressionselectiondialog.h \
+    ../../SWGIS-Inc/SWGIS-Gui/symbology-ng/qgsnullsymbolrendererwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/layertree/qgslayertreeembeddedwidgetsimpl.h \
+    ../../SWGIS-Inc/SWGIS-Gui/editorwidgets/qgsdoublespinbox.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgssqlcomposerdialog.h \
+    ../../SWGIS-Inc/SWGIS-Gui/raster/qgshillshaderendererwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgsmaplayerconfigwidgetfactory.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgstablewidgetitem.h \
+    ../../SWGIS-Inc/SWGIS-Gui/layertree/qgslayertreeembeddedconfigwidget.h \
+    ../../SWGIS-Inc/SWGIS-Gui/qgscomposeritemcombobox.h
 
 FORMS += \
     stgismessageviewer.ui \
@@ -503,7 +560,6 @@ FORMS += \
     stgisdatumtransformdialogbase.ui \
     stgisprojectionselectorbase.ui \
     swgiscredentialdialog.ui \
-    swgiscolordialog.ui \
     swgissymbolv2selectordialogbase.ui \
     widget_layerproperties.ui \
     widget_symbolslist.ui \
@@ -539,7 +595,6 @@ FORMS += \
     swgisstylev2exportimportdialogbase.ui \
     swgisstylev2groupselectiondialogbase.ui \
     swgissmartgroupeditordialogbase.ui \
-    swgismultibandcolorrendererwidgetbase.ui \
     swgispalettedrendererwidgetbase.ui \
     swgisrasterminmaxwidgetbase.ui \
     swgisrasterhistogramwidgetbase.ui \
@@ -590,5 +645,16 @@ FORMS += \
     swgisnewvectorlayerdialogbase.ui \
     swgisrasterformatsaveoptionswidgetbase.ui \
     swgisrasterpyramidsoptionswidgetbase.ui \
-    swgisnewhttpconnection.ui
+    swgisnewhttpconnection.ui \
+    swgiscolordialog.ui \
+    swgismultibandcolorrendererwidgetbase.ui \
+    swgiscompoundcolorwidget.ui \
+    widget_filledmarker.ui \
+    swgisarrowsymbollayerwidgetbase.ui \
+    swgisorganizetablecolumnsdialog.ui \
+    swgisexpressionselectiondialogbase.ui \
+    swgissqlcomposerdialogbase.ui \
+    swgishillshaderendererwidget.ui \
+    swgislabelingrulepropswidget.ui \
+    swgislayertreeembeddedconfigwidget.ui
 

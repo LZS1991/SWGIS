@@ -16,9 +16,10 @@
 #ifndef QGSRANGEWIDGETFACTORY_H
 #define QGSRANGEWIDGETFACTORY_H
 
-#include "./core/qgseditorwidgetfactory.h"
+#include "qgseditorwidgetfactory.h"
 
-/** \class QgsRangeWidgetFactory
+/** \ingroup gui
+ * \class QgsRangeWidgetFactory
  * \note not available in Python bindings
  */
 

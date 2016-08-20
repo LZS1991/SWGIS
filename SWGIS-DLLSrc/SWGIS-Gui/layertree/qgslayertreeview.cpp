@@ -13,16 +13,18 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./layertree/qgslayertreeview.h"
+#include "qgslayertreeview.h"
 
-#include "./layertree/qgslayertree.h"
-#include "./layertree/qgslayertreemodel.h"
-#include "./layertree/qgslayertreemodellegendnode.h"
-#include "./layertree/qgslayertreeviewdefaultactions.h"
+#include "qgslayertree.h"
+#include "qgslayertreeembeddedwidgetregistry.h"
+#include "qgslayertreemodel.h"
+#include "qgslayertreemodellegendnode.h"
+#include "qgslayertreeviewdefaultactions.h"
 #include "qgsmaplayer.h"
 
 #include <QMenu>
 #include <QContextMenuEvent>
+
 
 QgsLayerTreeView::QgsLayerTreeView( QWidget *parent )
     : QTreeView( parent )
@@ -128,6 +130,27 @@ void QgsLayerTreeView::modelRowsInserted( const QModelIndex& index, int start, i
   QgsLayerTreeNode* parentNode = layerTreeModel()->index2node( index );
   if ( !parentNode )
     return;
+
+  // Embedded widgets - replace placeholders in the model by actual widgets
+  if ( layerTreeModel()->testFlag( QgsLayerTreeModel::UseEmbeddedWidgets ) && QgsLayerTree::isLayer( parentNode ) )
+  {
+    QgsLayerTreeLayer* nodeLayer = QgsLayerTree::toLayer( parentNode );
+    if ( QgsMapLayer* layer = nodeLayer->layer() )
+    {
+      int widgetsCount = layer->customProperty( "embeddedWidgets/count", 0 ).toInt();
+      QList<QgsLayerTreeModelLegendNode*> legendNodes = layerTreeModel()->layerLegendNodes( nodeLayer );
+      for ( int i = 0; i < widgetsCount; ++i )
+      {
+        QString providerId = layer->customProperty( QString( "embeddedWidgets/%1/id" ).arg( i ) ).toString();
+        if ( QgsLayerTreeEmbeddedWidgetProvider* provider = QgsLayerTreeEmbeddedWidgetRegistry::instance()->provider( providerId ) )
+        {
+          QModelIndex index = layerTreeModel()->legendNode2index( legendNodes[i] );
+          setIndexWidget( index, provider->createWidget( layer, i ) );
+        }
+      }
+    }
+  }
+
 
   if ( QgsLayerTree::isLayer( parentNode ) )
   {

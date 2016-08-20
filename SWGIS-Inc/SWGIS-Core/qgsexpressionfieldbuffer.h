@@ -25,7 +25,7 @@
 #include "qgsfield.h"
 #include "qgsexpression.h"
 
-/**
+/** \ingroup core
  * Buffers information about expression fields for a vector layer.
  *
  * @note added in 2.6
@@ -36,7 +36,11 @@ class SWGISCORE_EXPORT QgsExpressionFieldBuffer
     typedef struct ExpressionField
     {
       ExpressionField() : cachedExpression( expression ) {}
-      ExpressionField( const QString& exp, const QgsField& fld ) : expression( exp ), cachedExpression( exp ), field( fld ) {}
+      ExpressionField( const QString& exp, const QgsField& fld )
+          : expression( exp )
+          , cachedExpression( exp )
+          , field( fld )
+      {}
 
       /**
        * @deprecated use cachedExpression instead

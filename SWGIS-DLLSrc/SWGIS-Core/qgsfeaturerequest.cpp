@@ -15,7 +15,7 @@
 #include "qgsfeaturerequest.h"
 
 #include "qgsfield.h"
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 
 #include <QStringList>
 
@@ -382,7 +382,7 @@ QSet<QString> QgsFeatureRequest::OrderBy::usedAttributes() const
   return usedAttributes;
 }
 
-QString QgsFeatureRequest::OrderBy::dump( void ) const
+QString QgsFeatureRequest::OrderBy::dump() const
 {
   QStringList results;
 

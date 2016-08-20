@@ -51,5 +51,6 @@ win32{
 }
 
 HEADERS += \
-    ../../SWGIS-Inc/SWGIS-Plugins/swgispluginsconfig.h
+    ../../SWGIS-Inc/SWGIS-Plugins/swgispluginsconfig.h \
+    ../../SWGIS-Inc/SWGIS-Plugins/qgsapplydialog.h
 

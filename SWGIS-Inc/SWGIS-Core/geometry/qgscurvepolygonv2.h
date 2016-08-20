@@ -60,7 +60,11 @@ class SWGISCORE_EXPORT QgsCurvePolygonV2: public QgsSurfaceV2
     int numInteriorRings() const;
     const QgsCurveV2* exteriorRing() const;
     const QgsCurveV2* interiorRing( int i ) const;
-    virtual QgsPolygonV2* toPolygon() const;
+    /** Returns a new polygon geometry corresponding to a segmentized approximation
+     * of the curve.
+     * @param tolerance segmentation tolerance
+     * @param toleranceType maximum segmentation angle or maximum difference between approximation and curve*/
+    virtual QgsPolygonV2* toPolygon( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const;
 
     /** Sets the exterior ring of the polygon. The CurvePolygon type will be updated to match the dimensionality
      * of the exterior ring. For instance, setting a 2D exterior ring on a 3D CurvePolygon will drop the z dimension
@@ -79,11 +83,8 @@ class SWGISCORE_EXPORT QgsCurvePolygonV2: public QgsSurfaceV2
     bool removeInteriorRing( int nr );
 
     virtual void draw( QPainter& p ) const override;
-    /** Transforms the geometry using a coordinate transform
-     * @param ct coordinate transform
-     * @param d transformation direction
-     */
-    void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform ) override;
+    void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform,
+                    bool transformZ = false ) override;
     void transform( const QTransform& t ) override;
 
     virtual bool insertVertex( QgsVertexId position, const QgsPointV2& vertex ) override;
@@ -95,7 +96,10 @@ class SWGISCORE_EXPORT QgsCurvePolygonV2: public QgsSurfaceV2
     bool nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const override;
 
     bool hasCurvedSegments() const override;
-    QgsAbstractGeometryV2* segmentize() const override;
+    /** Returns a geometry without curves. Caller takes ownership
+     * @param tolerance segmentation tolerance
+     * @param toleranceType maximum segmentation angle or maximum difference between approximation and curve*/
+    QgsAbstractGeometryV2* segmentize( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const override;
 
     /** Returns approximate rotation angle for a vertex. Usually average angle between adjacent segments.
      *  @param vertex the vertex id

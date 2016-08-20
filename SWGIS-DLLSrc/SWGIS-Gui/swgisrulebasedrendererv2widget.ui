@@ -71,20 +71,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnEditRule">
-       <property name="toolTip">
-        <string>Edit current rule</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>:/images/themes/default/symbologyEdit.png</normaloff>:/images/themes/default/symbologyEdit.png</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QPushButton" name="btnRemoveRule">
        <property name="toolTip">
         <string>Remove selected rules</string>
@@ -99,31 +85,27 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnRefineRule">
-       <property name="enabled">
-        <bool>true</bool>
+      <widget class="QPushButton" name="btnEditRule">
+       <property name="toolTip">
+        <string>Edit current rule</string>
        </property>
        <property name="text">
-        <string>Refine selected rules</string>
+        <string/>
        </property>
-       <property name="checkable">
-        <bool>false</bool>
-       </property>
-       <property name="autoDefault">
-        <bool>false</bool>
-       </property>
-       <property name="default">
-        <bool>false</bool>
-       </property>
-       <property name="flat">
-        <bool>false</bool>
+       <property name="icon">
+        <iconset>
+         <normaloff>:/images/themes/default/symbologyEdit.png</normaloff>:/images/themes/default/symbologyEdit.png</iconset>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="btnCountFeatures">
-       <property name="text">
+       <property name="toolTip">
         <string>Count features</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>:/images/themes/default/mActionSum.svg</normaloff>:/images/themes/default/mActionSum.svg</iconset>
        </property>
       </widget>
      </item>
@@ -149,10 +131,47 @@
      </item>
     </layout>
    </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout2">
+     <item>
+      <widget class="QPushButton" name="btnRefineRule">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Refine selected rules</string>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+       <property name="default">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
   </layout>
  </widget>
- <resources>
-  <include location="../../images/images.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

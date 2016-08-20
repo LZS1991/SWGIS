@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_EXP_C_QGIS_QGISBUILD_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
-# define YY_EXP_C_QGIS_QGISBUILD_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
+#ifndef YY_EXP_C_QGIS_QGISBUILD_2_16_1_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
+# define YY_EXP_C_QGIS_QGISBUILD_2_16_1_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 1
@@ -80,9 +80,10 @@ extern int exp_debug;
     FUNCTION = 290,
     SPECIAL_COL = 291,
     VARIABLE = 292,
-    COMMA = 293,
-    Unknown_CHARACTER = 294,
-    UMINUS = 295
+    NAMED_NODE = 293,
+    COMMA = 294,
+    Unknown_CHARACTER = 295,
+    UMINUS = 296
   };
 #endif
 
@@ -91,10 +92,11 @@ extern int exp_debug;
 
 union YYSTYPE
 {
-#line 77 "C:/QGIS/QGIS_2_14_2/src/core/qgsexpressionparser.yy" /* yacc.c:1909  */
+#line 77 "C:/QGIS/QGIS_2_16_1/src/core/qgsexpressionparser.yy" /* yacc.c:1909  */
 
   QgsExpression::Node* node;
   QgsExpression::NodeList* nodelist;
+  QgsExpression::NamedNode* namednode;
   double numberFloat;
   int    numberInt;
   bool   boolVal;
@@ -104,7 +106,7 @@ union YYSTYPE
   QgsExpression::WhenThen* whenthen;
   QgsExpression::WhenThenList* whenthenlist;
 
-#line 108 "C:/QGIS/QGISBuild/src/core/qgsexpressionparser.hpp" /* yacc.c:1909  */
+#line 110 "C:/QGIS/QGISBuild_2_16_1/src/core/qgsexpressionparser.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -116,4 +118,4 @@ typedef union YYSTYPE YYSTYPE;
 
 int exp_parse (expression_parser_context* parser_ctx);
 
-#endif /* !YY_EXP_C_QGIS_QGISBUILD_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED  */
+#endif /* !YY_EXP_C_QGIS_QGISBUILD_2_16_1_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED  */

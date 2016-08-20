@@ -39,11 +39,12 @@ email                : sherman at mrcc.com
 #include <QSettings>
 
 #include "qgsapplication.h"
+#include "qgscrscache.h"
 #include "qgsdataitem.h"
 #include "qgsdataprovider.h"
 #include "qgsfeature.h"
 #include "qgsfield.h"
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsvectorlayerimport.h"
 #include "qgslocalec.h"
@@ -139,7 +140,7 @@ bool QgsOgrProvider::convertField( QgsField &field, const QTextCodec &encoding )
 
 void QgsOgrProvider::repack()
 {
-  if ( ogrDriverName != "ESRI Shapefile" || !ogrOrigLayer )
+  if ( !mValid || ogrDriverName != "ESRI Shapefile" || !ogrOrigLayer )
     return;
 
   QByteArray layerName = OGR_FD_GetName( OGR_L_GetLayerDefn( ogrOrigLayer ) );
@@ -159,7 +160,7 @@ void QgsOgrProvider::repack()
       OGR_DS_Destroy( ogrDataSource );
       ogrLayer = ogrOrigLayer = nullptr;
 
-      ogrDataSource = OGROpen( TO8F( mFilePath ), true, nullptr );
+      ogrDataSource = QgsOgrProviderUtils::OGROpenWrapper( TO8F( mFilePath ), true, nullptr );
       if ( ogrDataSource )
       {
         if ( mLayerName.isNull() )
@@ -271,6 +272,7 @@ QgsVectorLayerImport::ImportError QgsOgrProvider::createEmptyLayer(
 
 QgsOgrProvider::QgsOgrProvider( QString const & uri )
     : QgsVectorDataProvider( uri )
+    , mFirstFieldIsFid( false )
     , ogrDataSource( nullptr )
     , mExtent( nullptr )
     , ogrLayer( nullptr )
@@ -280,10 +282,14 @@ QgsOgrProvider::QgsOgrProvider( QString const & uri )
     , mOgrGeometryTypeFilter( wkbUnknown )
     , ogrDriver( nullptr )
     , mValid( false )
-    , geomType( wkbUnknown )
+    , mOGRGeomType( wkbUnknown )
     , mFeaturesCounted( -1 )
     , mWriteAccess( false )
+    , mWriteAccessPossible( false )
+    , mDynamicWriteAccess( false )
     , mShapefileMayBeCorrupted( false )
+    , mUpdateModeStackDepth( 0 )
+    , mCapabilities( 0 )
 {
   QgsApplication::registerOgrDrivers();
 
@@ -301,9 +307,8 @@ QgsOgrProvider::QgsOgrProvider( QString const & uri )
   // This part of the code parses the uri transmitted to the ogr provider to
   // get the options the client wants us to apply
 
-  // If there is no & in the uri, then the uri is just the filename. The loaded
+  // If there is no | in the uri, then the uri is just the filename. The loaded
   // layer will be layer 0.
-  //this is not true for geojson
 
   if ( !uri.contains( '|', Qt::CaseSensitive ) )
   {
@@ -354,7 +359,7 @@ QgsOgrProvider::QgsOgrProvider( QString const & uri )
     }
   }
 
-  open();
+  open( OpenModeInitial );
 
   mNativeTypes
   << QgsVectorDataProvider::NativeType( tr( "Whole number (integer)" ), "integer", QVariant::Int, 1, 10 )
@@ -374,12 +379,16 @@ QgsOgrProvider::QgsOgrProvider( QString const & uri )
     << QgsVectorDataProvider::NativeType( tr( "Date & Time" ), "datetime", QVariant::DateTime );
   }
 
-  QgsOgrConnPool::instance()->ref( mFilePath );
+  QgsOgrConnPool::instance()->ref( dataSourceUri() );
 }
 
 QgsOgrProvider::~QgsOgrProvider()
 {
   close();
+  QgsOgrConnPool::instance()->unref( dataSourceUri() );
+  // We must also make sure to flush unusef cached connections so that
+  // the file can be removed (#15137)
+  QgsOgrConnPool::instance()->invalidateConnections( dataSourceUri() );
 }
 
 QgsAbstractFeatureSource* QgsOgrProvider::featureSource() const
@@ -390,6 +399,9 @@ QgsAbstractFeatureSource* QgsOgrProvider::featureSource() const
 bool QgsOgrProvider::setSubsetString( const QString& theSQL, bool updateFeatureCount )
 {
   QgsCPLErrorHandler handler;
+
+  if ( !ogrDataSource )
+    return false;
 
   if ( theSQL == mSubsetString && mFeaturesCounted >= 0 )
     return true;
@@ -471,6 +483,20 @@ QString QgsOgrProvider::subsetString()
 QString QgsOgrProvider::ogrWkbGeometryTypeName( OGRwkbGeometryType type ) const
 {
   QString geom;
+
+  // GDAL 2.1 can return M/ZM geometries
+#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,1,0)
+  if ( wkbHasM( type ) )
+  {
+    geom = ogrWkbGeometryTypeName( wkbFlatten( type ) );
+    if ( wkbHasZ( type ) )
+      geom += "Z";
+    if ( wkbHasM( type ) )
+      geom += "M";
+    return geom;
+  }
+#endif
+
   switch (( long )type )
   {
     case wkbUnknown:
@@ -497,6 +523,38 @@ QString QgsOgrProvider::ogrWkbGeometryTypeName( OGRwkbGeometryType type ) const
     case wkbGeometryCollection:
       geom = "GeometryCollection";
       break;
+#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+    case wkbCircularString:
+      geom = "CircularString";
+      break;
+    case wkbCompoundCurve:
+      geom = "CompoundCurve";
+      break;
+    case wkbCurvePolygon:
+      geom = "CurvePolygon";
+      break;
+    case wkbMultiCurve:
+      geom = "MultiCurve";
+      break;
+    case wkbMultiSurface:
+      geom = "MultiSurface";
+      break;
+    case wkbCircularStringZ:
+      geom = "CircularStringZ";
+      break;
+    case wkbCompoundCurveZ:
+      geom = "CompoundCurveZ";
+      break;
+    case wkbCurvePolygonZ:
+      geom = "CurvePolygonZ";
+      break;
+    case wkbMultiCurveZ:
+      geom = "MultiCurveZ";
+      break;
+    case wkbMultiSurfaceZ:
+      geom = "MultiSurfaceZ";
+      break;
+#endif
     case wkbNone:
       geom = "None";
       break;
@@ -525,7 +583,8 @@ QString QgsOgrProvider::ogrWkbGeometryTypeName( OGRwkbGeometryType type ) const
       geom = "GeometryCollection25D";
       break;
     default:
-      geom = QString( "Unknown WKB: %1" ).arg( type );
+      // Do not use ':', as it will mess with the separator used by QgsSublayersDialog::populateLayers()
+      geom = QString( "Unknown WKB (%1)" ).arg( type );
   }
   return geom;
 }
@@ -614,12 +673,42 @@ QStringList QgsOgrProvider::subLayers() const
       {
         fCount[wkbUnknown] = 0;
       }
-      bool bIs25D = (( layerGeomType & wkb25DBit ) != 0 );
-      Q_FOREACH ( OGRwkbGeometryType gType, fCount.keys() )
-      {
-        QString geom = ogrWkbGeometryTypeName(( bIs25D ) ? ( OGRwkbGeometryType )( gType | wkb25DBit ) : gType );
 
-        QString sl = QString( "%1:%2:%3:%4" ).arg( i ).arg( theLayerName ).arg( fCount.value( gType ) ).arg( geom );
+#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+      // When there are CurvePolygons, promote Polygons
+      if ( fCount.contains( wkbPolygon ) && fCount.contains( wkbCurvePolygon ) )
+      {
+        fCount[wkbCurvePolygon] += fCount.value( wkbPolygon );
+        fCount.remove( wkbPolygon );
+      }
+      // When there are CompoundCurves, promote LineStrings and CircularStrings
+      if ( fCount.contains( wkbLineString ) && fCount.contains( wkbCompoundCurve ) )
+      {
+        fCount[wkbCompoundCurve] += fCount.value( wkbLineString );
+        fCount.remove( wkbLineString );
+      }
+      if ( fCount.contains( wkbCircularString ) && fCount.contains( wkbCompoundCurve ) )
+      {
+        fCount[wkbCompoundCurve] += fCount.value( wkbCircularString );
+        fCount.remove( wkbCircularString );
+      }
+#endif
+
+#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+      bool bIs25D = ( wkbHasZ( layerGeomType ) != 0 );
+#else
+      bool bIs25D = (( layerGeomType & wkb25DBit ) != 0 );
+#endif
+      QMap<OGRwkbGeometryType, int>::const_iterator countIt = fCount.constBegin();
+      for ( ; countIt != fCount.constEnd(); ++countIt )
+      {
+#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+        QString geom = ogrWkbGeometryTypeName(( bIs25D ) ? wkbSetZ( countIt.key() ) : countIt.key() );
+#else
+        QString geom = ogrWkbGeometryTypeName(( bIs25D ) ? ( OGRwkbGeometryType )( countIt.key() | wkb25DBit ) : countIt.key() );
+#endif
+
+        QString sl = QString( "%1:%2:%3:%4" ).arg( i ).arg( theLayerName ).arg( fCount.value( countIt.key() ) ).arg( geom );
         QgsDebugMsg( "sub layer: " + sl );
         mSubLayerList << sl;
       }
@@ -657,25 +746,33 @@ OGRwkbGeometryType QgsOgrProvider::getOgrGeomType( OGRLayerH ogrLayer )
   {
     geomType = OGR_FD_GetGeomType( fdef );
 
+    // Handle wkbUnknown and its Z/M variants. QGIS has no unknown Z/M variants,
+    // so just use flat wkbUnknown
+    if ( wkbFlatten( geomType ) == wkbUnknown )
+      geomType = wkbUnknown;
+
     // Some ogr drivers (e.g. GML) are not able to determine the geometry type of a layer like this.
     // In such cases, we use virtual sublayers for each geometry if the layer contains
-    // multiple geometries (see subLayers) otherwise we guess geometry type from first feature
+    // multiple geometries (see subLayers) otherwise we guess geometry type from the first
+    // feature that has a geometry (limit us to a few features, not the whole layer)
     if ( geomType == wkbUnknown )
     {
+      geomType = wkbNone;
       OGR_L_ResetReading( ogrLayer );
-      OGRFeatureH firstFeature = OGR_L_GetNextFeature( ogrLayer );
-      if ( firstFeature )
+      for ( int i = 0; i < 10; i++ )
       {
-        OGRGeometryH firstGeometry = OGR_F_GetGeometryRef( firstFeature );
-        if ( firstGeometry )
+        OGRFeatureH nextFeature = OGR_L_GetNextFeature( ogrLayer );
+        if ( !nextFeature )
+          break;
+
+        OGRGeometryH geometry = OGR_F_GetGeometryRef( nextFeature );
+        if ( geometry )
         {
-          geomType = OGR_G_GetGeometryType( firstGeometry );
+          geomType = OGR_G_GetGeometryType( geometry );
         }
-        else
-        {
-          geomType = wkbNone;
-        }
-        OGR_F_Destroy( firstFeature );
+        OGR_F_Destroy( nextFeature );
+        if ( geomType != wkbNone )
+          break;
       }
       OGR_L_ResetReading( ogrLayer );
     }
@@ -685,21 +782,38 @@ OGRwkbGeometryType QgsOgrProvider::getOgrGeomType( OGRLayerH ogrLayer )
 
 void QgsOgrProvider::loadFields()
 {
-  QgsOgrConnPool::instance()->invalidateConnections( filePath() );
+  QgsOgrConnPool::instance()->invalidateConnections( dataSourceUri() );
   //the attribute fields need to be read again when the encoding changes
   mAttributeFields.clear();
+  if ( !ogrLayer )
+    return;
 
   if ( mOgrGeometryTypeFilter != wkbUnknown )
   {
-    geomType = mOgrGeometryTypeFilter;
+    mOGRGeomType = mOgrGeometryTypeFilter;
   }
   else
   {
-    geomType = getOgrGeomType( ogrLayer );
+    mOGRGeomType = getOgrGeomType( ogrLayer );
   }
   OGRFeatureDefnH fdef = OGR_L_GetLayerDefn( ogrLayer );
   if ( fdef )
   {
+    // Expose the OGR FID if it comes from a "real" column (typically GPKG)
+    // and make sure that this FID column is not exposed as a regular OGR field (shouldn't happen normally)
+    mFirstFieldIsFid = !( EQUAL( OGR_L_GetFIDColumn( ogrLayer ), "" ) ) &&
+                       OGR_FD_GetFieldIndex( fdef, OGR_L_GetFIDColumn( ogrLayer ) ) < 0;
+    if ( mFirstFieldIsFid )
+    {
+      mAttributeFields.append(
+        QgsField(
+          OGR_L_GetFIDColumn( ogrLayer ),
+          QVariant::LongLong,
+          "Integer64"
+        )
+      );
+    }
+
     for ( int i = 0; i < OGR_FD_GetFieldCount( fdef ); ++i )
     {
       OGRFieldDefnH fldDef = OGR_FD_GetFieldDefn( fdef, i );
@@ -784,23 +898,23 @@ QString QgsOgrProvider::storageType() const
 
 void QgsOgrProvider::setRelevantFields( OGRLayerH ogrLayer, bool fetchGeometry, const QgsAttributeList &fetchAttributes )
 {
-  QgsOgrUtils::setRelevantFields( ogrLayer, mAttributeFields.count(), fetchGeometry, fetchAttributes );
+  QgsOgrProviderUtils::setRelevantFields( ogrLayer, mAttributeFields.count(), fetchGeometry, fetchAttributes, mFirstFieldIsFid );
 }
 
 
-void QgsOgrUtils::setRelevantFields( OGRLayerH ogrLayer, int fieldCount, bool fetchGeometry, const QgsAttributeList &fetchAttributes )
+void QgsOgrProviderUtils::setRelevantFields( OGRLayerH ogrLayer, int fieldCount, bool fetchGeometry, const QgsAttributeList &fetchAttributes, bool firstAttrIsFid )
 {
 #if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1800
   if ( OGR_L_TestCapability( ogrLayer, OLCIgnoreFields ) )
   {
     QVector<const char*> ignoredFields;
     OGRFeatureDefnH featDefn = OGR_L_GetLayerDefn( ogrLayer );
-    for ( int i = 0; i < fieldCount; i++ )
+    for ( int i = ( firstAttrIsFid ? 1 : 0 ); i < fieldCount; i++ )
     {
       if ( !fetchAttributes.contains( i ) )
       {
         // add to ignored fields
-        ignoredFields.append( OGR_Fld_GetNameRef( OGR_FD_GetFieldDefn( featDefn, i ) ) );
+        ignoredFields.append( OGR_Fld_GetNameRef( OGR_FD_GetFieldDefn( featDefn, firstAttrIsFid ? i - 1 : i ) ) );
       }
     }
 
@@ -898,6 +1012,8 @@ void QgsOgrProvider::updateExtents()
 
 size_t QgsOgrProvider::layerCount() const
 {
+  if ( !mValid )
+    return 0;
   return OGR_DS_GetLayerCount( ogrDataSource );
 } // QgsOgrProvider::layerCount()
 
@@ -907,7 +1023,7 @@ size_t QgsOgrProvider::layerCount() const
  */
 QGis::WkbType QgsOgrProvider::geometryType() const
 {
-  return static_cast<QGis::WkbType>( geomType );
+  return static_cast<QGis::WkbType>( mOGRGeomType );
 }
 
 /**
@@ -933,6 +1049,36 @@ bool QgsOgrProvider::isValid()
   return mValid;
 }
 
+// Drivers may be more tolerant than we really wish (e.g. GeoPackage driver
+// may accept any geometry type)
+OGRGeometryH QgsOgrProvider::ConvertGeometryIfNecessary( OGRGeometryH hGeom )
+{
+  if ( hGeom == nullptr )
+    return hGeom;
+  OGRwkbGeometryType layerGeomType = OGR_L_GetGeomType( ogrLayer );
+  OGRwkbGeometryType flattenLayerGeomType = wkbFlatten( layerGeomType );
+  OGRwkbGeometryType geomType = OGR_G_GetGeometryType( hGeom );
+  OGRwkbGeometryType flattenGeomType = wkbFlatten( geomType );
+
+  if ( flattenLayerGeomType == wkbUnknown || flattenLayerGeomType == flattenGeomType )
+  {
+    return hGeom;
+  }
+  if ( flattenLayerGeomType == wkbMultiPolygon && flattenGeomType == wkbPolygon )
+  {
+    return OGR_G_ForceToMultiPolygon( hGeom );
+  }
+  if ( flattenLayerGeomType == wkbMultiLineString && flattenGeomType == wkbLineString )
+  {
+    return OGR_G_ForceToMultiLineString( hGeom );
+  }
+#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+  return OGR_G_ForceTo( hGeom, layerGeomType, nullptr );
+#else
+  return hGeom;
+#endif
+}
+
 bool QgsOgrProvider::addFeature( QgsFeature& f )
 {
   bool returnValue = true;
@@ -951,6 +1097,9 @@ bool QgsOgrProvider::addFeature( QgsFeature& f )
         pushError( tr( "OGR error creating wkb for feature %1: %2" ).arg( f.id() ).arg( CPLGetLastErrorMsg() ) );
         return false;
       }
+
+      geom = ConvertGeometryIfNecessary( geom );
+
       OGR_F_SetGeometryDirectly( feature, geom );
     }
   }
@@ -959,45 +1108,65 @@ bool QgsOgrProvider::addFeature( QgsFeature& f )
 
   QgsLocaleNumC l;
 
+  int qgisAttId = ( mFirstFieldIsFid ) ? 1 : 0;
+  // If the first attribute is the FID and the user has set it, then use it
+  if ( mFirstFieldIsFid && attrs.count() > 0 )
+  {
+    QVariant attrFid = attrs.at( 0 );
+    if ( !attrFid.isNull() )
+    {
+      bool ok = false;
+      qlonglong id = attrFid.toLongLong( &ok );
+      if ( ok )
+      {
+#if GDAL_VERSION_MAJOR >= 2
+        OGR_F_SetFID( feature, static_cast<GIntBig>( id ) );
+#else
+        OGR_F_SetFID( feature, static_cast<long>( id ) );
+#endif
+      }
+    }
+  }
+
   //add possible attribute information
-  for ( int targetAttributeId = 0; targetAttributeId < attrs.count(); ++targetAttributeId )
+  for ( int ogrAttId = 0; qgisAttId < attrs.count(); ++qgisAttId, ++ogrAttId )
   {
     // don't try to set field from attribute map if it's not present in layer
-    if ( targetAttributeId < 0 || targetAttributeId >= OGR_FD_GetFieldCount( fdef ) )
+    if ( ogrAttId >= OGR_FD_GetFieldCount( fdef ) )
       continue;
 
     //if(!s.isEmpty())
     // continue;
     //
-    OGRFieldDefnH fldDef = OGR_FD_GetFieldDefn( fdef, targetAttributeId );
+    OGRFieldDefnH fldDef = OGR_FD_GetFieldDefn( fdef, ogrAttId );
     OGRFieldType type = OGR_Fld_GetType( fldDef );
 
-    QVariant attrVal = attrs.at( targetAttributeId );
+    QVariant attrVal = attrs.at( qgisAttId );
     if ( attrVal.isNull() || ( type != OFTString && attrVal.toString().isEmpty() ) )
     {
-      OGR_F_UnsetField( feature, targetAttributeId );
+      OGR_F_UnsetField( feature, ogrAttId );
     }
     else
     {
       switch ( type )
       {
         case OFTInteger:
-          OGR_F_SetFieldInteger( feature, targetAttributeId, attrVal.toInt() );
+          OGR_F_SetFieldInteger( feature, ogrAttId, attrVal.toInt() );
           break;
 
 
 #if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 2000000
         case OFTInteger64:
-          OGR_F_SetFieldInteger64( feature, targetAttributeId, attrVal.toLongLong() );
+          OGR_F_SetFieldInteger64( feature, ogrAttId, attrVal.toLongLong() );
           break;
 #endif
 
         case OFTReal:
-          OGR_F_SetFieldDouble( feature, targetAttributeId, attrVal.toDouble() );
+          OGR_F_SetFieldDouble( feature, ogrAttId, attrVal.toDouble() );
           break;
 
         case OFTDate:
-          OGR_F_SetFieldDateTime( feature, targetAttributeId,
+          OGR_F_SetFieldDateTime( feature, ogrAttId,
                                   attrVal.toDate().year(),
                                   attrVal.toDate().month(),
                                   attrVal.toDate().day(),
@@ -1006,7 +1175,7 @@ bool QgsOgrProvider::addFeature( QgsFeature& f )
           break;
 
         case OFTTime:
-          OGR_F_SetFieldDateTime( feature, targetAttributeId,
+          OGR_F_SetFieldDateTime( feature, ogrAttId,
                                   0, 0, 0,
                                   attrVal.toTime().hour(),
                                   attrVal.toTime().minute(),
@@ -1015,7 +1184,7 @@ bool QgsOgrProvider::addFeature( QgsFeature& f )
           break;
 
         case OFTDateTime:
-          OGR_F_SetFieldDateTime( feature, targetAttributeId,
+          OGR_F_SetFieldDateTime( feature, ogrAttId,
                                   attrVal.toDateTime().date().year(),
                                   attrVal.toDateTime().date().month(),
                                   attrVal.toDateTime().date().day(),
@@ -1027,14 +1196,14 @@ bool QgsOgrProvider::addFeature( QgsFeature& f )
 
         case OFTString:
           QgsDebugMsg( QString( "Writing string attribute %1 with %2, encoding %3" )
-                       .arg( targetAttributeId )
+                       .arg( qgisAttId )
                        .arg( attrVal.toString(),
                              mEncoding->name().data() ) );
-          OGR_F_SetFieldString( feature, targetAttributeId, mEncoding->fromUnicode( attrVal.toString() ).constData() );
+          OGR_F_SetFieldString( feature, ogrAttId, mEncoding->fromUnicode( attrVal.toString() ).constData() );
           break;
 
         default:
-          QgsMessageLog::logMessage( tr( "type %1 for attribute %2 not found" ).arg( type ).arg( targetAttributeId ), tr( "OGR" ) );
+          QgsMessageLog::logMessage( tr( "type %1 for attribute %2 not found" ).arg( type ).arg( qgisAttId ), tr( "OGR" ) );
           break;
       }
     }
@@ -1047,9 +1216,16 @@ bool QgsOgrProvider::addFeature( QgsFeature& f )
   }
   else
   {
-    long id = OGR_F_GetFID( feature );
+    QgsFeatureId id = static_cast<QgsFeatureId>( OGR_F_GetFID( feature ) );
     if ( id >= 0 )
+    {
       f.setFeatureId( id );
+
+      if ( mFirstFieldIsFid && attrs.count() > 0 )
+      {
+        f.setAttribute( 0, id );
+      }
+    }
   }
   OGR_F_Destroy( feature );
 
@@ -1059,6 +1235,9 @@ bool QgsOgrProvider::addFeature( QgsFeature& f )
 
 bool QgsOgrProvider::addFeatures( QgsFeatureList & flist )
 {
+  if ( !doInitialActionsForEdition() )
+    return false;
+
   setRelevantFields( ogrLayer, true, attributeIndexes() );
 
   bool returnvalue = true;
@@ -1085,6 +1264,16 @@ bool QgsOgrProvider::addFeatures( QgsFeatureList & flist )
 
 bool QgsOgrProvider::addAttributes( const QList<QgsField> &attributes )
 {
+  if ( !doInitialActionsForEdition() )
+    return false;
+
+  if ( ogrDriverName == "MapInfo File" )
+  {
+    // adding attributes in mapinfo requires to be able to delete the .dat file
+    // so drop any cached connections.
+    QgsOgrConnPool::instance()->invalidateConnections( dataSourceUri() );
+  }
+
   bool returnvalue = true;
 
   for ( QList<QgsField>::const_iterator iter = attributes.begin(); iter != attributes.end(); ++iter )
@@ -1142,6 +1331,9 @@ bool QgsOgrProvider::addAttributes( const QList<QgsField> &attributes )
 
 bool QgsOgrProvider::deleteAttributes( const QgsAttributeIds &attributes )
 {
+  if ( !doInitialActionsForEdition() )
+    return false;
+
 #if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1900
   bool res = true;
   QList<int> attrsLst = attributes.toList();
@@ -1149,6 +1341,19 @@ bool QgsOgrProvider::deleteAttributes( const QgsAttributeIds &attributes )
   qSort( attrsLst.begin(), attrsLst.end(), qGreater<int>() );
   Q_FOREACH ( int attr, attrsLst )
   {
+    if ( mFirstFieldIsFid )
+    {
+      if ( attr == 0 )
+      {
+        pushError( tr( "Cannot delete feature id column" ) );
+        res = false;
+        break;
+      }
+      else
+      {
+        --attr;
+      }
+    }
     if ( OGR_L_DeleteField( ogrLayer, attr ) != OGRERR_NONE )
     {
       pushError( tr( "OGR error deleting field %1: %2" ).arg( attr ).arg( CPLGetLastErrorMsg() ) );
@@ -1164,9 +1369,66 @@ bool QgsOgrProvider::deleteAttributes( const QgsAttributeIds &attributes )
 #endif
 }
 
+bool QgsOgrProvider::renameAttributes( const QgsFieldNameMap& renamedAttributes )
+{
+  if ( !doInitialActionsForEdition() )
+    return false;
+
+#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1900
+  QgsFieldNameMap::const_iterator renameIt = renamedAttributes.constBegin();
+  bool result = true;
+  for ( ; renameIt != renamedAttributes.constEnd(); ++renameIt )
+  {
+    int fieldIndex = renameIt.key();
+    if ( fieldIndex < 0 || fieldIndex >= mAttributeFields.count() )
+    {
+      pushError( tr( "Invalid attribute index" ) );
+      result = false;
+      continue;
+    }
+    if ( mAttributeFields.indexFromName( renameIt.value() ) >= 0 )
+    {
+      //field name already in use
+      pushError( tr( "Error renaming field %1: name '%2' already exists" ).arg( fieldIndex ).arg( renameIt.value() ) );
+      result = false;
+      continue;
+    }
+    int ogrFieldIndex = fieldIndex;
+    if ( mFirstFieldIsFid )
+    {
+      ogrFieldIndex -= 1;
+      if ( ogrFieldIndex < 0 )
+      {
+        pushError( tr( "Invalid attribute index" ) );
+        result = false;
+        continue;
+      }
+    }
+
+    //type does not matter, it will not be used
+    OGRFieldDefnH fld = OGR_Fld_Create( mEncoding->fromUnicode( renameIt.value() ), OFTReal );
+    if ( OGR_L_AlterFieldDefn( ogrLayer, ogrFieldIndex, fld, ALTER_NAME_FLAG ) != OGRERR_NONE )
+    {
+      pushError( tr( "OGR error renaming field %1: %2" ).arg( fieldIndex ).arg( CPLGetLastErrorMsg() ) );
+      result = false;
+    }
+    OGR_Fld_Destroy( fld );
+  }
+  loadFields();
+  return result;
+#else
+  Q_UNUSED( attributes );
+  pushError( tr( "Renaming fields is not supported prior to GDAL 1.9.0" ) );
+  return false;
+#endif
+}
+
 
 bool QgsOgrProvider::changeAttributeValues( const QgsChangedAttributesMap &attr_map )
 {
+  if ( !doInitialActionsForEdition() )
+    return false;
+
   if ( attr_map.isEmpty() )
     return true;
 
@@ -1200,6 +1462,21 @@ bool QgsOgrProvider::changeAttributeValues( const QgsChangedAttributesMap &attr_
     for ( QgsAttributeMap::const_iterator it2 = attr.begin(); it2 != attr.end(); ++it2 )
     {
       int f = it2.key();
+      if ( mFirstFieldIsFid )
+      {
+        if ( f == 0 )
+        {
+          if ( it2->toLongLong() != fid )
+          {
+            pushError( tr( "Changing feature id of feature %1 is not allowed." ).arg( fid ) );
+            continue;
+          }
+        }
+        else
+        {
+          --f;
+        }
+      }
 
       OGRFieldDefnH fd = OGR_F_GetFieldDefnRef( of, f );
       if ( !fd )
@@ -1270,20 +1547,22 @@ bool QgsOgrProvider::changeAttributeValues( const QgsChangedAttributesMap &attr_
     {
       pushError( tr( "OGR error setting feature %1: %2" ).arg( fid ).arg( CPLGetLastErrorMsg() ) );
     }
+
+    OGR_F_Destroy( of );
   }
 
   if ( OGR_L_SyncToDisk( ogrLayer ) != OGRERR_NONE )
   {
     pushError( tr( "OGR error syncing to disk: %1" ).arg( CPLGetLastErrorMsg() ) );
   }
-  QgsOgrConnPool::instance()->invalidateConnections( filePath() );
+  QgsOgrConnPool::instance()->invalidateConnections( dataSourceUri() );
   return true;
 }
 
 bool QgsOgrProvider::changeGeometryValues( const QgsGeometryMap &geometry_map )
 {
-  OGRFeatureH theOGRFeature = nullptr;
-  OGRGeometryH theNewGeometry = nullptr;
+  if ( !doInitialActionsForEdition() )
+    return false;
 
   setRelevantFields( ogrLayer, true, attributeIndexes() );
 
@@ -1295,37 +1574,49 @@ bool QgsOgrProvider::changeGeometryValues( const QgsGeometryMap &geometry_map )
       continue;
     }
 
-    theOGRFeature = OGR_L_GetFeature( ogrLayer, static_cast<long>( FID_TO_NUMBER( it.key() ) ) );
+    OGRFeatureH theOGRFeature = OGR_L_GetFeature( ogrLayer, static_cast<long>( FID_TO_NUMBER( it.key() ) ) );
     if ( !theOGRFeature )
     {
       pushError( tr( "OGR error changing geometry: feature %1 not found" ).arg( it.key() ) );
       continue;
     }
 
-    //create an OGRGeometry
-    if ( OGR_G_CreateFromWkb( const_cast<unsigned char*>( it->asWkb() ),
-                              OGR_L_GetSpatialRef( ogrLayer ),
-                              &theNewGeometry,
-                              it->wkbSize() ) != OGRERR_NONE )
+    OGRGeometryH theNewGeometry = nullptr;
+    // We might receive null geometries. It is ok, but don't go through the
+    // OGR_G_CreateFromWkb() route then
+    if ( it->wkbSize() != 0 )
     {
-      pushError( tr( "OGR error creating geometry for feature %1: %2" ).arg( it.key() ).arg( CPLGetLastErrorMsg() ) );
-      OGR_G_DestroyGeometry( theNewGeometry );
-      theNewGeometry = nullptr;
-      continue;
-    }
+      //create an OGRGeometry
+      if ( OGR_G_CreateFromWkb( const_cast<unsigned char*>( it->asWkb() ),
+                                OGR_L_GetSpatialRef( ogrLayer ),
+                                &theNewGeometry,
+                                it->wkbSize() ) != OGRERR_NONE )
+      {
+        pushError( tr( "OGR error creating geometry for feature %1: %2" ).arg( it.key() ).arg( CPLGetLastErrorMsg() ) );
+        OGR_G_DestroyGeometry( theNewGeometry );
+        theNewGeometry = nullptr;
+        OGR_F_Destroy( theOGRFeature );
+        continue;
+      }
 
-    if ( !theNewGeometry )
-    {
-      pushError( tr( "OGR error in feature %1: geometry is null" ).arg( it.key() ) );
-      continue;
+      if ( !theNewGeometry )
+      {
+        pushError( tr( "OGR error in feature %1: geometry is null" ).arg( it.key() ) );
+        OGR_F_Destroy( theOGRFeature );
+        continue;
+      }
+
+      theNewGeometry = ConvertGeometryIfNecessary( theNewGeometry );
     }
 
     //set the new geometry
     if ( OGR_F_SetGeometryDirectly( theOGRFeature, theNewGeometry ) != OGRERR_NONE )
     {
       pushError( tr( "OGR error setting geometry of feature %1: %2" ).arg( it.key() ).arg( CPLGetLastErrorMsg() ) );
-      OGR_G_DestroyGeometry( theNewGeometry );
-      theNewGeometry = nullptr;
+      // Shouldn't happen normally. If it happens, ownership of the geometry
+      // may be not really well defined, so better not destroy it, but just
+      // the feature.
+      OGR_F_Destroy( theOGRFeature );
       continue;
     }
 
@@ -1333,20 +1624,22 @@ bool QgsOgrProvider::changeGeometryValues( const QgsGeometryMap &geometry_map )
     if ( OGR_L_SetFeature( ogrLayer, theOGRFeature ) != OGRERR_NONE )
     {
       pushError( tr( "OGR error setting feature %1: %2" ).arg( it.key() ).arg( CPLGetLastErrorMsg() ) );
-      OGR_G_DestroyGeometry( theNewGeometry );
-      theNewGeometry = nullptr;
+      OGR_F_Destroy( theOGRFeature );
       continue;
     }
     mShapefileMayBeCorrupted = true;
 
     OGR_F_Destroy( theOGRFeature );
   }
-  QgsOgrConnPool::instance()->invalidateConnections( filePath() );
+  QgsOgrConnPool::instance()->invalidateConnections( dataSourceUri() );
   return syncToDisc();
 }
 
 bool QgsOgrProvider::createSpatialIndex()
 {
+  if ( !doInitialActionsForEdition() )
+    return false;
+
   if ( ogrDriverName != "ESRI Shapefile" )
     return false;
 
@@ -1367,6 +1660,9 @@ bool QgsOgrProvider::createSpatialIndex()
 
 bool QgsOgrProvider::createAttributeIndex( int field )
 {
+  if ( !doInitialActionsForEdition() )
+    return false;
+
   QByteArray quotedLayerName = quotedIdentifier( OGR_FD_GetName( OGR_L_GetLayerDefn( ogrOrigLayer ) ) );
   QByteArray dropSql = "DROP INDEX ON " + quotedLayerName;
   OGR_DS_ExecuteSQL( ogrDataSource, dropSql.constData(), OGR_L_GetSpatialFilter( ogrOrigLayer ), nullptr );
@@ -1381,6 +1677,9 @@ bool QgsOgrProvider::createAttributeIndex( int field )
 
 bool QgsOgrProvider::deleteFeatures( const QgsFeatureIds & id )
 {
+  if ( !doInitialActionsForEdition() )
+    return false;
+
   bool returnvalue = true;
   for ( QgsFeatureIds::const_iterator it = id.begin(); it != id.end(); ++it )
   {
@@ -1406,6 +1705,9 @@ bool QgsOgrProvider::deleteFeatures( const QgsFeatureIds & id )
 
 bool QgsOgrProvider::deleteFeature( QgsFeatureId id )
 {
+  if ( !doInitialActionsForEdition() )
+    return false;
+
   if ( FID_TO_NUMBER( id ) > std::numeric_limits<long>::max() )
   {
     pushError( tr( "OGR error on feature %1: id too large" ).arg( id ) );
@@ -1423,7 +1725,27 @@ bool QgsOgrProvider::deleteFeature( QgsFeatureId id )
   return true;
 }
 
+bool QgsOgrProvider::doInitialActionsForEdition()
+{
+  if ( !mValid )
+    return false;
+
+  if ( !mWriteAccess && mWriteAccessPossible && mDynamicWriteAccess )
+  {
+    QgsDebugMsg( "Enter update mode implictly" );
+    if ( !enterUpdateMode() )
+      return false;
+  }
+
+  return true;
+}
+
 int QgsOgrProvider::capabilities() const
+{
+  return mCapabilities;
+}
+
+void QgsOgrProvider::computeCapabilities()
 {
   int ability = 0;
 
@@ -1446,19 +1768,19 @@ int QgsOgrProvider::capabilities() const
       ability |= QgsVectorDataProvider::SelectAtId | QgsVectorDataProvider::SelectGeometryAtId;
     }
 
-    if ( mWriteAccess && OGR_L_TestCapability( ogrLayer, "SequentialWrite" ) )
+    if ( mWriteAccessPossible && OGR_L_TestCapability( ogrLayer, "SequentialWrite" ) )
       // true if the CreateFeature() method works for this layer.
     {
       ability |= QgsVectorDataProvider::AddFeatures;
     }
 
-    if ( mWriteAccess && OGR_L_TestCapability( ogrLayer, "DeleteFeature" ) )
+    if ( mWriteAccessPossible && OGR_L_TestCapability( ogrLayer, "DeleteFeature" ) )
       // true if this layer can delete its features
     {
       ability |= DeleteFeatures;
     }
 
-    if ( mWriteAccess && OGR_L_TestCapability( ogrLayer, "RandomWrite" ) )
+    if ( mWriteAccessPossible && OGR_L_TestCapability( ogrLayer, "RandomWrite" ) )
       // true if the SetFeature() method is operational on this layer.
     {
       // TODO According to http://shapelib.maptools.org/ (Shapefile C Library V1.2)
@@ -1506,14 +1828,19 @@ int QgsOgrProvider::capabilities() const
     }
 #endif
 
-    if ( mWriteAccess && OGR_L_TestCapability( ogrLayer, "CreateField" ) )
+    if ( mWriteAccessPossible && OGR_L_TestCapability( ogrLayer, "CreateField" ) )
     {
       ability |= AddAttributes;
     }
 
-    if ( mWriteAccess && OGR_L_TestCapability( ogrLayer, "DeleteField" ) )
+    if ( mWriteAccessPossible && OGR_L_TestCapability( ogrLayer, "DeleteField" ) )
     {
       ability |= DeleteAttributes;
+    }
+
+    if ( mWriteAccessPossible && OGR_L_TestCapability( ogrLayer, "AlterFieldDefn" ) )
+    {
+      ability |= RenameAttributes;
     }
 
 #if defined(OLCStringsAsUTF8)
@@ -1549,19 +1876,9 @@ int QgsOgrProvider::capabilities() const
     {
       ability |= CircularGeometries;
     }
-
-    // supports geometry simplification on provider side
-#if defined(GDAL_VERSION_NUM) && defined(GDAL_COMPUTE_VERSION)
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,11,0)
-    ability |= QgsVectorDataProvider::SimplifyGeometries;
-#endif
-#endif
-#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1900
-    ability |= QgsVectorDataProvider::SimplifyGeometriesWithTopologicalValidation;
-#endif
   }
 
-  return ability;
+  mCapabilities = ability;
 }
 
 
@@ -1935,11 +2252,6 @@ QString createFilters( QString type )
       {
         myFileFilters += createFileFilter_( QObject::tr( "Arc/Info Generate" ), "*.gen" );
         myExtensions << "gen";
-      }
-      else if ( driverName.startsWith( "SXF" ) )
-      {
-        myFileFilters += createFileFilter_( QObject::tr( "Storage and eXchange Format" ), "*.sxf" );
-        myExtensions << "sxf";
       }
       else if ( driverName.startsWith( "PDF" ) )
       {
@@ -2359,6 +2671,8 @@ QgsCoordinateReferenceSystem QgsOgrProvider::crs()
   QgsDebugMsg( "Entering." );
 
   QgsCoordinateReferenceSystem srs;
+  if ( !mValid )
+    return srs;
 
   if ( ogrDriver )
   {
@@ -2374,7 +2688,8 @@ QgsCoordinateReferenceSystem QgsOgrProvider::crs()
         QString myWktString = prjStream.readLine();
         prjFile.close();
 
-        if ( srs.createFromWkt( myWktString.toUtf8().constData() ) )
+        srs = QgsCRSCache::instance()->crsByWkt( myWktString.toUtf8().constData() );
+        if ( srs.isValid() )
           return srs;
       }
     }
@@ -2395,7 +2710,7 @@ QgsCoordinateReferenceSystem QgsOgrProvider::crs()
     char *pszWkt = nullptr;
     OSRExportToWkt( mySpatialRefSys, &pszWkt );
 
-    srs.createFromWkt( pszWkt );
+    srs = QgsCRSCache::instance()->crsByWkt( pszWkt );
     OGRFree( pszWkt );
   }
   else
@@ -2410,7 +2725,7 @@ void QgsOgrProvider::uniqueValues( int index, QList<QVariant> &uniqueValues, int
 {
   uniqueValues.clear();
 
-  if ( index < 0 || index >= mAttributeFields.count() )
+  if ( !mValid || index < 0 || index >= mAttributeFields.count() )
     return;
 
   const QgsField& fld = mAttributeFields.at( index );
@@ -2457,7 +2772,7 @@ void QgsOgrProvider::uniqueValues( int index, QList<QVariant> &uniqueValues, int
 
 QVariant QgsOgrProvider::minimumValue( int index )
 {
-  if ( index < 0 || index >= mAttributeFields.count() )
+  if ( !mValid || index < 0 || index >= mAttributeFields.count() )
   {
     return QVariant();
   }
@@ -2496,7 +2811,7 @@ QVariant QgsOgrProvider::minimumValue( int index )
 
 QVariant QgsOgrProvider::maximumValue( int index )
 {
-  if ( index < 0 || index >= mAttributeFields.count() )
+  if ( !mValid || index < 0 || index >= mAttributeFields.count() )
   {
     return QVariant();
   }
@@ -2535,15 +2850,42 @@ QVariant QgsOgrProvider::maximumValue( int index )
 
 QByteArray QgsOgrProvider::quotedIdentifier( QByteArray field ) const
 {
-  return QgsOgrUtils::quotedIdentifier( field, ogrDriverName );
+  return QgsOgrProviderUtils::quotedIdentifier( field, ogrDriverName );
 }
 
 void QgsOgrProvider::forceReload()
 {
-  QgsOgrConnPool::instance()->invalidateConnections( filePath() );
+  QgsOgrConnPool::instance()->invalidateConnections( dataSourceUri() );
 }
 
-QByteArray QgsOgrUtils::quotedIdentifier( QByteArray field, const QString& ogrDriverName )
+OGRDataSourceH QgsOgrProviderUtils::OGROpenWrapper( const char* pszPath, bool bUpdate, OGRSFDriverH *phDriver )
+{
+  CPLErrorReset();
+  OGRSFDriverH hDriver = nullptr;
+  OGRDataSourceH hDS = OGROpen( pszPath, bUpdate, &hDriver );
+  if ( phDriver )
+    *phDriver = hDriver;
+  if ( !hDS )
+    return nullptr;
+  // GDAL < 1.11.5 has a crashing bug with GeoPackage databases with curve geometry
+  // types (https://trac.osgeo.org/gdal/ticket/6558)
+#if GDAL_VERSION_MAJOR == 1 && GDAL_VERSION_MINOR == 11 && GDAL_VERSION_MACRO < 5
+  const char* pszLastErrorMsg = CPLGetLastErrorMsg();
+  if ( hDriver == OGRGetDriverByName( "GPKG" ) &&
+       strstr( pszLastErrorMsg, "geometry column" ) &&
+       strstr( pszLastErrorMsg, "of type" ) &&
+       strstr( pszLastErrorMsg, "ignored" ) )
+  {
+    QgsDebugMsg( QString( "Ignoring %1 that is a GeoPackage DB with curve geometries" ).arg( pszPath ) );
+    OGR_DS_Destroy( hDS );
+    hDS = nullptr;
+  }
+#endif
+  return hDS;
+}
+
+
+QByteArray QgsOgrProviderUtils::quotedIdentifier( QByteArray field, const QString& ogrDriverName )
 {
   if ( ogrDriverName == "MySQL" )
   {
@@ -2560,7 +2902,7 @@ QByteArray QgsOgrUtils::quotedIdentifier( QByteArray field, const QString& ogrDr
   }
 }
 
-QString QgsOgrUtils::quotedValue( const QVariant& value )
+QString QgsOgrProviderUtils::quotedValue( const QVariant& value )
 {
   if ( value.isNull() )
     return "NULL";
@@ -2590,7 +2932,7 @@ QString QgsOgrUtils::quotedValue( const QVariant& value )
 bool QgsOgrProvider::syncToDisc()
 {
   //for shapefiles, remove spatial index files and create a new index
-  QgsOgrConnPool::instance()->unref( mFilePath );
+  QgsOgrConnPool::instance()->unref( dataSourceUri() );
   bool shapeIndex = false;
   if ( ogrDriverName == "ESRI Shapefile" )
   {
@@ -2605,9 +2947,11 @@ bool QgsOgrProvider::syncToDisc()
     {
       shapeIndex = true;
       close();
-      QgsOgrConnPool::instance()->invalidateConnections( mFilePath );
+      QgsOgrConnPool::instance()->invalidateConnections( dataSourceUri() );
       QFile::remove( sbnIndexFile );
-      open();
+      open( OpenModeSameAsCurrent );
+      if ( !mValid )
+        return false;
     }
   }
 
@@ -2621,7 +2965,7 @@ bool QgsOgrProvider::syncToDisc()
 
   mShapefileMayBeCorrupted = false;
 
-  QgsOgrConnPool::instance()->ref( mFilePath );
+  QgsOgrConnPool::instance()->ref( dataSourceUri() );
   if ( shapeIndex )
   {
     return createSpatialIndex();
@@ -2632,6 +2976,12 @@ bool QgsOgrProvider::syncToDisc()
 
 void QgsOgrProvider::recalculateFeatureCount()
 {
+  if ( !ogrLayer )
+  {
+    mFeaturesCounted = 0;
+    return;
+  }
+
   OGRGeometryH filter = OGR_L_GetSpatialFilter( ogrLayer );
   if ( filter )
   {
@@ -2671,13 +3021,13 @@ void QgsOgrProvider::recalculateFeatureCount()
     OGR_L_SetSpatialFilter( ogrLayer, filter );
   }
 
-  QgsOgrConnPool::instance()->invalidateConnections( filePath() );
+  QgsOgrConnPool::instance()->invalidateConnections( dataSourceUri() );
 }
 
 bool QgsOgrProvider::doesStrictFeatureTypeCheck() const
 {
   // FIXME probably other drivers too...
-  return ogrDriverName != "ESRI Shapefile" || ( geomType == wkbPoint || geomType == wkbPoint25D );
+  return ogrDriverName != "ESRI Shapefile" || ( mOGRGeomType == wkbPoint || mOGRGeomType == wkbPoint25D );
 }
 
 OGRwkbGeometryType QgsOgrProvider::ogrWkbSingleFlatten( OGRwkbGeometryType type )
@@ -2691,6 +3041,12 @@ OGRwkbGeometryType QgsOgrProvider::ogrWkbSingleFlatten( OGRwkbGeometryType type 
       return wkbLineString;
     case wkbMultiPolygon:
       return wkbPolygon;
+#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+    case wkbMultiCurve:
+      return wkbCompoundCurve;
+    case wkbMultiSurface:
+      return wkbCurvePolygon;
+#endif
     default:
       return type;
   }
@@ -2698,10 +3054,10 @@ OGRwkbGeometryType QgsOgrProvider::ogrWkbSingleFlatten( OGRwkbGeometryType type 
 
 OGRLayerH QgsOgrProvider::setSubsetString( OGRLayerH layer, OGRDataSourceH ds )
 {
-  return QgsOgrUtils::setSubsetString( layer, ds, mEncoding, mSubsetString );
+  return QgsOgrProviderUtils::setSubsetString( layer, ds, mEncoding, mSubsetString );
 }
 
-OGRLayerH QgsOgrUtils::setSubsetString( OGRLayerH layer, OGRDataSourceH ds, QTextCodec* encoding, const QString& subsetString )
+OGRLayerH QgsOgrProviderUtils::setSubsetString( OGRLayerH layer, OGRDataSourceH ds, QTextCodec* encoding, const QString& subsetString )
 {
   QByteArray layerName = OGR_FD_GetName( OGR_L_GetLayerDefn( layer ) );
   OGRSFDriverH ogrDriver = OGR_DS_GetDriver( ds );
@@ -2724,7 +3080,7 @@ OGRLayerH QgsOgrUtils::setSubsetString( OGRLayerH layer, OGRDataSourceH ds, QTex
   return OGR_DS_ExecuteSQL( ds, sql.constData(), nullptr, nullptr );
 }
 
-void QgsOgrProvider::open()
+void QgsOgrProvider::open( OpenMode mode )
 {
   bool openReadOnly = false;
 
@@ -2749,30 +3105,38 @@ void QgsOgrProvider::open()
   QgsDebugMsg( "mLayerName: " + mLayerName );
   QgsDebugMsg( "mSubsetString: " + mSubsetString );
   CPLSetConfigOption( "OGR_ORGANIZE_POLYGONS", "ONLY_CCW" );  // "SKIP" returns MULTIPOLYGONs for multiringed POLYGONs
+  CPLSetConfigOption( "GPX_ELE_AS_25D", "YES" );  // use GPX elevation as z values
 
   if ( mFilePath.startsWith( "MySQL:" ) && !mLayerName.isEmpty() && !mFilePath.endsWith( ",tables=" + mLayerName ) )
   {
     mFilePath += ",tables=" + mLayerName;
   }
 
+  if ( mode == OpenModeForceReadOnly )
+    openReadOnly = true;
+  else if ( mode == OpenModeSameAsCurrent && !mWriteAccess )
+    openReadOnly = true;
+
   // first try to open in update mode (unless specified otherwise)
   if ( !openReadOnly )
-    ogrDataSource = OGROpen( TO8F( mFilePath ), true, &ogrDriver );
+    ogrDataSource = QgsOgrProviderUtils::OGROpenWrapper( TO8F( mFilePath ), true, &ogrDriver );
 
+  mValid = false;
   if ( ogrDataSource )
   {
     mWriteAccess = true;
+    mWriteAccessPossible = true;
   }
   else
   {
-    QgsDebugMsg( "OGR failed to opened in update mode, trying in read-only mode" );
+    mWriteAccess = false;
+    if ( !openReadOnly )
+    {
+      QgsDebugMsg( "OGR failed to opened in update mode, trying in read-only mode" );
+    }
 
     // try to open read-only
-    ogrDataSource = OGROpen( TO8F( mFilePath ), false, &ogrDriver );
-
-    //TODO Need to set a flag or something to indicate that the layer
-    //TODO is in read-only mode, otherwise edit ops will fail
-    //TODO: capabilities() should now reflect this; need to test.
+    ogrDataSource = QgsOgrProviderUtils::OGROpenWrapper( TO8F( mFilePath ), false, &ogrDriver );
   }
 
   if ( ogrDataSource )
@@ -2801,6 +3165,10 @@ void QgsOgrProvider::open()
       mValid = setSubsetString( mSubsetString );
       if ( mValid )
       {
+        if ( mode == OpenModeInitial )
+        {
+          computeCapabilities();
+        }
         QgsDebugMsg( "Data source is valid" );
       }
       else
@@ -2817,6 +3185,59 @@ void QgsOgrProvider::open()
   {
     QgsMessageLog::logMessage( tr( "Data source is invalid (%1)" ).arg( QString::fromUtf8( CPLGetLastErrorMsg() ) ), tr( "OGR" ) );
   }
+
+  // For shapefiles or MapInfo .tab, so as to allow concurrent opening between
+  // QGIS and MapInfo, we go back to read-only mode for now.
+  // We limit to those drivers as re-opening is relatively cheap (other drivers
+  // like GeoJSON might do full content ingestion for example)
+  if ( mValid && mode == OpenModeInitial && mWriteAccess &&
+       ( ogrDriverName == "ESRI Shapefile" || ogrDriverName == "MapInfo File" ) )
+  {
+    OGR_DS_Destroy( ogrDataSource );
+    ogrLayer = ogrOrigLayer = nullptr;
+    mValid = false;
+
+    ogrDataSource = QgsOgrProviderUtils::OGROpenWrapper( TO8F( mFilePath ), false, &ogrDriver );
+
+    mWriteAccess = false;
+
+    if ( ogrDataSource )
+    {
+      // We get the layer which was requested by the uri. The layername
+      // has precedence over the layerid if both are given.
+      if ( mLayerName.isNull() )
+      {
+        ogrOrigLayer = OGR_DS_GetLayer( ogrDataSource, mLayerIndex );
+      }
+      else
+      {
+        ogrOrigLayer = OGR_DS_GetLayerByName( ogrDataSource, TO8( mLayerName ) );
+      }
+
+      ogrLayer = ogrOrigLayer;
+    }
+    if ( ogrLayer )
+    {
+      mValid = true;
+      mDynamicWriteAccess = true;
+
+      if ( !mSubsetString.isEmpty() )
+      {
+        int featuresCountedBackup = mFeaturesCounted;
+        mFeaturesCounted = -1;
+        mValid = setSubsetString( mSubsetString, false );
+        mFeaturesCounted = featuresCountedBackup;
+      }
+    }
+  }
+
+  // For debug/testing purposes
+  if ( !mValid )
+    setProperty( "_debug_open_mode", "invalid" );
+  else if ( mWriteAccess )
+    setProperty( "_debug_open_mode", "read-write" );
+  else
+    setProperty( "_debug_open_mode", "read-only" );
 }
 
 void QgsOgrProvider::close()
@@ -2831,10 +3252,81 @@ void QgsOgrProvider::close()
     OGR_DS_Destroy( ogrDataSource );
   }
   ogrDataSource = nullptr;
+  ogrLayer = nullptr;
+  ogrOrigLayer = nullptr;
+  mValid = false;
+  setProperty( "_debug_open_mode", "invalid" );
 
   updateExtents();
+}
 
-  QgsOgrConnPool::instance()->unref( mFilePath );
+void QgsOgrProvider::reloadData()
+{
+  forceReload();
+  close();
+  open( OpenModeSameAsCurrent );
+  if ( !mValid )
+    pushError( tr( "Cannot reopen datasource %1" ).arg( dataSourceUri() ) );
+}
+
+bool QgsOgrProvider::enterUpdateMode()
+{
+  if ( !mWriteAccessPossible )
+  {
+    return false;
+  }
+  if ( mWriteAccess )
+  {
+    ++mUpdateModeStackDepth;
+    return true;
+  }
+  if ( mUpdateModeStackDepth == 0 )
+  {
+    Q_ASSERT( mDynamicWriteAccess );
+    QgsDebugMsg( QString( "Reopening %1 in update mode" ).arg( dataSourceUri() ) );
+    close();
+    open( OpenModeForceUpdate );
+    if ( !ogrDataSource || !mWriteAccess )
+    {
+      QgsMessageLog::logMessage( tr( "Cannot reopen datasource %1 in update mode" ).arg( dataSourceUri() ), tr( "OGR" ) );
+      pushError( tr( "Cannot reopen datasource %1 in update mode" ).arg( dataSourceUri() ) );
+      return false;
+    }
+  }
+  ++mUpdateModeStackDepth;
+  return true;
+}
+
+bool QgsOgrProvider::leaveUpdateMode()
+{
+  if ( !mWriteAccessPossible )
+  {
+    return false;
+  }
+  --mUpdateModeStackDepth;
+  if ( mUpdateModeStackDepth < 0 )
+  {
+    QgsMessageLog::logMessage( tr( "Unbalanced call to leaveUpdateMode() w.r.t. enterUpdateMode()" ), tr( "OGR" ) );
+    mUpdateModeStackDepth = 0;
+    return false;
+  }
+  if ( !mDynamicWriteAccess )
+  {
+    return true;
+  }
+  if ( mUpdateModeStackDepth == 0 )
+  {
+    QgsDebugMsg( QString( "Reopening %1 in read-only mode" ).arg( dataSourceUri() ) );
+    close();
+    open( OpenModeForceReadOnly );
+    if ( !ogrDataSource )
+    {
+      QgsMessageLog::logMessage( tr( "Cannot reopen datasource %1 in read-only mode" ).arg( dataSourceUri() ), tr( "OGR" ) );
+      pushError( tr( "Cannot reopen datasource %1 in read-only mode" ).arg( dataSourceUri() ) );
+      return false;
+    }
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------------------

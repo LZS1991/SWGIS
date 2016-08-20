@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 #include "qgsnmeaconnection.h"
-#include "./qextserialport/qextserialport.h"
+#include "qextserialport.h"
 #include "qgslogger.h"
 
 #include <QIODevice>
@@ -103,7 +103,7 @@ void QgsNMEAConnection::processStringBuffer()
           mStatus = GPSDataReceived;
           QgsDebugMsg( "*******************GPS data received****************" );
         }
-        else if ( substring.startsWith( "$GPRMC" ) )
+        else if ( substring.startsWith( "$GPRMC" ) || substring.startsWith( "$GNRMC" ) )
         {
           QgsDebugMsg( substring );
           processRMCSentence( ba.data(), ba.length() );

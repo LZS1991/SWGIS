@@ -23,13 +23,12 @@
 #include "qgsmaptopixel.h"
 #include "qgspointv2.h"
 #include "qgswkbptr.h"
-#include "qmath.h"
 #include <QPainter>
 #include <QPainterPath>
 
 QgsCircularStringV2::QgsCircularStringV2(): QgsCurveV2()
 {
-
+  mWkbType = QgsWKBTypes::CircularString;
 }
 
 QgsCircularStringV2::~QgsCircularStringV2()
@@ -58,11 +57,11 @@ QgsCircularStringV2 *QgsCircularStringV2::clone() const
 
 void QgsCircularStringV2::clear()
 {
+  mWkbType = QgsWKBTypes::CircularString;
   mX.clear();
   mY.clear();
   mZ.clear();
   mM.clear();
-  mWkbType = QgsWKBTypes::Unknown;
   clearCache();
 }
 
@@ -79,7 +78,7 @@ QgsRectangle QgsCircularStringV2::calculateBoundingBox() const
     else
     {
       QgsRectangle segmentBox = segmentBoundingBox( QgsPointV2( mX[i], mY[i] ), QgsPointV2( mX[i + 1], mY[i + 1] ), QgsPointV2( mX[i + 2], mY[i + 2] ) );
-      bbox.combineExtentWith( &segmentBox );
+      bbox.combineExtentWith( segmentBox );
     }
   }
 
@@ -253,7 +252,7 @@ bool QgsCircularStringV2::fromWkt( const QString& wkt )
 
   QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
-  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::CircularString )
     return false;
   mWkbType = parts.first;
 
@@ -352,7 +351,7 @@ QgsPointV2 QgsCircularStringV2::endPoint() const
   return pointN( numPoints() - 1 );
 }
 
-QgsLineStringV2* QgsCircularStringV2::curveToLine() const
+QgsLineStringV2* QgsCircularStringV2::curveToLine( double tolerance, SegmentationToleranceType toleranceType ) const
 {
   QgsLineStringV2* line = new QgsLineStringV2();
   QgsPointSequenceV2 points;
@@ -360,7 +359,7 @@ QgsLineStringV2* QgsCircularStringV2::curveToLine() const
 
   for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
   {
-    segmentize( pointN( i ), pointN( i + 1 ), pointN( i + 2 ), points );
+    segmentize( pointN( i ), pointN( i + 1 ), pointN( i + 2 ), points, tolerance, toleranceType );
   }
 
   line->setPoints( points );
@@ -474,9 +473,9 @@ void QgsCircularStringV2::setPoints( const QgsPointSequenceV2 &points )
   }
 }
 
-void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QgsPointSequenceV2 &points ) const
+void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QgsPointSequenceV2 &points, double tolerance, SegmentationToleranceType toleranceType ) const
 {
-  //adapted code from poqgs
+  //adapted code from postgis
   double radius = 0;
   double centerX = 0;
   double centerY = 0;
@@ -497,7 +496,12 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
     clockwise = true;
   }
 
-  double increment = fabs( M_PI_2 / 90 ); //one segment per degree
+  double increment = tolerance; //one segment per degree
+  if ( toleranceType == QgsAbstractGeometryV2::MaximumDifference )
+  {
+    double halfAngle = acos( -tolerance / radius + 1 );
+    increment = 2 * halfAngle;
+  }
 
   //angles of pt1, pt2, pt3
   double a1 = atan2( p1.y() - centerY, p1.x() - centerX );
@@ -538,8 +542,21 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
     if ( hasM )
       pointWkbType = QgsWKBTypes::addM( pointWkbType );
 
+    //make sure the curve point p2 is part of the segmentized vertices. But only if p1 != p3
+    bool addP2 = true;
+    if ( qgsDoubleNear( p1.x(), p3.x() ) && qgsDoubleNear( p1.y(), p3.y() ) )
+    {
+      addP2 = false;
+    }
+
     for ( double angle = a1 + increment; clockwise ? angle > a3 : angle < a3; angle += increment )
     {
+      if (( addP2 && clockwise && angle < a2 ) || ( addP2 && !clockwise && angle > a2 ) )
+      {
+        points.append( p2 );
+        addP2 = false;
+      }
+
       x = centerX + radius * cos( angle );
       y = centerY + radius * sin( angle );
 
@@ -612,7 +629,7 @@ void QgsCircularStringV2::draw( QPainter& p ) const
   p.drawPath( path );
 }
 
-void QgsCircularStringV2::transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d )
+void QgsCircularStringV2::transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d, bool transformZ )
 {
   clearCache();
 
@@ -620,7 +637,8 @@ void QgsCircularStringV2::transform( const QgsCoordinateTransform& ct, QgsCoordi
 
   bool hasZ = is3D();
   int nPoints = numPoints();
-  if ( !hasZ )
+  bool useDummyZ = !hasZ || !transformZ;
+  if ( useDummyZ )
   {
     zArray = new double[nPoints];
     for ( int i = 0; i < nPoints; ++i )
@@ -629,7 +647,7 @@ void QgsCircularStringV2::transform( const QgsCoordinateTransform& ct, QgsCoordi
     }
   }
   ct.transformCoords( nPoints, mX.data(), mY.data(), zArray, d );
-  if ( !hasZ )
+  if ( useDummyZ )
   {
     delete[] zArray;
   }
@@ -762,9 +780,10 @@ bool QgsCircularStringV2::deleteVertex( QgsVertexId position )
   int nVertices = this->numPoints();
   if ( nVertices < 4 ) //circular string must have at least 3 vertices
   {
-    return false;
+    clear();
+    return true;
   }
-  if ( position.vertex < 1 || position.vertex > ( nVertices - 2 ) )
+  if ( position.vertex < 0 || position.vertex > ( nVertices - 1 ) )
   {
     return false;
   }
@@ -861,7 +880,7 @@ void QgsCircularStringV2::sumUpArea( double& sum ) const
     //segment is a full circle, p2 is the center point
     if ( p1 == p3 )
     {
-      double r2 = QgsGeometryUtils::sqrDistance2D( p1, p2 );
+      double r2 = QgsGeometryUtils::sqrDistance2D( p1, p2 ) / 4.0;
       sum += M_PI * r2;
       continue;
     }

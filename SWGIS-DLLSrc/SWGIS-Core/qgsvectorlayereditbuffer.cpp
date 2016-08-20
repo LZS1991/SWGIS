@@ -14,7 +14,7 @@
  ***************************************************************************/
 #include "qgsvectorlayereditbuffer.h"
 
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgslogger.h"
 #include "qgsvectorlayerundocommand.h"
 #include "qgsvectordataprovider.h"
@@ -71,6 +71,12 @@ void QgsVectorLayerEditBuffer::updateFields( QgsFields& fields )
   for ( int i = 0; i < mAddedAttributes.count(); ++i )
   {
     fields.append( mAddedAttributes[i], QgsFields::OriginEdit, i );
+  }
+  // rename fields
+  QgsFieldNameMap::const_iterator renameIt = mRenamedAttributes.constBegin();
+  for ( ; renameIt != mRenamedAttributes.constEnd(); ++renameIt )
+  {
+    fields[ renameIt.key()].setName( renameIt.value() );
   }
 }
 
@@ -225,10 +231,9 @@ bool QgsVectorLayerEditBuffer::addAttribute( const QgsField &field )
   if ( field.name().isEmpty() )
     return false;
 
-  const QgsFields& updatedFields = L->fields();
-  for ( int idx = 0; idx < updatedFields.count(); ++idx )
+  Q_FOREACH ( const QgsField& updatedField, L->fields() )
   {
-    if ( updatedFields[idx].name() == field.name() )
+    if ( updatedField.name() == field.name() )
       return false;
   }
 
@@ -259,6 +264,27 @@ bool QgsVectorLayerEditBuffer::deleteAttribute( int index )
     return false;
 
   L->undoStack()->push( new QgsVectorLayerUndoCommandDeleteAttribute( this, index ) );
+  return true;
+}
+
+bool QgsVectorLayerEditBuffer::renameAttribute( int index, const QString& newName )
+{
+  if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::RenameAttributes ) )
+    return false;
+
+  if ( newName.isEmpty() )
+    return false;
+
+  if ( index < 0 || index >= L->fields().count() )
+    return false;
+
+  Q_FOREACH ( const QgsField& updatedField, L->fields() )
+  {
+    if ( updatedField.name() == newName )
+      return false;
+  }
+
+  L->undoStack()->push( new QgsVectorLayerUndoCommandRenameAttribute( this, index, newName ) );
   return true;
 }
 
@@ -352,6 +378,25 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
       }
       commitErrors << list;
 #endif
+      success = false;
+    }
+  }
+
+  // rename attributes
+  if ( !mRenamedAttributes.isEmpty() )
+  {
+    if (( cap & QgsVectorDataProvider::RenameAttributes ) && provider->renameAttributes( mRenamedAttributes ) )
+    {
+      commitErrors << tr( "SUCCESS: %n attribute(s) renamed.", "renamed attributes count", mRenamedAttributes.size() );
+
+      emit committedAttributesRenamed( L->id(), mRenamedAttributes );
+
+      mRenamedAttributes.clear();
+      attributesChanged = true;
+    }
+    else
+    {
+      commitErrors << tr( "ERROR: %n attribute(s) not renamed", "not renamed attributes count", mRenamedAttributes.size() );
       success = false;
     }
   }
@@ -621,6 +666,20 @@ void QgsVectorLayerEditBuffer::handleAttributeAdded( int index )
     attrs.insert( index, QVariant() );
     featureIt->setAttributes( attrs );
   }
+
+  // go through renamed attributes and adapt
+  QList< int > sortedRenamedIndices = mRenamedAttributes.keys();
+  //sort keys
+  qSort( sortedRenamedIndices.begin(), sortedRenamedIndices.end(), qGreater< int >() );
+  Q_FOREACH ( int renameIndex, sortedRenamedIndices )
+  {
+    if ( renameIndex >= index )
+    {
+      mRenamedAttributes[ renameIndex + 1 ] = mRenamedAttributes.value( renameIndex );
+    }
+  }
+  //remove last
+  mRenamedAttributes.remove( index );
 }
 
 void QgsVectorLayerEditBuffer::handleAttributeDeleted( int index )
@@ -646,6 +705,24 @@ void QgsVectorLayerEditBuffer::handleAttributeDeleted( int index )
     attrs.remove( index );
     featureIt->setAttributes( attrs );
   }
+
+  // go through rename attributes and adapt
+  QList< int > sortedRenamedIndices = mRenamedAttributes.keys();
+  //sort keys
+  qSort( sortedRenamedIndices.begin(), sortedRenamedIndices.end() );
+  int last = -1;
+  mRenamedAttributes.remove( index );
+  Q_FOREACH ( int renameIndex, sortedRenamedIndices )
+  {
+    if ( renameIndex > index )
+    {
+      mRenamedAttributes.insert( renameIndex - 1, mRenamedAttributes.value( renameIndex ) );
+      last = renameIndex;
+    }
+  }
+  //remove last
+  if ( last > -1 )
+    mRenamedAttributes.remove( last );
 }
 
 

@@ -31,10 +31,18 @@ class QgsGeometryCache;
 #include "qgsvectorlayer.h"
 #include "qgsvectorlayereditbuffer.h"
 
+/** \ingroup core
+ * \class QgsVectorLayerUndoCommand
+ * \brief Base class for undo commands within a QgsVectorLayerEditBuffer.
+ */
 
 class SWGISCORE_EXPORT QgsVectorLayerUndoCommand : public QUndoCommand
 {
   public:
+
+    /** Constructor for QgsVectorLayerUndoCommand
+     * @param buffer associated edit buffer
+     */
     QgsVectorLayerUndoCommand( QgsVectorLayerEditBuffer *buffer )
         : QUndoCommand()
         , mBuffer( buffer )
@@ -141,6 +149,34 @@ class SWGISCORE_EXPORT QgsVectorLayerUndoCommandDeleteAttribute : public QgsVect
     QgsEditorWidgetConfig mOldEditorWidgetConfig;
 
     QMap<QgsFeatureId, QVariant> mDeletedValues;
+    QString mOldName;
+};
+
+
+/** \ingroup core
+ * \class QgsVectorLayerUndoCommandRenameAttribute
+ * \brief Undo command for renaming an existing attribute of a vector layer.
+ * \note added in QGIS 2.16
+ */
+
+class SWGISCORE_EXPORT QgsVectorLayerUndoCommandRenameAttribute : public QgsVectorLayerUndoCommand
+{
+  public:
+
+    /** Constructor for QgsVectorLayerUndoCommandRenameAttribute
+     * @param buffer associated edit buffer
+     * @param fieldIndex index of field to rename
+     * @param newName new name for field
+     */
+    QgsVectorLayerUndoCommandRenameAttribute( QgsVectorLayerEditBuffer* buffer, int fieldIndex, const QString& newName );
+
+    virtual void undo() override;
+    virtual void redo() override;
+
+  private:
+    int mFieldIndex;
+    QString mOldName;
+    QString mNewName;
 };
 
 

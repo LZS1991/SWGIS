@@ -23,7 +23,7 @@
 #include "qgscomposition.h"
 #include "qgsvectordataprovider.h"
 #include "qgsexpression.h"
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsproject.h"
 #include "qgsmessagelog.h"
@@ -147,22 +147,24 @@ void QgsAtlasComposition::setSortKeyAttributeIndex( int idx )
 {
   if ( mCoverageLayer )
   {
-    const QgsFields fields = mCoverageLayer->fields();
+    QgsFields fields = mCoverageLayer->fields();
     if ( idx >= 0 && idx < fields.count() )
     {
-      mSortKeyAttributeName = fields[idx].name();
+      mSortKeyAttributeName = fields.at( idx ).name();
       return;
     }
   }
   mSortKeyAttributeName = "";
 }
 
-//
-// Private class only used for the sorting of features
+/// @cond PRIVATE
 class FieldSorter
 {
   public:
-    FieldSorter( QgsAtlasComposition::SorterKeys& keys, bool ascending = true ) : mKeys( keys ), mAscending( ascending ) {}
+    FieldSorter( QgsAtlasComposition::SorterKeys& keys, bool ascending = true )
+        : mKeys( keys )
+        , mAscending( ascending )
+    {}
 
     bool operator()( const QPair< QgsFeatureId, QString > & id1, const QPair< QgsFeatureId, QString >& id2 )
     {
@@ -174,6 +176,8 @@ class FieldSorter
     QgsAtlasComposition::SorterKeys& mKeys;
     bool mAscending;
 };
+
+/// @endcond
 
 int QgsAtlasComposition::updateFeatures()
 {
@@ -216,7 +220,10 @@ int QgsAtlasComposition::updateFeatures()
     {
       nameExpression.reset( nullptr );
     }
-    nameExpression->prepare( &expressionContext );
+    else
+    {
+      nameExpression->prepare( &expressionContext );
+    }
   }
 
   // We cannot use nextFeature() directly since the feature pointer is rewinded by the rendering process
@@ -701,10 +708,10 @@ void QgsAtlasComposition::readXML( const QDomElement& atlasElem, const QDomDocum
     int idx = mSortKeyAttributeName.toInt( &isIndex );
     if ( isIndex && mCoverageLayer )
     {
-      const QgsFields fields = mCoverageLayer->fields();
+      QgsFields fields = mCoverageLayer->fields();
       if ( idx >= 0 && idx < fields.count() )
       {
-        mSortKeyAttributeName = fields[idx].name();
+        mSortKeyAttributeName = fields.at( idx ).name();
       }
     }
     mSortAscending = atlasElem.attribute( "sortAscending", "true" ) == "true" ? true : false;

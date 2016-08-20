@@ -17,17 +17,17 @@
 
 #include <QSettings>
 
-#include "./layertree/qgslayertree.h"
-#include "./layertree/qgslayertreemodellegendnode.h"
+#include "qgslayertree.h"
+#include "qgslayertreemodellegendnode.h"
 #include "qgspluginlayer.h"
-#include "./raster/qgsrasterlayer.h"
-#include "./symbology-ng/qgsrendererv2.h"
+#include "qgsrasterlayer.h"
+#include "qgsrendererv2.h"
 #include "qgsvectorlayer.h"
 #include "qgsdiagramrendererv2.h"
 
 
-QgsMapLayerLegend::QgsMapLayerLegend( QObject *parent ) :
-    QObject( parent )
+QgsMapLayerLegend::QgsMapLayerLegend( QObject *parent )
+    : QObject( parent )
 {
 }
 
@@ -238,7 +238,7 @@ QList<QgsLayerTreeModelLegendNode*> QgsDefaultRasterLayerLegend::createLayerTree
   QList<QgsLayerTreeModelLegendNode*> nodes;
 
   // temporary solution for WMS. Ideally should be done with a delegate.
-  if ( mLayer->providerType() == "wms" )
+  if ( mLayer->dataProvider()->supportsLegendGraphic() )
   {
     nodes << new QgsWMSLegendNode( nodeLayer );
   }

@@ -25,8 +25,8 @@
 #include "qgsogcutils.h"
 #include "qgsvectorcolorrampv2.h"
 #include "qgsrendercontext.h"
-#include "../effects/qgspainteffect.h"
-#include "../effects/qgspainteffectregistry.h"
+#include "qgspainteffect.h"
+#include "qgspainteffectregistry.h"
 
 #include <QDomDocument>
 #include <QDomElement>

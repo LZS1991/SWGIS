@@ -17,7 +17,6 @@
 
 #include <QFlags>
 #include <QList>
-#include <QDate>
 
 #include "qgsfeature.h"
 #include "qgsrectangle.h"
@@ -27,7 +26,7 @@
 
 typedef QList<int> QgsAttributeList;
 
-/**
+/** \ingroup core
  * This class wraps a request for features to a vector layer (or directly its vector data provider).
  * The request may apply a filter to fetch only a particular subset of features. Currently supported filters:
  * - no filter - all features are returned
@@ -85,7 +84,7 @@ class SWGISCORE_EXPORT QgsFeatureRequest
       FilterFids        //!< Filter using feature IDs
     };
 
-    /**
+    /** \ingroup core
      * The OrderByClause class represents an order by clause for a QgsFeatureRequest.
      *
      * It can be a simple field or an expression. Multiple order by clauses can be added to
@@ -169,7 +168,7 @@ class SWGISCORE_EXPORT QgsFeatureRequest
         bool mNullsFirst;
     };
 
-    /**
+    /** \ingroup core
      * Represents a list of OrderByClauses, with the most important first and the least
      * important last.
      *
@@ -371,7 +370,7 @@ class SWGISCORE_EXPORT QgsFeatureRequest
      * Return the subset of attributes which at least need to be fetched
      * @return A list of attributes to be fetched
      */
-    const QgsAttributeList& subsetOfAttributes() const { return mAttrs; }
+    QgsAttributeList subsetOfAttributes() const { return mAttrs; }
 
     //! Set a subset of attributes by names that will be fetched
     QgsFeatureRequest& setSubsetOfAttributes( const QStringList& attrNames, const QgsFields& fields );
@@ -417,7 +416,8 @@ Q_DECLARE_OPERATORS_FOR_FLAGS( QgsFeatureRequest::Flags )
 class QgsFeatureIterator;
 class QgsAbstractFeatureIterator;
 
-/** Base class that can be used for any class that is capable of returning features
+/** \ingroup core
+ * Base class that can be used for any class that is capable of returning features
  * @note added in 2.4
  */
 class SWGISCORE_EXPORT QgsAbstractFeatureSource

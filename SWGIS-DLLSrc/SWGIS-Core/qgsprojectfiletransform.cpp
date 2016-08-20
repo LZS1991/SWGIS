@@ -19,7 +19,7 @@
 #include "qgsprojectfiletransform.h"
 #include "qgsprojectversion.h"
 #include "qgslogger.h"
-#include "./raster/qgsrasterlayer.h"
+#include "qgsrasterlayer.h"
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
 #include <QTextStream>
@@ -204,7 +204,6 @@ void QgsProjectFileTransform::transform081to090()
 
 void QgsProjectFileTransform::transform091to0100()
 {
-  QgsDebugMsg( "entering" );
   if ( ! mDom.isNull() )
   {
     // Insert transforms here!

@@ -19,12 +19,12 @@
 #include "qgscomposerlegenditem.h"
 #include "qgscomposerlegend.h"
 #include "qgsmaplayerregistry.h"
+#include "qgsrasterlayer.h"
+#include "qgsrendererv2.h"
+#include "qgssymbolv2.h"
+#include "qgssymbollayerv2utils.h"
 #include "qgsvectorlayer.h"
 #include "qgsapplication.h"
-#include "../raster/qgsrasterlayer.h"
-#include "../symbology-ng/qgsrendererv2.h"
-#include "../symbology-ng/qgssymbolv2.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
 #include <QDomDocument>
 #include <QDomElement>
 

@@ -19,7 +19,7 @@
 #include "qgsexpression.h"
 #include "qgsogrfeatureiterator.h"
 #include "qgssqlexpressioncompiler.h"
-#include "ogrproviderconfig.h"
+
 class SWGISOGRPROVIDER_EXPORT QgsOgrExpressionCompiler : public QgsSqlExpressionCompiler
 {
   public:

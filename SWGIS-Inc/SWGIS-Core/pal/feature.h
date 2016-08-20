@@ -30,7 +30,7 @@
 #ifndef FEATURE_H
 #define FEATURE_H
 
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "pointset.h"
 #include "util.h"
 #include "labelposition.h"

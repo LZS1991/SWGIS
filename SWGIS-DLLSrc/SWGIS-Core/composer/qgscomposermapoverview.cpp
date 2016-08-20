@@ -18,8 +18,8 @@
 #include "qgscomposermapoverview.h"
 #include "qgscomposermap.h"
 #include "qgscomposition.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
-#include "../symbology-ng/qgssymbolv2.h"
+#include "qgssymbollayerv2utils.h"
+#include "qgssymbolv2.h"
 
 #include <QPainter>
 

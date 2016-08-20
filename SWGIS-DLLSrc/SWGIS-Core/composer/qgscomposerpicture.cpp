@@ -26,8 +26,8 @@
 #include "qgsmessagelog.h"
 #include "qgsdatadefined.h"
 #include "qgsnetworkcontentfetcher.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
-#include "../symbology-ng/qgssvgcache.h"
+#include "qgssymbollayerv2utils.h"
+#include "qgssvgcache.h"
 #include <QDomDocument>
 #include <QDomElement>
 #include <QFileInfo>

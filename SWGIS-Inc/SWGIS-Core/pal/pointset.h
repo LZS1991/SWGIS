@@ -30,7 +30,7 @@
 #ifndef POINTSET_H
 #define POINTSET_H
 
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "rtree.hpp"
 #include <cfloat>
 #include <cmath>

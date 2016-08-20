@@ -113,8 +113,6 @@ class SWGISCORE_EXPORT QgsVectorLayerDiagramProvider : public QgsAbstractLabelPr
     QgsDiagramLayerSettings mSettings;
     //! Diagram renderer instance (owned by mSettings)
     QgsDiagramRendererV2* mDiagRenderer;
-    //! ID of the layer
-    QString mLayerId;
 
     // these are needed only if using own renderer loop
 

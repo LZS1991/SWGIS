@@ -184,6 +184,28 @@ class SWGISGUI_EXPORT QgsColorButtonV2 : public QToolButton
      */
     void setNoColorString( const QString& noColorString ) { mNoColorString = noColorString; }
 
+    /** Sets whether a set to null (clear) option is shown in the button's drop down menu.
+     * @param showNull set to true to show a null option
+     * @note added in QGIS 2.16
+     * @see showNull()
+     * @see isNull()
+     */
+    void setShowNull( bool showNull );
+
+    /** Returns whether the set to null (clear) option is shown in the button's drop down menu.
+     * @note added in QGIS 2.16
+     * @see setShowNull()
+     * @see isNull()
+     */
+    bool showNull() const;
+
+    /** Returns true if the current color is null.
+     * @note added in QGIS 2.16
+     * @see setShowNull()
+     * @see showNull()
+     */
+    bool isNull() const;
+
     /** Returns the string used for the "no color" option in the button's drop down menu.
      * @returns string used for the "no color" menu option
      * @see setNoColorString
@@ -270,6 +292,13 @@ class SWGISGUI_EXPORT QgsColorButtonV2 : public QToolButton
      */
     void setToDefaultColor();
 
+    /** Sets color to null.
+     * @see setToDefaultColor()
+     * @see setToNoColor()
+     * @note added in QGIS 2.16
+     */
+    void setToNull();
+
   signals:
 
     /** Is emitted whenever a new color is set for the button. The color is always valid.
@@ -287,6 +316,7 @@ class SWGISGUI_EXPORT QgsColorButtonV2 : public QToolButton
 
   protected:
 
+    bool event( QEvent *e ) override;
     void changeEvent( QEvent* e ) override;
     void showEvent( QShowEvent* e ) override;
     void resizeEvent( QResizeEvent *event ) override;
@@ -346,6 +376,7 @@ class SWGISGUI_EXPORT QgsColorButtonV2 : public QToolButton
 
     bool mShowNoColorOption;
     QString mNoColorString;
+    bool mShowNull;
 
     QPoint mDragStartPosition;
     bool mPickingColor;

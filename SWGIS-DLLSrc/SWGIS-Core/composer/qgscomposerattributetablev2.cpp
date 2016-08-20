@@ -25,12 +25,13 @@
 #include "qgsatlascomposition.h"
 #include "qgsproject.h"
 #include "qgsrelationmanager.h"
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 
 //QgsComposerAttributeTableCompareV2
 
 QgsComposerAttributeTableCompareV2::QgsComposerAttributeTableCompareV2()
-    : mCurrentSortColumn( 0 ), mAscending( true )
+    : mCurrentSortColumn( 0 )
+    , mAscending( true )
 {
 }
 
@@ -201,14 +202,15 @@ void QgsComposerAttributeTableV2::resetColumns()
   mColumns.clear();
 
   //rebuild columns list from vector layer fields
-  const QgsFields& fields = source->fields();
-  for ( int idx = 0; idx < fields.count(); ++idx )
+  int idx = 0;
+  Q_FOREACH ( const QgsField& field, source->fields() )
   {
     QString currentAlias = source->attributeDisplayName( idx );
     QgsComposerTableColumn* col = new QgsComposerTableColumn;
-    col->setAttribute( fields[idx].name() );
+    col->setAttribute( field.name() );
     col->setHeading( currentAlias );
     mColumns.append( col );
+    idx++;
   }
 }
 
@@ -341,13 +343,65 @@ void QgsComposerAttributeTableV2::setDisplayAttributes( const QSet<int>& attr, b
   else
   {
     //resetting, so add all attributes to columns
-    for ( int idx = 0; idx < fields.count(); ++idx )
+    int idx = 0;
+    Q_FOREACH ( const QgsField& field, fields )
     {
       QString currentAlias = source->attributeDisplayName( idx );
       QgsComposerTableColumn* col = new QgsComposerTableColumn;
-      col->setAttribute( fields[idx].name() );
+      col->setAttribute( field.name() );
       col->setHeading( currentAlias );
       mColumns.append( col );
+      idx++;
+    }
+  }
+
+  if ( refresh )
+  {
+    refreshAttributes();
+  }
+}
+
+void QgsComposerAttributeTableV2::setDisplayedFields( const QStringList& fields, bool refresh )
+{
+  QgsVectorLayer* source = sourceLayer();
+  if ( !source )
+  {
+    return;
+  }
+
+  //rebuild columns list, taking only fields contained in supplied list
+  qDeleteAll( mColumns );
+  mColumns.clear();
+
+  QgsFields layerFields = source->fields();
+
+  if ( !fields.isEmpty() )
+  {
+    Q_FOREACH ( const QString& field, fields )
+    {
+      int attrIdx = layerFields.fieldNameIndex( field );
+      if ( attrIdx < 0 )
+        continue;
+
+      QString currentAlias = source->attributeDisplayName( attrIdx );
+      QgsComposerTableColumn* col = new QgsComposerTableColumn;
+      col->setAttribute( layerFields.at( attrIdx ).name() );
+      col->setHeading( currentAlias );
+      mColumns.append( col );
+    }
+  }
+  else
+  {
+    //resetting, so add all attributes to columns
+    int idx = 0;
+    Q_FOREACH ( const QgsField& field, layerFields )
+    {
+      QString currentAlias = source->attributeDisplayName( idx );
+      QgsComposerTableColumn* col = new QgsComposerTableColumn;
+      col->setAttribute( field.name() );
+      col->setHeading( currentAlias );
+      mColumns.append( col );
+      idx++;
     }
   }
 

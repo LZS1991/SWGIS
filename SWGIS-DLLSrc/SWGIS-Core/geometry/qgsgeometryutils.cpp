@@ -20,7 +20,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsgeometrycollectionv2.h"
 #include "qgslinestringv2.h"
 #include "qgswkbptr.h"
-#include "qmath.h"
+
 #include <QStringList>
 #include <QVector>
 
@@ -83,10 +83,40 @@ QgsPointV2 QgsGeometryUtils::closestVertex( const QgsAbstractGeometryV2& geom, c
       id.part = vertexId.part;
       id.ring = vertexId.ring;
       id.vertex = vertexId.vertex;
+      id.type = vertexId.type;
     }
   }
 
   return minDistPoint;
+}
+
+double QgsGeometryUtils::distanceToVertex( const QgsAbstractGeometryV2 &geom, const QgsVertexId &id )
+{
+  double currentDist = 0;
+  QgsVertexId vertexId;
+  QgsPointV2 vertex;
+  QgsPointV2 previousVertex;
+
+  bool first = true;
+  while ( geom.nextVertex( vertexId, vertex ) )
+  {
+    if ( !first )
+    {
+      currentDist += sqrt( QgsGeometryUtils::sqrDistance2D( previousVertex, vertex ) );
+    }
+
+    previousVertex = vertex;
+    first = false;
+
+    if ( vertexId == id )
+    {
+      //found target vertex
+      return currentDist;
+    }
+  }
+
+  //could not find target vertex
+  return -1;
 }
 
 void QgsGeometryUtils::adjacentVertices( const QgsAbstractGeometryV2& geom, QgsVertexId atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex )
@@ -329,9 +359,9 @@ void QgsGeometryUtils::circleCenterRadius( const QgsPointV2& pt1, const QgsPoint
   //closed circle
   if ( qgsDoubleNear( pt1.x(), pt3.x() ) && qgsDoubleNear( pt1.y(), pt3.y() ) )
   {
-    centerX = pt2.x();
-    centerY = pt2.y();
-    radius = sqrt( pow( pt2.x() - pt1.x(), 2.0 ) + pow( pt2.y() - pt1.y(), 2.0 ) );
+    centerX = ( pt1.x() + pt2.x() ) / 2.0;
+    centerY = ( pt1.y() + pt2.y() ) / 2.0;
+    radius = sqrt( pow( centerX - pt1.x(), 2.0 ) + pow( centerY - pt1.y(), 2.0 ) );
     return;
   }
 

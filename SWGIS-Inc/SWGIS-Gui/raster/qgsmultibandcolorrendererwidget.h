@@ -38,6 +38,7 @@ class SWGISGUI_EXPORT QgsMultiBandColorRendererWidget: public QgsRasterRendererW
     ~QgsMultiBandColorRendererWidget();
 
     QgsRasterRenderer* renderer() override;
+    void setMapCanvas( QgsMapCanvas* canvas ) override;
 
     void setFromRenderer( const QgsRasterRenderer* r );
 

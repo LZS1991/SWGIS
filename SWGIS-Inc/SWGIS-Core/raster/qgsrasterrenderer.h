@@ -33,6 +33,9 @@ class QgsRasterTransparency;
   */
 class SWGISCORE_EXPORT QgsRasterRenderer : public QgsRasterInterface
 {
+
+    Q_DECLARE_TR_FUNCTIONS( QgsRasterRenderer );
+
   public:
     // Origin of min / max values
     enum MinMaxOrigin
@@ -84,6 +87,11 @@ class SWGISCORE_EXPORT QgsRasterRenderer : public QgsRasterInterface
 
     /** Sets base class members from xml. Usually called from create() methods of subclasses*/
     void readXML( const QDomElement& rendererElem ) override;
+
+    /** Copies common properties like opacity / transparency data from other renderer.
+     *  Useful when cloning renderers.
+     *  @note added in 2.16  */
+    void copyCommonProperties( const QgsRasterRenderer* other );
 
     /** Returns a list of band numbers used by the renderer*/
     virtual QList<int> usesBands() const { return QList<int>(); }

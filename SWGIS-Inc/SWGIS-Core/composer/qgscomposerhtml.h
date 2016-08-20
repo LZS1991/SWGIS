@@ -21,7 +21,7 @@
 
 #include <QUrl>
 
-class QWebPage;
+class QgsWebPage;
 class QImage;
 class QgsVectorLayer;
 class QgsNetworkContentFetcher;
@@ -229,7 +229,7 @@ class SWGISCORE_EXPORT QgsComposerHtml: public QgsComposerMultiFrame
   private:
     ContentMode mContentMode;
     QUrl mUrl;
-    QWebPage* mWebPage;
+    QgsWebPage* mWebPage;
     QString mHtml;
     QString mFetchedHtml;
     QString mLastFetchedUrl;
@@ -248,6 +248,9 @@ class SWGISCORE_EXPORT QgsComposerHtml: public QgsComposerMultiFrame
 
     QString mUserStylesheet;
     bool mEnableUserStylesheet;
+
+    //! JSON string representation of current atlas feature
+    QString mAtlasFeatureJSON;
 
     QgsNetworkContentFetcher* mFetcher;
 

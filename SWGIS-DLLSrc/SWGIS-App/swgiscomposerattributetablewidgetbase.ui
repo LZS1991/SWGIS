@@ -198,7 +198,7 @@
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QComboBox" name="mComposerMapComboBox"/>
+           <widget class="QgsComposerItemComboBox" name="mComposerMapComboBox"/>
           </item>
           <item row="4" column="0" colspan="2">
            <widget class="QCheckBox" name="mIntersectAtlasCheckBox">
@@ -764,15 +764,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QgsCollapsibleGroupBoxBasic</class>
-   <extends>QGroupBox</extends>
-   <header>qgscollapsiblegroupbox.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>QgsMapLayerComboBox</class>
-   <extends>QComboBox</extends>
-   <header location="global">qgsmaplayercombobox.h</header>
+   <class>QgsDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qgsdoublespinbox.h</header>
   </customwidget>
   <customwidget>
    <class>QgsColorButtonV2</class>
@@ -781,14 +775,25 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsDoubleSpinBox</class>
-   <extends>QDoubleSpinBox</extends>
-   <header>qgsdoublespinbox.h</header>
-  </customwidget>
-  <customwidget>
    <class>QgsSpinBox</class>
    <extends>QSpinBox</extends>
    <header>qgsspinbox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsCollapsibleGroupBoxBasic</class>
+   <extends>QGroupBox</extends>
+   <header>qgscollapsiblegroupbox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsComposerItemComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgscomposeritemcombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header location="global">qgsmaplayercombobox.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -833,8 +838,6 @@
   <tabstop>mEmptyFrameCheckBox</tabstop>
   <tabstop>mHideEmptyBgCheckBox</tabstop>
  </tabstops>
- <resources>
-  <include location="../../../images/images.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

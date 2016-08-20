@@ -35,7 +35,7 @@ email                : nyall dot dawson at gmail dot com
 
 #include "qgsfield.h"
 
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 
 class QgsFeaturePrivate : public QSharedData
 {

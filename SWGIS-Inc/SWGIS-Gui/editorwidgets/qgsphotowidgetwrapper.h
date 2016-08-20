@@ -16,7 +16,7 @@
 #ifndef QGSPHOTOWIDGETWRAPPER_H
 #define QGSPHOTOWIDGETWRAPPER_H
 
-#include "./core/qgseditorwidgetwrapper.h"
+#include "qgseditorwidgetwrapper.h"
 #include "qgspixmaplabel.h"
 
 #include <QLabel>
@@ -28,7 +28,7 @@
 #endif
 
 
-/**
+/** \ingroup gui
  * Wraps a photo widget. Will show a picture and a file chooser to change the picture.
  *
  * Options:
@@ -49,6 +49,7 @@ class SWGISGUI_EXPORT QgsPhotoWidgetWrapper : public QgsEditorWidgetWrapper
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;
@@ -64,6 +65,8 @@ class SWGISGUI_EXPORT QgsPhotoWidgetWrapper : public QgsEditorWidgetWrapper
     void loadPixmap( const QString& fileName );
 
   private:
+    void updateConstraintWidgetStatus( bool constraintValid ) override;
+
     //! This label is used as a container to display the picture
     QLabel* mPhotoLabel;
     //! This label is used as a container to display a picture that scales with the dialog layout.
@@ -77,6 +80,8 @@ class SWGISGUI_EXPORT QgsPhotoWidgetWrapper : public QgsEditorWidgetWrapper
     QLineEdit* mLineEdit;
     //! The button to open the file chooser dialog
     QPushButton* mButton;
+
+    void clearPicture();
 };
 
 #endif // QGSPHOTOWIDGETWRAPPER_H

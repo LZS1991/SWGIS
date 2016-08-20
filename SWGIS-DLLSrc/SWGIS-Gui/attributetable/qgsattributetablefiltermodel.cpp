@@ -22,7 +22,7 @@
 #include "qgsfeature.h"
 #include "qgsmapcanvas.h"
 #include "qgslogger.h"
-#include "./symbology-ng/qgsrendererv2.h"
+#include "qgsrendererv2.h"
 #include "qgsvectorlayereditbuffer.h"
 //////////////////
 // Filter Model //
@@ -63,8 +63,161 @@ bool QgsAttributeTableFilterModel::lessThan( const QModelIndex &left, const QMod
 
 void QgsAttributeTableFilterModel::sort( int column, Qt::SortOrder order )
 {
-  masterModel()->prefetchColumnData( column );
-  QSortFilterProxyModel::sort( column, order );
+  int myColumn = mColumnMapping.at( column );
+  masterModel()->prefetchColumnData( myColumn );
+  QSortFilterProxyModel::sort( myColumn, order );
+  emit sortColumnChanged( column, order );
+}
+
+QVariant QgsAttributeTableFilterModel::data( const QModelIndex& index, int role ) const
+{
+  if ( mapColumnToSource( index.column() ) == -1 ) // actions
+  {
+    if ( role == TypeRole )
+      return ColumnTypeActionButton;
+    else if ( role == QgsAttributeTableModel::FeatureIdRole )
+    {
+      QModelIndex fieldIndex = QSortFilterProxyModel::mapToSource( QSortFilterProxyModel::index( index.row(), 0, index.parent() ) );
+      return sourceModel()->data( fieldIndex, QgsAttributeTableModel::FeatureIdRole );
+    }
+  }
+  else if ( role == TypeRole )
+    return ColumnTypeField;
+
+  return QSortFilterProxyModel::data( index, role );
+}
+
+QVariant QgsAttributeTableFilterModel::headerData( int section, Qt::Orientation orientation, int role ) const
+{
+  if ( orientation ==  Qt::Horizontal )
+  {
+    if ( mColumnMapping.at( section ) == -1 && role == Qt::DisplayRole )
+      return tr( "Actions" );
+    else
+      return QSortFilterProxyModel::headerData( section, orientation, role );
+  }
+  else
+  {
+    if ( role == Qt::DisplayRole )
+      return section + 1;
+    else
+    {
+      int sourceSection = mapToSource( index( section, ( !mColumnMapping.isEmpty() && mColumnMapping.at( 0 ) == -1 ) ? 1 : 0 ) ).row();
+      return sourceModel()->headerData( sourceSection, orientation, role );
+    }
+  }
+}
+
+int QgsAttributeTableFilterModel::actionColumnIndex() const
+{
+  return mColumnMapping.indexOf( -1 );
+}
+
+int QgsAttributeTableFilterModel::columnCount( const QModelIndex& parent ) const
+{
+  Q_UNUSED( parent );
+  return mColumnMapping.count();
+}
+
+void QgsAttributeTableFilterModel::setAttributeTableConfig( const QgsAttributeTableConfig& config )
+{
+  mConfig = config;
+  mConfig.update( layer()->fields() );
+
+  QVector<int> newColumnMapping;
+
+  Q_FOREACH ( const QgsAttributeTableConfig::ColumnConfig& columnConfig, mConfig.columns() )
+  {
+    // Hidden? Forget about this column
+    if ( columnConfig.hidden )
+      continue;
+
+    // The new value for the mapping (field index or -1 for action column)
+    int newValue = ( columnConfig.type == QgsAttributeTableConfig::Action ) ? -1 : layer()->fieldNameIndex( columnConfig.name );
+    newColumnMapping << newValue;
+  }
+
+  if ( newColumnMapping != mColumnMapping )
+  {
+    bool requiresReset = false;
+    int firstRemovedColumn = -1;
+    int removedColumnCount = 0;
+
+    // Check if there have a contiguous set of columns have been removed or if we require a full reset
+    for ( int i = 0; i < qMin( newColumnMapping.size(), mColumnMapping.size() - removedColumnCount ); ++i )
+    {
+      if ( newColumnMapping.at( i ) == mColumnMapping.at( i + removedColumnCount ) )
+        continue;
+
+      if ( firstRemovedColumn == -1 )
+      {
+        firstRemovedColumn = i;
+
+        while ( i < mColumnMapping.size() - removedColumnCount && mColumnMapping.at( i + removedColumnCount ) != newColumnMapping.at( i ) )
+        {
+          ++removedColumnCount;
+        }
+      }
+      else
+      {
+        requiresReset = true;
+        break;
+      }
+    }
+
+    // No difference found so far
+    if ( firstRemovedColumn == -1 )
+    {
+      if ( newColumnMapping.size() > mColumnMapping.size() )
+      {
+        // More columns: appended to the end
+        beginInsertColumns( QModelIndex(), mColumnMapping.size(), newColumnMapping.size() - 1 );
+        mColumnMapping = newColumnMapping;
+        endInsertColumns();
+      }
+      else
+      {
+        // Less columns: removed from the end
+        beginRemoveColumns( QModelIndex(), newColumnMapping.size(), mColumnMapping.size() - 1 );
+        mColumnMapping = newColumnMapping;
+        endRemoveColumns();
+      }
+    }
+    else
+    {
+      if ( newColumnMapping.size() == mColumnMapping.size() - removedColumnCount )
+      {
+        beginRemoveColumns( QModelIndex(), firstRemovedColumn, firstRemovedColumn + removedColumnCount );
+        mColumnMapping = newColumnMapping;
+        endRemoveColumns();
+      }
+      else
+      {
+        requiresReset = true;
+      }
+    }
+
+    if ( requiresReset )
+    {
+      beginResetModel();
+      mColumnMapping = newColumnMapping;
+      endResetModel();
+    }
+  }
+
+  sort( config.sortExpression(), config.sortOrder() );
+}
+
+void QgsAttributeTableFilterModel::sort( QString expression, Qt::SortOrder order )
+{
+  QSortFilterProxyModel::sort( -1 );
+  masterModel()->prefetchSortData( expression );
+  QSortFilterProxyModel::sort( 0, order ) ;
+}
+
+QString QgsAttributeTableFilterModel::sortExpression() const
+{
+  return masterModel()->sortCacheExpression();
 }
 
 void QgsAttributeTableFilterModel::setSelectedOnTop( bool selectedOnTop )
@@ -85,7 +238,21 @@ void QgsAttributeTableFilterModel::setSourceModel( QgsAttributeTableModel* sourc
 {
   mTableModel = sourceModel;
 
+  for ( int i = 0; i < mTableModel->columnCount() - mTableModel->extraColumns(); ++i )
+  {
+    mColumnMapping.append( i );
+  }
+
   QSortFilterProxyModel::setSourceModel( sourceModel );
+
+  // Disconnect any code to update columns in the parent, we handle this manually
+  disconnect( sourceModel, SIGNAL( columnsAboutToBeInserted( QModelIndex, int, int ) ), this, SLOT( _q_sourceColumnsAboutToBeInserted( QModelIndex, int, int ) ) );
+  disconnect( sourceModel, SIGNAL( columnsInserted( QModelIndex, int, int ) ), this, SLOT( _q_sourceColumnsInserted( QModelIndex, int, int ) ) );
+  disconnect( sourceModel, SIGNAL( columnsAboutToBeRemoved( QModelIndex, int, int ) ), this, SLOT( _q_sourceColumnsAboutToBeRemoved( QModelIndex, int, int ) ) );
+  disconnect( sourceModel, SIGNAL( columnsRemoved( QModelIndex, int, int ) ), this, SLOT( _q_sourceColumnsRemoved( QModelIndex, int, int ) ) );
+
+  connect( mTableModel, SIGNAL( columnsAboutToBeInserted( QModelIndex, int, int ) ), this, SLOT( onColumnsChanged() ) );
+  connect( mTableModel, SIGNAL( columnsAboutToBeRemoved( QModelIndex, int, int ) ), this, SLOT( onColumnsChanged() ) );
 }
 
 bool QgsAttributeTableFilterModel::selectedOnTop()
@@ -193,6 +360,21 @@ void QgsAttributeTableFilterModel::selectionChanged()
   }
 }
 
+void QgsAttributeTableFilterModel::onColumnsChanged()
+{
+  setAttributeTableConfig( mConfig );
+}
+
+int QgsAttributeTableFilterModel::mapColumnToSource( int column ) const
+{
+  if ( mColumnMapping.isEmpty() )
+    return column;
+  if ( column < 0 || column >= mColumnMapping.size() )
+    return -1;
+  else
+    return mColumnMapping.at( column );
+}
+
 void QgsAttributeTableFilterModel::generateListOfVisibleFeatures()
 {
   if ( !layer() )
@@ -215,9 +397,7 @@ void QgsAttributeTableFilterModel::generateListOfVisibleFeatures()
   }
 
   const QgsMapSettings& ms = mCanvas->mapSettings();
-  if ( layer()->hasScaleBasedVisibility() &&
-       ( layer()->minimumScale() > ms.scale() ||
-         layer()->maximumScale() <= ms.scale() ) )
+  if ( !layer()->isInScaleRange( ms.scale() ) )
   {
     QgsDebugMsg( "Out of scale limits" );
   }
@@ -301,14 +481,42 @@ QModelIndexList QgsAttributeTableFilterModel::fidToIndexList( QgsFeatureId fid )
   return indexes;
 }
 
-QModelIndex QgsAttributeTableFilterModel::mapToMaster( const QModelIndex &proxyIndex ) const
+QModelIndex QgsAttributeTableFilterModel::mapToSource( const QModelIndex& proxyIndex ) const
 {
-  // Master is source
-  return mapToSource( proxyIndex );
+  if ( !proxyIndex.isValid() )
+    return QModelIndex();
+
+  int sourceColumn = mapColumnToSource( proxyIndex.column() );
+
+  // For the action column there is no matching column in the source model, just return the first one
+  // so we are still able to query for the feature id, the feature...
+  if ( sourceColumn == -1 )
+    sourceColumn = 0;
+
+  return QSortFilterProxyModel::mapToSource( index( proxyIndex.row(), sourceColumn, proxyIndex.parent() ) );
 }
 
-QModelIndex QgsAttributeTableFilterModel::mapFromMaster( const QModelIndex &sourceIndex ) const
+QModelIndex QgsAttributeTableFilterModel::mapFromSource( const QModelIndex& sourceIndex ) const
 {
-  // Master is source
-  return mapFromSource( sourceIndex );
+  QModelIndex proxyIndex = QSortFilterProxyModel::mapFromSource( sourceIndex );
+
+  if ( proxyIndex.column() < 0 )
+    return QModelIndex();
+
+  int col = mapColumnToSource( proxyIndex.column() );
+  if ( col == -1 )
+    col = 0;
+
+  return index( proxyIndex.row(), col , proxyIndex.parent() );
 }
+
+Qt::ItemFlags QgsAttributeTableFilterModel::flags( const QModelIndex& index ) const
+{
+  // Handle the action column flags here, the master model doesn't know it
+  if ( mapColumnToSource( index.column() ) == -1 )
+    return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+
+  QModelIndex source_index = mapToSource( index );
+  return masterModel()->flags( source_index );
+}
+

@@ -17,7 +17,7 @@
 
 #include "qgsshadoweffect.h"
 #include "qgsimageoperation.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
+#include "qgssymbollayerv2utils.h"
 #include "qgsunittypes.h"
 
 QgsShadowEffect::QgsShadowEffect()

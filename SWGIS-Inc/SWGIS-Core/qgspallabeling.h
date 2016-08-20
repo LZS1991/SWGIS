@@ -58,6 +58,7 @@ class QgsMapSettings;
 class QgsLabelFeature;
 class QgsLabelingEngineV2;
 class QgsVectorLayerLabelProvider;
+class QgsDxfExport;
 class QgsVectorLayerDiagramProvider;
 
 class SWGISCORE_EXPORT QgsPalLayerSettings
@@ -542,7 +543,7 @@ class SWGISCORE_EXPORT QgsPalLayerSettings
      * the feature's original geometry will be used as an obstacle for labels. Not available
      * in Python bindings.
      */
-    void registerFeature( QgsFeature& f, QgsRenderContext& context, const QString& dxfLayer, QgsLabelFeature** labelFeature = nullptr, QgsGeometry* obstacleGeometry = nullptr );
+    void registerFeature( QgsFeature& f, QgsRenderContext& context, QgsLabelFeature** labelFeature = nullptr, QgsGeometry* obstacleGeometry = nullptr );
 
     void readFromLayer( QgsVectorLayer* layer );
     void writeToLayer( QgsVectorLayer* layer );
@@ -712,7 +713,7 @@ class SWGISCORE_EXPORT QgsPalLayerSettings
 
     /** Registers a feature as an obstacle only (no label rendered)
      */
-    void registerObstacleFeature( QgsFeature &f, QgsRenderContext &context, const QString& dxfLayer, QgsLabelFeature** obstacleFeature, QgsGeometry* obstacleGeometry = nullptr );
+    void registerObstacleFeature( QgsFeature &f, QgsRenderContext &context, QgsLabelFeature** obstacleFeature, QgsGeometry* obstacleGeometry = nullptr );
 
     QMap<DataDefinedProperties, QVariant> dataDefinedValues;
     QgsExpression* expression;
@@ -951,7 +952,7 @@ class SWGISCORE_EXPORT QgsPalLabeling : public QgsLabelingEngineInterface
      * must have already had the feature and fields sets prior to calling this method.
      * @param dxfLayer dxfLayer name
      */
-    virtual void registerFeature( const QString& layerID, QgsFeature& feat, QgsRenderContext& context, const QString& dxfLayer = QString::null ) override;
+    virtual void registerFeature( const QString& layerID, QgsFeature& feat, QgsRenderContext& context ) override;
 
     virtual void registerDiagramFeature( const QString& layerID, QgsFeature& feat, QgsRenderContext& context ) override;
     //! called when the map is drawn and labels should be placed
@@ -1057,6 +1058,7 @@ class SWGISCORE_EXPORT QgsPalLabeling : public QgsLabelingEngineInterface
                                        const QMap< QgsPalLayerSettings::DataDefinedProperties, QVariant >& ddValues );
 
     friend class QgsVectorLayerLabelProvider; // to allow calling the static methods above
+    friend class QgsDxfExport;                // to allow calling the static methods above
 
     void deleteTemporaryData();
 

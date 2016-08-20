@@ -37,6 +37,7 @@ class SWGISGUI_EXPORT QgsWebViewWidgetWrapper : public QgsEditorWidgetWrapper
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;
@@ -52,6 +53,8 @@ class SWGISGUI_EXPORT QgsWebViewWidgetWrapper : public QgsEditorWidgetWrapper
     void selectFileName();
 
   private:
+    void updateConstraintWidgetStatus( bool constraintValid ) override;
+
     //! This label is used as a container to display the picture
     QWebView* mWebView;
     //! The line edit containing the path to the picture

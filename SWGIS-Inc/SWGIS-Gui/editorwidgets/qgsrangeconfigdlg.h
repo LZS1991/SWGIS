@@ -19,7 +19,8 @@
 #include "ui_swgisrangeconfigdlgbase.h"
 #include "./core/qgseditorconfigwidget.h"
 
-/** \class QgsRangeConfigDlg
+/** \ingroup gui
+ * \class QgsRangeConfigDlg
  * \note not available in Python bindings
  */
 

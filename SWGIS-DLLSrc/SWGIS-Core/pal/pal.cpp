@@ -27,7 +27,7 @@
  *
  */
 
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "pal.h"
 #include "layer.h"
 #include "palexception.h"

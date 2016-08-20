@@ -23,7 +23,7 @@
 # define SWGISGUI_EXPORT Q_DECL_IMPORT
 #endif
 
-//#include <qgisgui.h>
+#include <qgisgui.h>
 #include <QString>
 #include <QFrame>
 #include <QIcon>
@@ -92,9 +92,9 @@ class SWGISGUI_EXPORT QgsMessageBar: public QFrame
     static QgsMessageBarItem* createMessage( QWidget *widget, QWidget *parent = nullptr );
 
     //! convenience method for pushing a message to the bar
-    void pushMessage( const QString &text, MessageLevel level = INFO, int duration = 0 ) { return pushMessage( QString::null, text, level, duration ); }
+    void pushMessage( const QString &text, MessageLevel level = INFO, int duration = 5 ) { return pushMessage( QString::null, text, level, duration ); }
     //! convenience method for pushing a message with title to the bar
-    void pushMessage( const QString &title, const QString &text, MessageLevel level = INFO, int duration = 0 );
+    void pushMessage( const QString &title, const QString &text, MessageLevel level = INFO, int duration = 5 );
 
     QgsMessageBarItem *currentItem() { return mCurrentItem; }
 

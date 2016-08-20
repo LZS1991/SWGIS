@@ -129,6 +129,11 @@ class SWGISGUI_EXPORT QgsCategorizedSymbolRendererV2Widget : public QgsRendererV
      */
     void matchToSymbolsFromXml();
 
+  private slots:
+
+    void cleanUpSymbolSelector( QgsPanelWidget* container );
+    void updateSymbolsFromWidget();
+
   protected:
 
     void updateUiFromRenderer();
@@ -153,7 +158,7 @@ class SWGISGUI_EXPORT QgsCategorizedSymbolRendererV2Widget : public QgsRendererV
 
     QList<QgsSymbolV2*> selectedSymbols() override;
     QgsCategoryList selectedCategoryList();
-    void refreshSymbolView() override { populateCategories(); }
+    void refreshSymbolView() override;
     void keyPressEvent( QKeyEvent* event ) override;
 
   protected:

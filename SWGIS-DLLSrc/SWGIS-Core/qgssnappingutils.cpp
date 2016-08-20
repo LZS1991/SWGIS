@@ -15,7 +15,7 @@
 
 #include "qgssnappingutils.h"
 
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsproject.h"
 #include "qgsvectorlayer.h"
@@ -559,7 +559,7 @@ QString QgsSnappingUtils::dump()
           else
             limit = "not evaluated";
         }
-        msg += QString( "index : YES | %1 | %2 | %3\n" ).arg( cachedGeoms ).arg( extentStr ).arg( limit );
+        msg += QString( "index : YES | %1 | %2 | %3\n" ).arg( cachedGeoms, extentStr, limit );
       }
       else
         msg += QString( "index : ???\n" ); // should not happen

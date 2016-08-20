@@ -118,7 +118,7 @@ class SWGISGUI_EXPORT QgsExpressionBuilderWidget : public QWidget, private Ui::E
 {
     Q_OBJECT
   public:
-    QgsExpressionBuilderWidget( QWidget *parent );
+    QgsExpressionBuilderWidget( QWidget *parent = nullptr );
     ~QgsExpressionBuilderWidget();
 
     /** Sets layer in order to get the fields and values
@@ -180,9 +180,17 @@ class SWGISGUI_EXPORT QgsExpressionBuilderWidget : public QWidget, private Ui::E
 
     bool isExpressionValid();
 
-    void saveToRecent( const QString& key );
+    /**
+     * Adds the current expression to the given collection.
+     * By default it is saved to the collection "generic".
+     */
+    void saveToRecent( const QString& collection = "generic" );
 
-    void loadRecent( const QString& key );
+    /**
+     * Loads the recent expressions from the given collection.
+     * By default it is loaded from the collection "generic".
+     */
+    void loadRecent( const QString& collection = "generic" );
 
     /** Create a new file in the function editor
      */

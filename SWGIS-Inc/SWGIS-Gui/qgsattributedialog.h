@@ -20,17 +20,14 @@
 #include "qgsfeature.h"
 #include "qgsattributeeditorcontext.h"
 #include "qgsattributeform.h"
+#include "qgstrackedvectorlayertools.h"
 
 #include <QDialog>
 #include <QMenuBar>
 #include <QGridLayout>
 
 class QgsDistanceArea;
-class QgsFeature;
-class QgsField;
 class QgsHighlight;
-class QgsVectorLayer;
-class QgsVectorLayerTools;
 
 class SWGISGUI_EXPORT QgsAttributeDialog : public QDialog
 {
@@ -109,7 +106,14 @@ class SWGISGUI_EXPORT QgsAttributeDialog : public QDialog
      *
      * @param isAddDialog If set to true, turn this dialog into an add feature dialog.
      */
-    void setIsAddDialog( bool isAddDialog ) { mAttributeForm->setIsAddDialog( isAddDialog ); }
+    Q_DECL_DEPRECATED void setIsAddDialog( bool isAddDialog ) { mAttributeForm->setMode( isAddDialog ? QgsAttributeForm::AddFeatureMode : QgsAttributeForm::SingleEditMode ); }
+
+    /**
+     * Toggles the form mode.
+     * @param mode form mode. Eg if set to QgsAttributeForm::AddFeatureMode, the dialog will be editable even with an invalid feature and
+     * will add a new feature when the form is accepted.
+     */
+    void setMode( QgsAttributeForm::Mode mode ) { mAttributeForm->setMode( mode ); }
 
     /**
      * Sets the edit command message (Undo) that will be used when the dialog is accepted
@@ -129,13 +133,14 @@ class SWGISGUI_EXPORT QgsAttributeDialog : public QDialog
 
   public slots:
     void accept() override;
+    void reject() override;
 
     //! Show the dialog non-blocking. Reparents this dialog to be a child of the dialog form and is deleted when
     //! closed.
     void show( bool autoDelete = true );
 
   private:
-    void init( QgsVectorLayer* layer, QgsFeature* feature, const QgsAttributeEditorContext& context );
+    void init( QgsVectorLayer* layer, QgsFeature* feature, const QgsAttributeEditorContext& context, bool showDialogButtons );
 
     QString mSettingsPath;
     // Used to sync multiple widgets for the same field
@@ -146,11 +151,14 @@ class SWGISGUI_EXPORT QgsAttributeDialog : public QDialog
     QgsAttributeForm* mAttributeForm;
     QgsFeature *mOwnedFeature;
 
+    QgsTrackedVectorLayerTools mTrackedVectorLayerTools;
+
     // true if this dialog is editable
     bool mEditable;
 
     static int sFormCounter;
     static QString sSettingsPath;
+
 };
 
 #endif

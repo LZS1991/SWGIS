@@ -39,7 +39,8 @@ class SWGISGUI_EXPORT QgsFieldModel : public QAbstractItemModel
       ExpressionRole = Qt::UserRole + 3, /*!< return field name or expression */
       IsExpressionRole = Qt::UserRole + 4, /*!< return if index corresponds to an expression */
       ExpressionValidityRole = Qt::UserRole + 5, /*!< return if expression is valid or not */
-      FieldTypeRole = Qt::UserRole + 6 /*!< return the field type (if a field, return QVariant if expression) */
+      FieldTypeRole = Qt::UserRole + 6, /*!< return the field type (if a field, return QVariant if expression) */
+      FieldOriginRole = Qt::UserRole + 7, /*!< return the field origin (if a field, returns QVariant if expression) */
     };
 
     /**

@@ -15,12 +15,11 @@
 #include "qgsrulebasedlabeling.h"
 
 
-
 QgsRuleBasedLabelProvider::QgsRuleBasedLabelProvider( const QgsRuleBasedLabeling& rules, QgsVectorLayer* layer, bool withFeatureLoop )
-    : QgsVectorLayerLabelProvider( layer, withFeatureLoop )
+    : QgsVectorLayerLabelProvider( layer, QString(), withFeatureLoop )
     , mRules( rules )
 {
-  mRules.rootRule()->createSubProviders( layer, mSubProviders );
+  mRules.rootRule()->createSubProviders( layer, mSubProviders, this );
 }
 
 QgsRuleBasedLabelProvider::~QgsRuleBasedLabelProvider()
@@ -28,6 +27,10 @@ QgsRuleBasedLabelProvider::~QgsRuleBasedLabelProvider()
   // sub-providers owned by labeling engine
 }
 
+QgsVectorLayerLabelProvider *QgsRuleBasedLabelProvider::createProvider( QgsVectorLayer *layer, const QString& providerId, bool withFeatureLoop, const QgsPalLayerSettings *settings )
+{
+  return new QgsVectorLayerLabelProvider( layer, providerId, withFeatureLoop, settings );
+}
 
 bool QgsRuleBasedLabelProvider::prepare( const QgsRenderContext& context, QStringList& attributeNames )
 {
@@ -57,13 +60,17 @@ QList<QgsAbstractLabelProvider*> QgsRuleBasedLabelProvider::subProviders()
 ////////////////////
 
 QgsRuleBasedLabeling::Rule::Rule( QgsPalLayerSettings* settings, int scaleMinDenom, int scaleMaxDenom, const QString& filterExp, const QString& description, bool elseRule )
-    : mParent( nullptr ), mSettings( settings )
-    , mScaleMinDenom( scaleMinDenom ), mScaleMaxDenom( scaleMaxDenom )
-    , mFilterExp( filterExp ), mDescription( description )
+    : mParent( nullptr )
+    , mSettings( settings )
+    , mScaleMinDenom( scaleMinDenom )
+    , mScaleMaxDenom( scaleMaxDenom )
+    , mFilterExp( filterExp )
+    , mDescription( description )
     , mElseRule( elseRule )
     , mIsActive( true )
     , mFilter( nullptr )
 {
+  mRuleKey = QUuid::createUuid().toString();
   initFilter();
 }
 
@@ -112,6 +119,17 @@ void QgsRuleBasedLabeling::Rule::updateElseRules()
   }
 }
 
+void QgsRuleBasedLabeling::Rule::subProviderIds( QStringList& list ) const
+{
+  Q_FOREACH ( const Rule* rule, mChildren )
+  {
+    if ( rule->settings() )
+      list << rule->ruleKey();
+
+    rule->subProviderIds( list );
+  }
+}
+
 
 void QgsRuleBasedLabeling::Rule::appendChild( QgsRuleBasedLabeling::Rule* rule )
 {
@@ -132,6 +150,22 @@ void QgsRuleBasedLabeling::Rule::removeChildAt( int i )
   delete mChildren.at( i );
   mChildren.removeAt( i );
   updateElseRules();
+}
+
+const QgsRuleBasedLabeling::Rule* QgsRuleBasedLabeling::Rule::findRuleByKey( const QString& key ) const
+{
+  // we could use a hash / map for search if this will be slow...
+
+  if ( key == mRuleKey )
+    return this;
+
+  Q_FOREACH ( Rule* rule, mChildren )
+  {
+    const Rule* r = rule->findRuleByKey( key );
+    if ( r )
+      return r;
+  }
+  return nullptr;
 }
 
 QgsRuleBasedLabeling::Rule*QgsRuleBasedLabeling::Rule::clone() const
@@ -159,11 +193,11 @@ QgsRuleBasedLabeling::Rule*QgsRuleBasedLabeling::Rule::create( const QDomElement
   QString description = ruleElem.attribute( "description" );
   int scaleMinDenom = ruleElem.attribute( "scalemindenom", "0" ).toInt();
   int scaleMaxDenom = ruleElem.attribute( "scalemaxdenom", "0" ).toInt();
-  //QString ruleKey = ruleElem.attribute( "key" );
+  QString ruleKey = ruleElem.attribute( "key" );
   Rule* rule = new Rule( settings, scaleMinDenom, scaleMaxDenom, filterExp, description );
 
-  //if ( !ruleKey.isEmpty() )
-  //  rule->mRuleKey = ruleKey;
+  if ( !ruleKey.isEmpty() )
+    rule->mRuleKey = ruleKey;
 
   rule->setActive( ruleElem.attribute( "active", "1" ).toInt() );
 
@@ -203,7 +237,7 @@ QDomElement QgsRuleBasedLabeling::Rule::save( QDomDocument& doc ) const
     ruleElem.setAttribute( "description", mDescription );
   if ( !mIsActive )
     ruleElem.setAttribute( "active", 0 );
-  //ruleElem.setAttribute( "key", mRuleKey );
+  ruleElem.setAttribute( "key", mRuleKey );
 
   for ( RuleList::const_iterator it = mChildren.constBegin(); it != mChildren.constEnd(); ++it )
   {
@@ -213,19 +247,20 @@ QDomElement QgsRuleBasedLabeling::Rule::save( QDomDocument& doc ) const
   return ruleElem;
 }
 
-void QgsRuleBasedLabeling::Rule::createSubProviders( QgsVectorLayer* layer, QgsRuleBasedLabeling::RuleToProviderMap& subProviders )
+void QgsRuleBasedLabeling::Rule::createSubProviders( QgsVectorLayer* layer, QgsRuleBasedLabeling::RuleToProviderMap& subProviders, QgsRuleBasedLabelProvider *provider )
 {
   if ( mSettings )
   {
     // add provider!
-    QgsVectorLayerLabelProvider* p = new QgsVectorLayerLabelProvider( layer, false, mSettings );
+    QgsVectorLayerLabelProvider *p = provider->createProvider( layer, mRuleKey, false, mSettings );
+    delete subProviders.value( this, nullptr );
     subProviders[this] = p;
   }
 
   // call recursively
   Q_FOREACH ( Rule* rule, mChildren )
   {
-    rule->createSubProviders( layer, subProviders );
+    rule->createSubProviders( layer, subProviders, provider );
   }
 }
 
@@ -335,12 +370,22 @@ QgsRuleBasedLabeling::QgsRuleBasedLabeling( QgsRuleBasedLabeling::Rule* root )
 QgsRuleBasedLabeling::QgsRuleBasedLabeling( const QgsRuleBasedLabeling& other )
 {
   mRootRule = other.mRootRule->clone();
+
+  // normally with clone() the individual rules get new keys (UUID), but here we want to keep
+  // the tree of rules intact, so that other components that may use the rule keys work nicely (e.g. visibility presets)
+  mRootRule->setRuleKey( other.mRootRule->ruleKey() );
+  RuleList origDescendants = other.mRootRule->descendants();
+  RuleList clonedDescendants = mRootRule->descendants();
+  Q_ASSERT( origDescendants.count() == clonedDescendants.count() );
+  for ( int i = 0; i < origDescendants.count(); ++i )
+    clonedDescendants[i]->setRuleKey( origDescendants[i]->ruleKey() );
 }
 
 QgsRuleBasedLabeling::~QgsRuleBasedLabeling()
 {
   delete mRootRule;
 }
+
 
 QgsRuleBasedLabeling*QgsRuleBasedLabeling::create( const QDomElement& element )
 {
@@ -374,4 +419,21 @@ QDomElement QgsRuleBasedLabeling::save( QDomDocument& doc ) const
 QgsVectorLayerLabelProvider* QgsRuleBasedLabeling::provider( QgsVectorLayer* layer ) const
 {
   return new QgsRuleBasedLabelProvider( *this, layer, false );
+}
+
+QStringList QgsRuleBasedLabeling::subProviders() const
+{
+  QStringList lst;
+  mRootRule->subProviderIds( lst );
+  return lst;
+}
+
+QgsPalLayerSettings QgsRuleBasedLabeling::settings( QgsVectorLayer* layer, const QString& providerId ) const
+{
+  Q_UNUSED( layer );
+  const Rule* rule = mRootRule->findRuleByKey( providerId );
+  if ( rule && rule->settings() )
+    return *rule->settings();
+
+  return QgsPalLayerSettings();
 }

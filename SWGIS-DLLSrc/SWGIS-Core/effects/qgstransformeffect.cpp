@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 #include "qgstransformeffect.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
+#include "qgssymbollayerv2utils.h"
 #include "qgsunittypes.h"
 #include <QPicture>
 #include <QTransform>

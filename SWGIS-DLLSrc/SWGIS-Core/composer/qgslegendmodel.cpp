@@ -18,12 +18,12 @@
 #include "qgslegendmodel.h"
 #include "qgscomposerlegenditem.h"
 #include "qgsfield.h"
-#include "../layertree/qgslayertree.h"
+#include "qgslayertree.h"
 #include "qgsmaplayer.h"
 #include "qgsmaplayerregistry.h"
-#include "../raster/qgsrasterlayer.h"
-#include "../symbology-ng/qgsrendererv2.h"
-#include "../symbology-ng/qgssymbollayerv2utils.h"
+#include "qgsrasterlayer.h"
+#include "qgsrendererv2.h"
+#include "qgssymbollayerv2utils.h"
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
 #include <QApplication>
@@ -259,7 +259,7 @@ int QgsLegendModel::addRasterLayerItems( QStandardItem* layerItem, QgsMapLayer* 
   }
 
   QgsDebugMsg( QString( "layer providertype:: %1" ).arg( rasterLayer->providerType() ) );
-  if ( rasterLayer->providerType() == "wms" )
+  if ( rasterLayer->dataProvider()->supportsLegendGraphic() )
   {
     QgsComposerRasterSymbolItem* currentSymbolItem = new QgsComposerRasterSymbolItem( "" );
     // GetLegendGraphics in case of WMS service... image can return null if GetLegendGraphics
@@ -784,7 +784,6 @@ bool QgsLegendModel::removeRows( int row, int count, const QModelIndex & parent 
 QMimeData* QgsLegendModel::mimeData( const QModelIndexList &indexes ) const
 {
   QMimeData* mimeData = new QMimeData();
-  QByteArray encodedData;
   QDomDocument xmlDoc;
   QDomElement xmlRootElement = xmlDoc.createElement( "LegendModelDragData" );
   xmlDoc.appendChild( xmlRootElement );

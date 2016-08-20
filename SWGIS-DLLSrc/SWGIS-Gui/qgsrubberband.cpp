@@ -15,7 +15,7 @@
 
 #include "qgsrubberband.h"
 #include "qgsfeature.h"
-#include "geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgslogger.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaprenderer.h"
@@ -179,6 +179,26 @@ void QgsRubberBand::addPoint( const QgsPoint & p, bool doUpdate /* = true */, in
     mPoints[geometryIndex] << p;
   }
 
+
+  if ( doUpdate )
+  {
+    setVisible( true );
+    updateRect();
+    update();
+  }
+}
+
+void QgsRubberBand::closePoints( bool doUpdate, int geometryIndex )
+{
+  if ( geometryIndex < 0 || geometryIndex >= mPoints.size() )
+  {
+    return;
+  }
+
+  if ( mPoints.at( geometryIndex ).at( 0 ) != mPoints.at( geometryIndex ).at( mPoints.at( geometryIndex ).size() - 1 ) )
+  {
+    mPoints[geometryIndex] << mPoints.at( geometryIndex ).at( 0 );
+  }
 
   if ( doUpdate )
   {
@@ -558,7 +578,7 @@ void QgsRubberBand::updateRect()
       }
       else
       {
-        r.combineExtentWith( &rect );
+        r.combineExtentWith( rect );
       }
     }
   }

@@ -21,9 +21,11 @@ class QgsExternalResourceWidget;
 class QLabel;
 class QLineEdit;
 
-#include "./core/qgseditorwidgetwrapper.h"
+#include "qgseditorwidgetwrapper.h"
 
-/**
+
+
+/** \ingroup gui
  * Wraps a file name widget. Will offer a file browser to choose files.
  * \note not available in Python bindings
  */
@@ -40,6 +42,7 @@ class SWGISGUI_EXPORT QgsExternalResourceWidgetWrapper : public QgsEditorWidgetW
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;
@@ -51,6 +54,8 @@ class SWGISGUI_EXPORT QgsExternalResourceWidgetWrapper : public QgsEditorWidgetW
     void setEnabled( bool enabled ) override;
 
   private:
+    void updateConstraintWidgetStatus( bool constraintValid ) override;
+
     QLineEdit* mLineEdit;
     QLabel* mLabel;
     QgsExternalResourceWidget* mQgsWidget;

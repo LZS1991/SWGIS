@@ -29,7 +29,7 @@ QString QgsEditFormConfig::widgetType( int fieldIdx ) const
   if ( fieldIdx < 0 || fieldIdx >= mFields.count() )
     return "TextEdit";
 
-  return mEditorWidgetV2Types.value( mFields[fieldIdx].name(), "TextEdit" );
+  return mEditorWidgetV2Types.value( mFields.at( fieldIdx ).name(), "TextEdit" );
 }
 
 QString QgsEditFormConfig::widgetType( const QString& fieldName ) const
@@ -42,7 +42,7 @@ QgsEditorWidgetConfig QgsEditFormConfig::widgetConfig( int fieldIdx ) const
   if ( fieldIdx < 0 || fieldIdx >= mFields.count() )
     return QgsEditorWidgetConfig();
 
-  return mWidgetConfigs.value( mFields[fieldIdx].name() );
+  return mWidgetConfigs.value( mFields.at( fieldIdx ).name() );
 }
 
 QgsEditorWidgetConfig QgsEditFormConfig::widgetConfig( const QString& widgetName ) const
@@ -82,7 +82,7 @@ bool QgsEditFormConfig::removeWidgetConfig( int fieldIdx )
   if ( fieldIdx < 0 || fieldIdx >= mFields.count() )
     return false;
 
-  return mWidgetConfigs.remove( mFields[fieldIdx].name() );
+  return mWidgetConfigs.remove( mFields.at( fieldIdx ).name() );
 }
 
 void QgsEditFormConfig::setUiForm( const QString& ui )
@@ -119,6 +119,46 @@ bool QgsEditFormConfig::labelOnTop( int idx ) const
     return false;
 }
 
+QString QgsEditFormConfig::expression( int idx ) const
+{
+  QString expr;
+
+  if ( idx >= 0 && idx < mFields.count() )
+    expr = mConstraints.value( mFields.at( idx ).name(), QString() );
+
+  return expr;
+}
+
+void QgsEditFormConfig::setExpression( int idx, const QString& str )
+{
+  if ( idx >= 0 && idx < mFields.count() )
+    mConstraints[ mFields.at( idx ).name()] = str;
+}
+
+QString QgsEditFormConfig::expressionDescription( int idx ) const
+{
+  QString description;
+
+  if ( idx >= 0 && idx < mFields.count() )
+    description = mConstraintsDescription[ mFields.at( idx ).name()];
+
+  return description;
+}
+
+void QgsEditFormConfig::setExpressionDescription( int idx, const QString &descr )
+{
+  if ( idx >= 0 && idx < mFields.count() )
+    mConstraintsDescription[ mFields.at( idx ).name()] = descr;
+}
+
+bool QgsEditFormConfig::notNull( int idx ) const
+{
+  if ( idx >= 0 && idx < mFields.count() )
+    return mNotNull.value( mFields.at( idx ).name(), false );
+  else
+    return false;
+}
+
 void QgsEditFormConfig::setReadOnly( int idx, bool readOnly )
 {
   if ( idx >= 0 && idx < mFields.count() )
@@ -129,6 +169,12 @@ void QgsEditFormConfig::setLabelOnTop( int idx, bool onTop )
 {
   if ( idx >= 0 && idx < mFields.count() )
     mLabelOnTop[ mFields.at( idx ).name()] = onTop;
+}
+
+void QgsEditFormConfig::setNotNull( int idx, bool notnull )
+{
+  if ( idx >= 0 && idx < mFields.count() )
+    mNotNull[ mFields.at( idx ).name()] = notnull;
 }
 
 void QgsEditFormConfig::readXml( const QDomNode& node )
@@ -280,7 +326,6 @@ void QgsEditFormConfig::writeXml( QDomNode& node ) const
   efifpField.appendChild( doc.createTextNode( QgsProject::instance()->writePath( initFilePath() ) ) );
   node.appendChild( efifpField );
 
-
   QDomElement eficField  = doc.createElement( "editforminitcode" );
   eficField.appendChild( doc.createCDATASection( initCode() ) );
   node.appendChild( eficField );
@@ -337,6 +382,7 @@ void QgsEditFormConfig::writeXml( QDomNode& node ) const
     {
       QDomElement widgetElem = doc.createElement( "widget" );
       widgetElem.setAttribute( "name", configIt.key() );
+      // widgetElem.setAttribute( "notNull",  );
 
       QDomElement configElem = doc.createElement( "config" );
       widgetElem.appendChild( configElem );
@@ -369,6 +415,17 @@ QgsAttributeEditorElement* QgsEditFormConfig::attributeEditorElementFromDomEleme
   if ( elem.tagName() == "attributeEditorContainer" )
   {
     QgsAttributeEditorContainer* container = new QgsAttributeEditorContainer( elem.attribute( "name" ), parent );
+    bool ok;
+    int cc = elem.attribute( "columnCount" ).toInt( &ok );
+    if ( !ok )
+      cc = 0;
+    container->setColumnCount( cc );
+
+    bool isGroupBox = elem.attribute( "groupBox" ).toInt( &ok );
+    if ( ok )
+      container->setIsGroupBox( isGroupBox );
+    else
+      container->setIsGroupBox( qobject_cast<QgsAttributeEditorContainer*>( parent ) );
 
     QDomNodeList childNodeList = elem.childNodes();
 
@@ -419,4 +476,14 @@ void QgsEditFormConfig::onRelationsLoaded()
       }
     }
   }
+}
+
+int QgsAttributeEditorContainer::columnCount() const
+{
+  return mColumnCount;
+}
+
+void QgsAttributeEditorContainer::setColumnCount( int columnCount )
+{
+  mColumnCount = columnCount;
 }

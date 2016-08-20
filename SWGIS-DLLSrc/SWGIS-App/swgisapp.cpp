@@ -329,7 +329,7 @@ SWGISApp::SWGISApp(QSplashScreen *splash, bool restorePlugins, bool skipVersionC
     {
         QMessageBox::critical(
                             this,
-                            tr("Multiple Instances of QgisApp"),
+                            tr("Multiple Instances of SWGISApp"),
                             tr("Multiple instances of QGIS application object detected.\nPlease contact the developers.\n"));
         abort();
     }

@@ -20,7 +20,7 @@
 #include "qgssymbolv2.h"
 #include "qgsexpression.h"
 #include "qgsfeature.h"
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include <QScopedPointer>
 
 class QgsVectorColorRampV2;

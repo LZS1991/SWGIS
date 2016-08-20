@@ -14,11 +14,11 @@
  ***************************************************************************/
 
 #include "qgsapplication.h"
-//#include "./auth/qgsauthmanager.h"
+//#include "qgsauthmanager.h"
 #include "qgscrscache.h"
 #include "qgsdataitemproviderregistry.h"
 #include "qgsexception.h"
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgslogger.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsnetworkaccessmanager.h"
@@ -270,7 +270,7 @@ bool QgsApplication::notify( QObject * receiver, QEvent * event )
   }
   catch ( std::exception & e )
   {
-    QgsDebugMsg( "Caught unhandled std::exception: " + QString::fromAscii( e.what() ) );
+    QgsDebugMsg( "Caught unhandled std::exception: " + QString::fromLatin1( e.what() ) );
     if ( qApp->thread() == QThread::currentThread() )
       QMessageBox::critical( activeWindow(), tr( "Exception" ), e.what() );
   }
@@ -394,22 +394,32 @@ QString QgsApplication::iconPath( const QString& iconFile )
 
 QIcon QgsApplication::getThemeIcon( const QString &theName )
 {
+  QgsApplication* app = qobject_cast<QgsApplication*>( instance() );
+  if ( app && app->mIconCache.contains( theName ) )
+    return app->mIconCache.value( theName );
+
+  QIcon icon;
+
   QString myPreferredPath = activeThemePath() + QDir::separator() + theName;
   QString myDefaultPath = defaultThemePath() + QDir::separator() + theName;
   if ( QFile::exists( myPreferredPath ) )
   {
-    return QIcon( myPreferredPath );
+    icon = QIcon( myPreferredPath );
   }
   else if ( QFile::exists( myDefaultPath ) )
   {
     //could still return an empty icon if it
     //doesnt exist in the default theme either!
-    return QIcon( myDefaultPath );
+    icon = QIcon( myDefaultPath );
   }
   else
   {
-    return QIcon();
+    icon = QIcon();
   }
+
+  if ( app )
+    app->mIconCache.insert( theName, icon );
+  return icon;
 }
 
 // TODO: add some caching mechanism ?
@@ -1341,5 +1351,10 @@ void QgsApplication::setMaxThreads( int maxThreads )
   // set max thread count in QThreadPool
   QThreadPool::globalInstance()->setMaxThreadCount( maxThreads );
   QgsDebugMsg( QString( "set QThreadPool max thread count to %1" ).arg( QThreadPool::globalInstance()->maxThreadCount() ) );
+}
+
+void QgsApplication::emitSettingsChanged()
+{
+  emit settingsChanged();
 }
 

@@ -16,18 +16,19 @@
 #include "qgsvectorlayerlabelprovider.h"
 
 #include "qgsdatadefined.h"
+#include "qgsgeometry.h"
 #include "qgslabelsearchtree.h"
 #include "qgspallabeling.h"
 #include "qgstextlabelfeature.h"
 #include "qgsvectorlayer.h"
 #include "qgsvectorlayerfeatureiterator.h"
-#include "./symbology-ng/qgsrendererv2.h"
-#include "./geometry/qgspolygonv2.h"
-#include "./geometry/qgslinestringv2.h"
-#include "./geometry/qgsmultipolygonv2.h"
-#include "./geometry/qgsgeometry.h"
-#include "./pal/feature.h"
-#include "./pal/labelposition.h"
+#include "qgsrendererv2.h"
+#include "qgspolygonv2.h"
+#include "qgslinestringv2.h"
+#include "qgsmultipolygonv2.h"
+
+#include "feature.h"
+#include "labelposition.h"
 
 #include <QPicture>
 
@@ -48,8 +49,8 @@ static void _fixQPictureDPI( QPainter* p )
 
 
 
-QgsVectorLayerLabelProvider::QgsVectorLayerLabelProvider( QgsVectorLayer* layer, bool withFeatureLoop, const QgsPalLayerSettings* settings, const QString& layerName )
-    : QgsAbstractLabelProvider( layer->id() )
+QgsVectorLayerLabelProvider::QgsVectorLayerLabelProvider( QgsVectorLayer* layer, const QString& providerId, bool withFeatureLoop, const QgsPalLayerSettings* settings, const QString& layerName )
+    : QgsAbstractLabelProvider( layer->id(), providerId )
     , mSettings( settings ? *settings : QgsPalLayerSettings::fromLayer( layer ) )
     , mLayerGeometryType( layer->geometryType() )
     , mRenderer( layer->rendererV2() )
@@ -315,7 +316,7 @@ QList<QgsLabelFeature*> QgsVectorLayerLabelProvider::labelFeatures( QgsRenderCon
 void QgsVectorLayerLabelProvider::registerFeature( QgsFeature& feature, QgsRenderContext& context, QgsGeometry* obstacleGeometry )
 {
   QgsLabelFeature* label = nullptr;
-  mSettings.registerFeature( feature, context, QString(), &label, obstacleGeometry );
+  mSettings.registerFeature( feature, context, &label, obstacleGeometry );
   if ( label )
     mLabels << label;
 }
@@ -489,7 +490,7 @@ void QgsVectorLayerLabelProvider::drawLabel( QgsRenderContext& context, pal::Lab
 
   // add to the results
   QString labeltext = label->getFeaturePart()->feature()->labelText();
-  mEngine->results()->mLabelSearchTree->insertLabel( label, label->getFeaturePart()->featureId(), mLayerId, labeltext, dFont, false, lf->hasFixedPosition() );
+  mEngine->results()->mLabelSearchTree->insertLabel( label, label->getFeaturePart()->featureId(), mLayerId, labeltext, dFont, false, lf->hasFixedPosition(), mProviderId );
 }
 
 

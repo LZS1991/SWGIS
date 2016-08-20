@@ -24,15 +24,19 @@
 
 class QgsRasterLayer;
 class QgsRasterRenderer;
+class QgsMapCanvas;
 
 class SWGISGUI_EXPORT QgsRasterRendererWidget: public QWidget
 {
     Q_OBJECT
 
   public:
-    QgsRasterRendererWidget( QgsRasterLayer* layer, const QgsRectangle &extent ):
-        mRasterLayer( layer )
+
+    //TODO QGIS 3.0 - remove extent parameter, replace with map canvas parameter
+    QgsRasterRendererWidget( QgsRasterLayer* layer, const QgsRectangle &extent )
+        : mRasterLayer( layer )
         , mExtent( extent )
+        , mCanvas( nullptr )
     {}
 
     virtual ~QgsRasterRendererWidget() {}
@@ -50,13 +54,36 @@ class SWGISGUI_EXPORT QgsRasterRendererWidget: public QWidget
     void setRasterLayer( QgsRasterLayer* layer ) { mRasterLayer = layer; }
     const QgsRasterLayer* rasterLayer() const { return mRasterLayer; }
 
-    virtual QString min(int index = 0) { Q_UNUSED(index); return QString(); }
+    /** Sets the map canvas associated with the widget. This allows the widget to retrieve the current
+     * map extent and other properties from the canvas.
+     * @param canvas map canvas
+     * @see mapCanvas()
+     * @note added in QGIS 2.16
+     */
+    virtual void setMapCanvas( QgsMapCanvas* canvas );
+
+    /** Returns the map canvas associated with the widget.
+     * @see setMapCanvas()
+     * @see canvasExtent()
+     * @note added in QGIS 2.16
+     */
+    QgsMapCanvas* mapCanvas();
+
+    virtual QString min( int index = 0 ) { Q_UNUSED( index ); return QString(); }
     virtual QString max( int index = 0 ) { Q_UNUSED( index ); return QString(); }
     virtual void setMin( const QString& value, int index = 0 ) { Q_UNUSED( index ); Q_UNUSED( value ); }
     virtual void setMax( const QString& value, int index = 0 ) { Q_UNUSED( index ); Q_UNUSED( value ); }
     virtual QString stdDev() { return QString(); }
     virtual void setStdDev( const QString& value ) { Q_UNUSED( value ); }
     virtual int selectedBand( int index = 0 ) { Q_UNUSED( index ); return -1; }
+
+  signals:
+
+    /**
+     * Emitted when something on the widget has changed.
+     * All widgets will fire this event to notify of an internal change.
+     */
+    void widgetChanged();
 
   protected:
     QgsRasterLayer* mRasterLayer;
@@ -65,6 +92,9 @@ class SWGISGUI_EXPORT QgsRasterRendererWidget: public QWidget
 
     /** Current extent */
     QgsRectangle mExtent;
+
+    //! Associated map canvas
+    QgsMapCanvas* mCanvas;
 };
 
 #endif // QGSRASTERRENDERERWIDGET_H

@@ -26,7 +26,8 @@
 
 #include <QStringList>
 #include <QPushButton>
-//class QgisApp;
+
+class SWGISApp;
 class QgsWmsProvider;
 class QButtonGroup;
 class QgsNumericSortTreeWidgetItem;
@@ -50,7 +51,6 @@ class SWGISWMSPROVIDER_EXPORT QgsWMSSourceSelect : public QDialog, private Ui::W
   public:
     //! Constructor
     QgsWMSSourceSelect( QWidget *parent = nullptr, Qt::WindowFlags fl = QgisGui::ModalDialogFlags, bool managerMode = false, bool embeddedMode = false );
-
     //! Destructor
     ~QgsWMSSourceSelect();
 

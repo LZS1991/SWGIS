@@ -22,8 +22,10 @@
 
 #include "qgsdatadefined.h"
 #include "stgisguiconfig.h"
+#include "qgspanelwidget.h"
 #include <QStandardItemModel>
 #include <QScopedPointer>
+#include <QDialogButtonBox>
 
 class QgsStyleV2;
 class QgsSymbolV2;
@@ -71,13 +73,27 @@ class DataDefinedRestorer: public QObject
 };
 ///@endcond
 
-class SWGISGUI_EXPORT QgsSymbolV2SelectorDialog : public QDialog, private Ui::SymbolV2SelectorDialogBase
+class QgsSymbolV2SelectorDialog;
+
+/** \ingroup gui
+ * Symbol selector widget that cna be used to select and build a symbol
+ */
+class SWGISGUI_EXPORT QgsSymbolV2SelectorWidget: public QgsPanelWidget, private Ui::SymbolV2SelectorDialogBase
 {
     Q_OBJECT
+    /// Too allow for non API break access from the dialog.
+    friend class QgsSymbolV2SelectorDialog;
 
   public:
-    QgsSymbolV2SelectorDialog( QgsSymbolV2* symbol, QgsStyleV2* style, const QgsVectorLayer* vl, QWidget* parent = nullptr, bool embedded = false );
-    ~QgsSymbolV2SelectorDialog();
+    /**
+       * Symbol selector widget that can be used to select and build a symbol
+       * @param symbol The symbol to load into the widget as a start point.
+       * @param style The style used by the widget.
+       * @param vl The vector layer for the symbol.
+       * @param parent
+       */
+    QgsSymbolV2SelectorWidget( QgsSymbolV2* symbol, QgsStyleV2* style, const QgsVectorLayer* vl, QWidget* parent = nullptr );
+    ~QgsSymbolV2SelectorWidget();
 
     //! return menu for "advanced" button - create it if doesn't exist and show the advanced button
     QMenu* advancedMenu();
@@ -106,10 +122,17 @@ class SWGISGUI_EXPORT QgsSymbolV2SelectorDialog : public QDialog, private Ui::Sy
      */
     void setMapCanvas( QgsMapCanvas* canvas );
 
-  protected:
-    //! Reimplements dialog keyPress event so we can ignore it
-    void keyPressEvent( QKeyEvent * event ) override;
+    /**
+     * @brief Return the symbol that is currently active in the widget. Can be null.
+     * @return The active symbol.
+     */
+    QgsSymbolV2* symbol() { return mSymbol; }
 
+  protected:
+
+    /**
+     * Reload the current symbol in the view.
+     */
     void loadSymbol();
     //! @note not available in python bindings
     void loadSymbol( QgsSymbolV2* symbol, SymbolLayerItem* parent );
@@ -170,6 +193,104 @@ class SWGISGUI_EXPORT QgsSymbolV2SelectorDialog : public QDialog, private Ui::Sy
     QScopedPointer< QgsExpressionContext > mPresetExpressionContext;
 
     QgsMapCanvas* mMapCanvas;
+};
+
+/** \ingroup gui
+ * \class QgsSymbolV2SelectorDialog
+ */
+class SWGISGUI_EXPORT QgsSymbolV2SelectorDialog : public QDialog
+{
+    Q_OBJECT
+
+  public:
+    QgsSymbolV2SelectorDialog( QgsSymbolV2* symbol, QgsStyleV2* style, const QgsVectorLayer* vl, QWidget* parent = nullptr, bool embedded = false );
+    ~QgsSymbolV2SelectorDialog();
+
+    //! return menu for "advanced" button - create it if doesn't exist and show the advanced button
+    QMenu* advancedMenu();
+
+    /** Sets the optional expression context used for the widget. This expression context is used for
+     * evaluating data defined symbol properties and for populating based expression widgets in
+     * the layer widget.
+     * @param context expression context pointer. Ownership is transferred to the dialog.
+     * @note added in QGIS 2.12
+     * @see expressionContext()
+     */
+    void setExpressionContext( QgsExpressionContext* context );
+
+    /** Returns the expression context used for the dialog, if set. This expression context is used for
+     * evaluating data defined symbol properties and for populating based expression widgets in
+     * the dialog.
+     * @note added in QGIS 2.12
+     * @see setExpressionContext()
+     */
+    QgsExpressionContext* expressionContext() const;
+
+    /** Sets the map canvas associated with the dialog. This allows the widget to retrieve the current
+     * map scale and other properties from the canvas.
+     * @param canvas map canvas
+     * @note added in QGIS 2.12
+     */
+    void setMapCanvas( QgsMapCanvas* canvas );
+
+    /**
+     * @brief Return the symbol that is currently active in the widget. Can be null.
+     * @return The active symbol.
+     */
+    QgsSymbolV2* symbol();
+
+  protected:
+    //! Reimplements dialog keyPress event so we can ignore it
+    void keyPressEvent( QKeyEvent * e ) override;
+
+    void loadSymbol();
+    //! @note not available in python bindings
+    void loadSymbol( QgsSymbolV2* symbol, SymbolLayerItem* parent );
+
+    void updateUi();
+
+    void updateLockButton();
+
+    //! @note not available in python bindings
+    SymbolLayerItem* currentLayerItem();
+    QgsSymbolLayerV2* currentLayer();
+
+    void moveLayerByOffset( int offset );
+
+    void setWidget( QWidget* widget );
+
+  signals:
+    void symbolModified();
+
+  public slots:
+    void moveLayerDown();
+    void moveLayerUp();
+
+    void addLayer();
+    void removeLayer();
+
+    void lockLayer();
+
+    Q_DECL_DEPRECATED void saveSymbol();
+
+    //! Duplicates the current symbol layer and places the duplicated layer above the current symbol layer
+    //! @note added in QGIS 2.14
+    void duplicateLayer();
+
+    void layerChanged();
+
+    void updateLayerPreview();
+    void updatePreview();
+
+    //! Slot to update tree when a new symbol from style
+    void symbolChanged();
+    //! alters tree and sets proper widget when Layer Type is changed
+    //! @note: The layer is received from the LayerPropertiesWidget
+    void changeLayer( QgsSymbolLayerV2* layer );
+
+  private:
+    QgsSymbolV2SelectorWidget* mSelectorWidget;
+    QDialogButtonBox* mButtonBox;
 };
 
 #endif

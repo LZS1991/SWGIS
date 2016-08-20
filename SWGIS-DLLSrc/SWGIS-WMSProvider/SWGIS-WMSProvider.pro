@@ -13,8 +13,11 @@ TEMPLATE = lib
 include(../SWGISSrcSetting.pri)
 
 INCLUDEPATH += $$SWGISINC_PATH/SWGIS-Core \
+               $$SWGISINC_PATH/SWGIS-Core/raster \
+               $$SWGISINC_PATH/SWGIS-Core/geometry \
                $$SWGISINC_PATH/SWGIS-Gui \
                $$SWGISINC_PATH/SWGIS-WMSProvider \
+               $$SWGIS_BUILD_PATH/SWGIS-Gui
 
 INCLUDEPATH += $$THIRDPARTY_PATH \
                $$THIRDPARTY_PATH/GDAL/win_msvc_x64/include \

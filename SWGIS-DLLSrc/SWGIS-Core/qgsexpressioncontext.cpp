@@ -20,11 +20,11 @@
 #include "qgsfield.h"
 #include "qgsvectorlayer.h"
 #include "qgsproject.h"
-#include "./symbology-ng/qgssymbollayerv2utils.h"
-#include "./geometry/qgsgeometry.h"
-#include "./composer/qgscomposition.h"
-#include "./composer/qgscomposeritem.h"
-#include "./composer/qgsatlascomposition.h"
+#include "qgssymbollayerv2utils.h"
+#include "qgsgeometry.h"
+#include "qgscomposition.h"
+#include "qgscomposeritem.h"
+#include "qgsatlascomposition.h"
 #include "qgsapplication.h"
 #include <QSettings>
 #include <QDir>
@@ -37,6 +37,8 @@ const QString QgsExpressionContext::EXPR_SYMBOL_COLOR( "symbol_color" );
 const QString QgsExpressionContext::EXPR_SYMBOL_ANGLE( "symbol_angle" );
 const QString QgsExpressionContext::EXPR_GEOMETRY_PART_COUNT( "geometry_part_count" );
 const QString QgsExpressionContext::EXPR_GEOMETRY_PART_NUM( "geometry_part_num" );
+const QString QgsExpressionContext::EXPR_GEOMETRY_POINT_COUNT( "geometry_point_count" );
+const QString QgsExpressionContext::EXPR_GEOMETRY_POINT_NUM( "geometry_point_num" );
 
 //
 // QgsExpressionContextScope
@@ -211,6 +213,7 @@ QgsExpressionContext::QgsExpressionContext( const QgsExpressionContext& other )
     mStack << new QgsExpressionContextScope( *scope );
   }
   mHighlightedVariables = other.mHighlightedVariables;
+  mCachedValues = other.mCachedValues;
 }
 
 QgsExpressionContext& QgsExpressionContext::operator=( const QgsExpressionContext & other )
@@ -222,6 +225,7 @@ QgsExpressionContext& QgsExpressionContext::operator=( const QgsExpressionContex
     mStack << new QgsExpressionContextScope( *scope );
   }
   mHighlightedVariables = other.mHighlightedVariables;
+  mCachedValues = other.mCachedValues;
   return *this;
 }
 
@@ -305,6 +309,19 @@ int QgsExpressionContext::indexOfScope( QgsExpressionContextScope* scope ) const
     return -1;
 
   return mStack.indexOf( scope );
+}
+
+int QgsExpressionContext::indexOfScope( const QString& scopeName ) const
+{
+  int index = 0;
+  Q_FOREACH ( const QgsExpressionContextScope* scope, mStack )
+  {
+    if ( scope->name() == scopeName )
+      return index;
+
+    index++;
+  }
+  return -1;
 }
 
 QStringList QgsExpressionContext::variableNames() const
@@ -435,6 +452,26 @@ void QgsExpressionContext::setOriginalValueVariable( const QVariant &value )
 
   mStack.last()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_ORIGINAL_VALUE,
                               value, true ) );
+}
+
+void QgsExpressionContext::setCachedValue( const QString& key, const QVariant& value ) const
+{
+  mCachedValues.insert( key, value );
+}
+
+bool QgsExpressionContext::hasCachedValue( const QString& key ) const
+{
+  return mCachedValues.contains( key );
+}
+
+QVariant QgsExpressionContext::cachedValue( const QString& key ) const
+{
+  return mCachedValues.value( key, QVariant() );
+}
+
+void QgsExpressionContext::clearCachedValues() const
+{
+  mCachedValues.clear();
 }
 
 

@@ -53,13 +53,14 @@ class SWGISCORE_EXPORT QgsOWSConnection : public QObject
     static void setSelectedConnection( const QString & theService, const QString & name );
 
     QString mConnName;
-    QgsDataSourceURI uri();
+    /** Returns the connection uri */
+    QgsDataSourceURI uri() const;
     QString mConnectionInfo;
 
     //! @deprecated use mConnectionInfo instead
     Q_DECL_DEPRECATED QString connectionInfo();
 
-  private:
+  protected:
     QgsDataSourceURI mUri;
     QString mService;
 };

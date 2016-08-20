@@ -36,7 +36,10 @@ class SWGISCORE_EXPORT QgsErrorMessage
       Html
     };
 
-    QgsErrorMessage() : mLine( 0 ), mFormat( Text ) {}
+    QgsErrorMessage()
+        : mLine( 0 )
+        , mFormat( Text )
+    {}
 
     /** Constructor.
      *  @param theMessage error message string

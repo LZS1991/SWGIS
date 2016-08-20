@@ -18,7 +18,9 @@
 #include <QImageWriter>
 #include "qgsencodingfiledialog.h"
 #include "qgslogger.h"
+
 #include <QFontDialog>
+
 
 namespace QgisGui
 {
@@ -198,5 +200,4 @@ namespace QgisGui
     return QFontDialog::getFont( &ok, initial, nullptr, title );
 #endif
   }
-
 } // end of QgisGui namespace

@@ -16,11 +16,12 @@
 #ifndef QGSCLASSIFICATIONWIDGETWRAPPER_H
 #define QGSCLASSIFICATIONWIDGETWRAPPER_H
 
-#include "./core/qgseditorwidgetwrapper.h"
+#include "qgseditorwidgetwrapper.h"
 
 #include <QComboBox>
 
-/** \class QgsClassificationWidgetWrapper
+/** \ingroup gui
+ * \class QgsClassificationWidgetWrapper
  * \note not available in Python bindings
  */
 
@@ -33,6 +34,7 @@ class SWGISGUI_EXPORT QgsClassificationWidgetWrapper : public QgsEditorWidgetWra
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget*createWidget( QWidget* parent ) override;

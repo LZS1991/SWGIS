@@ -29,6 +29,11 @@ class SWGISGUI_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
     Q_FLAGS( Filters )
+
+    Q_PROPERTY( QgsMapLayerProxyModel::Filters filters READ filters WRITE setFilters )
+    Q_PROPERTY( QList<QgsMapLayer*> exceptedLayerList READ exceptedLayerList WRITE setExceptedLayerList )
+    Q_PROPERTY( QStringList exceptedLayerIds READ exceptedLayerIds WRITE setExceptedLayerIds )
+
   public:
     enum Filter
     {
@@ -40,6 +45,7 @@ class SWGISGUI_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
       HasGeometry = PointLayer | LineLayer | PolygonLayer,
       VectorLayer = NoGeometry | HasGeometry,
       PluginLayer = 32,
+      WritableLayer = 64,
       All = RasterLayer | VectorLayer | PluginLayer
     };
     Q_DECLARE_FLAGS( Filters, Filter )
@@ -66,6 +72,11 @@ class SWGISGUI_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
     //! offer the possibility to except some layers to be listed
     void setExceptedLayerList( const QList<QgsMapLayer*>& exceptList );
     QList<QgsMapLayer*> exceptedLayerList() {return mExceptList;}
+
+    //! Set the list of maplayer ids which are excluded from the list
+    void setExceptedLayerIds( const QStringList& ids );
+    //! Get the list of maplayer ids which are excluded from the list
+    QStringList exceptedLayerIds() const;
 
   private:
     Filters mFilters;

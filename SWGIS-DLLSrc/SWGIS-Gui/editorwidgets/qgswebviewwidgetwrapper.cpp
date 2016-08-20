@@ -57,19 +57,32 @@ QVariant QgsWebViewWidgetWrapper::value() const
   return v;
 }
 
+void QgsWebViewWidgetWrapper::showIndeterminateState()
+{
+  if ( mLineEdit )
+  {
+    whileBlocking( mLineEdit )->clear();
+  }
+
+  if ( mWebView )
+    mWebView->load( QString() );
+}
+
 QWidget* QgsWebViewWidgetWrapper::createWidget( QWidget* parent )
 {
   QWidget* container = new QWidget( parent );
-  QGridLayout* layout = new QGridLayout( container );
-  QgsFilterLineEdit* le = new QgsFilterLineEdit( container );
-  QWebView* webView = new QWebView( parent );
+  QGridLayout* layout = new QGridLayout();
+  QgsFilterLineEdit* le = new QgsFilterLineEdit();
+  QWebView* webView = new QWebView();
   webView->setObjectName( "EditorWebView" );
-  QPushButton* pb = new QPushButton( tr( "..." ), container );
+  QPushButton* pb = new QPushButton( tr( "..." ) );
   pb->setObjectName( "FileChooserButton" );
 
   layout->addWidget( webView, 0, 0, 1, 2 );
   layout->addWidget( le, 1, 0 );
   layout->addWidget( pb, 1, 1 );
+  layout->setMargin( 0 );
+  layout->setContentsMargins( 0, 0, 0, 0 );
 
   container->setLayout( layout );
 
@@ -174,4 +187,17 @@ void QgsWebViewWidgetWrapper::selectFileName()
 
   if ( mLineEdit )
     mLineEdit->setText( filePath );
+}
+
+void QgsWebViewWidgetWrapper::updateConstraintWidgetStatus( bool constraintValid )
+{
+  if ( mLineEdit )
+  {
+    if ( constraintValid )
+      mLineEdit->setStyleSheet( QString() );
+    else
+    {
+      mLineEdit->setStyleSheet( "QgsFilterLineEdit { background-color: #dd7777; }" );
+    }
+  }
 }

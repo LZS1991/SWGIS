@@ -62,7 +62,7 @@
         <x>0</x>
         <y>0</y>
         <width>313</width>
-        <height>583</height>
+        <height>710</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="mainLayout">
@@ -254,6 +254,12 @@
           </item>
           <item>
            <widget class="QListWidget" name="mPreviewListWidget">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>200</height>
+             </size>
+            </property>
             <property name="showDropIndicator" stdset="0">
              <bool>false</bool>
             </property>
@@ -465,7 +471,7 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QComboBox" name="mComposerMapComboBox"/>
+           <widget class="QgsComposerItemComboBox" name="mComposerMapComboBox"/>
           </item>
           <item row="0" column="0" colspan="2">
            <widget class="QgsDoubleSpinBox" name="mPictureRotationSpinBox">
@@ -489,10 +495,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QgsCollapsibleGroupBoxBasic</class>
-   <extends>QGroupBox</extends>
-   <header>qgscollapsiblegroupbox.h</header>
-   <container>1</container>
+   <class>QgsDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qgsdoublespinbox.h</header>
   </customwidget>
   <customwidget>
    <class>QgsColorButtonV2</class>
@@ -501,14 +506,20 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsDoubleSpinBox</class>
-   <extends>QDoubleSpinBox</extends>
-   <header>qgsdoublespinbox.h</header>
-  </customwidget>
-  <customwidget>
    <class>QgsDataDefinedButton</class>
    <extends>QToolButton</extends>
    <header>qgsdatadefinedbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsCollapsibleGroupBoxBasic</class>
+   <extends>QGroupBox</extends>
+   <header>qgscollapsiblegroupbox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsComposerItemComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgscomposeritemcombobox.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

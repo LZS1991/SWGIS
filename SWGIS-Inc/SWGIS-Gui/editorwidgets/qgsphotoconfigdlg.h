@@ -18,9 +18,10 @@
 
 #include "ui_swgisphotoconfigdlgbase.h"
 
-#include "./core/qgseditorconfigwidget.h"
+#include "qgseditorconfigwidget.h"
 
-/** \class QgsPhotoConfigDlg
+/** \ingroup gui
+ * \class QgsPhotoConfigDlg
  * \note not available in Python bindings
  */
 

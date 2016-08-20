@@ -56,6 +56,8 @@ class SWGISGUI_EXPORT QgsEllipseSymbolLayerV2Widget: public QgsSymbolLayerV2Widg
     void on_mHorizontalAnchorComboBox_currentIndexChanged( int index );
     void on_mVerticalAnchorComboBox_currentIndexChanged( int index );
 
+    void penJoinStyleChanged();
+
     void setOffset();
 };
 

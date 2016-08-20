@@ -17,7 +17,7 @@
 #define QGSVECTORLAYERLABELPROVIDER_H
 
 #include "qgslabelingenginev2.h"
-#include "./symbology-ng/qgsrendererv2.h"
+#include "qgsrendererv2.h"
 
 class QgsAbstractFeatureSource;
 class QgsFeatureRendererV2;
@@ -37,7 +37,11 @@ class SWGISCORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProv
   public:
 
     //! Convenience constructor to initialize the provider from given vector layer
-    explicit QgsVectorLayerLabelProvider( QgsVectorLayer* layer, bool withFeatureLoop = true, const QgsPalLayerSettings* settings = nullptr, const QString& layerName = QString() );
+    explicit QgsVectorLayerLabelProvider( QgsVectorLayer* layer,
+                                          const QString& providerId,
+                                          bool withFeatureLoop = true,
+                                          const QgsPalLayerSettings* settings = nullptr,
+                                          const QString& layerName = QString() );
 
     //! Construct diagram provider with all the necessary configuration parameters
     QgsVectorLayerLabelProvider( const QgsPalLayerSettings& settings,

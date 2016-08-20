@@ -14,17 +14,17 @@
  ***************************************************************************/
 
 
-#include "./symbology-ng/qgssymbolslistwidget.h"
+#include "qgssymbolslistwidget.h"
 
-#include "./symbology-ng/qgssizescalewidget.h"
+#include "qgssizescalewidget.h"
 
-#include "./symbology-ng/qgsstylev2managerdialog.h"
+#include "qgsstylev2managerdialog.h"
 #include "qgsdatadefined.h"
 
-#include "./symbology-ng/qgssymbolv2.h"
-#include "./symbology-ng/qgsstylev2.h"
-#include "./symbology-ng/qgssymbollayerv2utils.h"
-#include "./symbology-ng/qgsmarkersymbollayerv2.h"
+#include "qgssymbolv2.h"
+#include "qgsstylev2.h"
+#include "qgssymbollayerv2utils.h"
+#include "qgsmarkersymbollayerv2.h"
 #include "qgsmapcanvas.h"
 #include "qgsapplication.h"
 
@@ -182,8 +182,6 @@ void QgsSymbolsListWidget::populateSymbolView()
 void QgsSymbolsListWidget::populateSymbols( const QStringList& names )
 {
   QSize previewSize = viewSymbols->iconSize();
-  QPixmap p( previewSize );
-  QPainter painter;
 
   QStandardItemModel* model = qobject_cast<QStandardItemModel*>( viewSymbols->model() );
   if ( !model )

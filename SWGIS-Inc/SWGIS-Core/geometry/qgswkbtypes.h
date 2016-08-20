@@ -49,7 +49,7 @@ class SWGISCORE_EXPORT QgsWKBTypes
       GeometryCollection = 7,
       CircularString = 8,
       CompoundCurve = 9,
-      CurvePolygon =  10, //13, //should be 10. Seems to be correct in newer poqgs versions
+      CurvePolygon =  10, //13, //should be 10. Seems to be correct in newer postgis versions
       MultiCurve = 11,
       MultiSurface = 12,
       NoGeometry = 100, //attributes only
@@ -455,6 +455,17 @@ class SWGISCORE_EXPORT QgsWKBTypes
       return Unknown;
     }
 
+    /** Returns the modified input geometry type according to hasZ / hasM */
+    static Type zmType( Type type, bool hasZ, bool hasM )
+    {
+      type = flatType( type );
+      if ( hasZ )
+        type = static_cast<QgsWKBTypes::Type>( static_cast<quint32>( type ) + 1000 );
+      if ( hasM )
+        type = static_cast<QgsWKBTypes::Type>( static_cast<quint32>( type ) + 2000 );
+      return type;
+    }
+
     /** Attempts to extract the WKB type from a WKT string.
      * @param wktStr a valid WKT string
      */
@@ -847,9 +858,16 @@ class SWGISCORE_EXPORT QgsWKBTypes
     struct wkbEntry
     {
       wkbEntry( const QString& name, bool isMultiType, Type multiType, Type singleType, Type flatType, GeometryType geometryType,
-                bool hasZ, bool hasM ):
-          mName( name ), mIsMultiType( isMultiType ), mMultiType( multiType ), mSingleType( singleType ), mFlatType( flatType ), mGeometryType( geometryType ),
-          mHasZ( hasZ ), mHasM( hasM ) {}
+                bool hasZ, bool hasM )
+          : mName( name )
+          , mIsMultiType( isMultiType )
+          , mMultiType( multiType )
+          , mSingleType( singleType )
+          , mFlatType( flatType )
+          , mGeometryType( geometryType )
+          , mHasZ( hasZ )
+          , mHasM( hasM )
+      {}
       QString mName;
       bool mIsMultiType;
       Type mMultiType;

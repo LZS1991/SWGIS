@@ -18,7 +18,7 @@
 
 #include "qgsdataitem.h"
 #include "qgsogrprovider.h"
-#include "ogrproviderconfig.h"
+
 Q_NOWARN_DEPRECATED_PUSH
 class SWGISOGRPROVIDER_EXPORT QgsOgrLayerItem : public QgsLayerItem
 {

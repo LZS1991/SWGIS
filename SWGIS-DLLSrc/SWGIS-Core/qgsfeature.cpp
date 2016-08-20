@@ -16,7 +16,7 @@ email                : sherman at mrcc.com
 #include "qgsfeature.h"
 #include "qgsfeature_p.h"
 #include "qgsfield.h"
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgsrectangle.h"
 
 #include "qgsmessagelog.h"
@@ -287,6 +287,12 @@ int QgsFeature::fieldNameIndex( const QString& fieldName ) const
 {
   return d->fields.fieldNameIndex( fieldName );
 }
+
+/***************************************************************************
+ * This class is considered CRITICAL and any change MUST be accompanied with
+ * full unit tests in testqgsfeature.cpp.
+ * See details in QEP #17
+ ****************************************************************************/
 
 QDataStream& operator<<( QDataStream& out, const QgsFeature& feature )
 {

@@ -14,7 +14,7 @@
  ***************************************************************************/
 
 #include "qgsgeometrygeneratorsymbollayerv2.h"
-#include "../geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 
 QgsGeometryGeneratorSymbolLayerV2::~QgsGeometryGeneratorSymbolLayerV2()
 {

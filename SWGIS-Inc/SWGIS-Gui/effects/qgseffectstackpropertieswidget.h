@@ -17,6 +17,7 @@
 #define QGSEFFECTSTACKPROPERTIESWIDGET_H
 
 #include "qgsdialog.h"
+#include "qgspanelwidget.h"
 #include "effects/qgseffectstack.h"
 #include <QWidget>
 #include <QStandardItemModel>
@@ -39,7 +40,7 @@ class QToolButton;
  * \see QgsEffectStackCompactWidget
  */
 
-class SWGISGUI_EXPORT QgsEffectStackPropertiesWidget : public QWidget, private Ui::EffectStackPropertiesWidgetBase
+class SWGISGUI_EXPORT QgsEffectStackPropertiesWidget : public QgsPanelWidget, private Ui::EffectStackPropertiesWidgetBase
 {
     Q_OBJECT
 
@@ -183,7 +184,7 @@ class SWGISGUI_EXPORT QgsEffectStackPropertiesDialog: public QgsDialog
  * \see QgsEffectStackPropertiesDialog
  */
 
-class SWGISGUI_EXPORT QgsEffectStackCompactWidget: public QWidget
+class SWGISGUI_EXPORT QgsEffectStackCompactWidget: public QgsPanelWidget
 {
     Q_OBJECT
 
@@ -228,6 +229,9 @@ class SWGISGUI_EXPORT QgsEffectStackCompactWidget: public QWidget
     void showDialog();
 
     void enableToggled( bool checked );
+
+    void updateAcceptWidget( QgsPanelWidget* panel );
+    void updateEffectLive();
 
   private:
 

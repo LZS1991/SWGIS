@@ -16,9 +16,10 @@
 #ifndef QGSENUMERATIONWIDGETFACTORY_H
 #define QGSENUMERATIONWIDGETFACTORY_H
 
-#include "./core/qgseditorwidgetfactory.h"
+#include "qgseditorwidgetfactory.h"
 
-/** \class QgsEnumerationWidgetFactory
+/** \ingroup gui
+ * \class QgsEnumerationWidgetFactory
  * \note not available in Python bindings
  */
 

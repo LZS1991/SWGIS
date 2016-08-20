@@ -41,7 +41,10 @@ class SWGISCORE_EXPORT QgsRuleBasedRendererV2 : public QgsFeatureRendererV2
     // feature for rendering: QgsFeature and some flags
     struct FeatureToRender
     {
-      FeatureToRender( QgsFeature& _f, int _flags ) : feat( _f ), flags( _flags ) {}
+      FeatureToRender( QgsFeature& _f, int _flags )
+          : feat( _f )
+          , flags( _flags )
+      {}
       QgsFeature feat;
       int flags; // selected and/or draw markers
     };
@@ -50,7 +53,10 @@ class SWGISCORE_EXPORT QgsRuleBasedRendererV2 : public QgsFeatureRendererV2
     // (both f, symbol are _not_ owned by this class)
     struct RenderJob
     {
-      RenderJob( FeatureToRender& _ftr, QgsSymbolV2* _s ) : ftr( _ftr ), symbol( _s ) {}
+      RenderJob( FeatureToRender& _ftr, QgsSymbolV2* _s )
+          : ftr( _ftr )
+          , symbol( _s )
+      {}
       FeatureToRender& ftr;
       QgsSymbolV2* symbol;
     };
@@ -129,6 +135,11 @@ class SWGISCORE_EXPORT QgsRuleBasedRendererV2 : public QgsFeatureRendererV2
          * @return A set of attribute names
          */
         QSet<QString> usedAttributes() const;
+
+        /**
+         * Returns true if this rule or one of its chilren needs the geometry to be applied.
+         */
+        bool needsGeometry() const;
 
         //! @note available in python bindings as symbol2
         QgsSymbolV2List symbols( const QgsRenderContext& context = QgsRenderContext() ) const;
@@ -421,6 +432,8 @@ class SWGISCORE_EXPORT QgsRuleBasedRendererV2 : public QgsFeatureRendererV2
     virtual QString filter( const QgsFields& fields = QgsFields() ) override;
 
     virtual QList<QString> usedAttributes() override;
+
+    virtual bool filterNeedsGeometry() const override;
 
     virtual QgsRuleBasedRendererV2* clone() const override;
 

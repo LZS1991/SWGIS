@@ -48,7 +48,14 @@ class SWGISAPP_EXPORT QgsLabelingGui : public QWidget, private Ui::LabelingGuiBa
 
     void setLabelMode( LabelMode mode );
 
+  signals:
+    void widgetChanged();
+
   public slots:
+    void setLayer( QgsMapLayer* layer );
+    void setDockMode( bool enabled );
+    void connectValueChanged( QList<QWidget*> widgets, const char* slot );
+
     void init();
     void collapseSample( bool collapse );
     void apply();
@@ -121,6 +128,7 @@ class SWGISAPP_EXPORT QgsLabelingGui : public QWidget, private Ui::LabelingGuiBa
 
     // background reference font
     QFont mRefFont;
+    bool mDockMode;
     int mPreviewSize;
 
     int mMinPixelLimit;

@@ -18,11 +18,11 @@
 #include "qgslogger.h"
 #include "qgsproject.h"
 
-#include "./pal/feature.h"
-#include "./pal/labelposition.h"
-#include "./pal/layer.h"
-#include "./pal/pal.h"
-#include "./pal/problem.h"
+#include "feature.h"
+#include "labelposition.h"
+#include "layer.h"
+#include "pal.h"
+#include "problem.h"
 
 
 
@@ -32,12 +32,15 @@ static bool _palIsCancelled( void* ctx )
   return ( reinterpret_cast< QgsRenderContext* >( ctx ) )->renderingStopped();
 }
 
-// helper class for sorting labels into correct draw order
+/** \ingroup core
+ * \class QgsLabelSorter
+ * Helper class for sorting labels into correct draw order
+ */
 class QgsLabelSorter
 {
   public:
 
-    QgsLabelSorter( const QgsMapSettings& mapSettings )
+    explicit QgsLabelSorter( const QgsMapSettings& mapSettings )
         : mMapSettings( mapSettings )
     {}
 
@@ -381,9 +384,10 @@ QgsAbstractLabelProvider*QgsLabelFeature::provider() const
 
 }
 
-QgsAbstractLabelProvider::QgsAbstractLabelProvider( const QString& layerId )
+QgsAbstractLabelProvider::QgsAbstractLabelProvider( const QString& layerId, const QString& providerId )
     : mEngine( nullptr )
     , mLayerId( layerId )
+    , mProviderId( providerId )
     , mFlags( DrawLabels )
     , mPlacement( QgsPalLayerSettings::AroundPoint )
     , mLinePlacementFlags( 0 )

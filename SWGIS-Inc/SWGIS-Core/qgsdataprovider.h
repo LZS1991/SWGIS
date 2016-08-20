@@ -61,6 +61,19 @@ class SWGISCORE_EXPORT QgsDataProvider : public QObject
       Net                 = 1 << 3  // Internet source
     };
 
+    /**
+     * Properties are used to pass custom configuration options into data providers.
+     * This enum defines a list of custom properties which can be used on different
+     * providers. It depends on the provider, which properties are supported.
+     * In addition to these default properties, providers can add their custom properties
+     * starting from CustomData.
+     */
+    enum ProviderProperty
+    {
+      EvaluateDefaultValues,       //!< Evaluate default values on provider side when calling QgsVectorDataProvider::defaultValue( int index ) rather than on commit.
+      CustomData   = 3000          //!< Custom properties for 3rd party providers or very provider-specific properties which are not expected to be of interest for other providers can be added starting from this value up.
+    };
+
     QgsDataProvider( QString const & uri = "" )
         : mDataSourceURI( uri )
     {}
@@ -311,11 +324,84 @@ class SWGISCORE_EXPORT QgsDataProvider : public QObject
      */
     virtual void invalidateConnections( const QString& connection ) { Q_UNUSED( connection ); }
 
+    /** Enter update mode.
+     *
+     * This is aimed at providers that can open differently the connection to
+     * the datasource, according it to be in update mode or in read-only mode.
+     * A call to this method shall be balanced with a call to leaveUpdateMode(),
+     * if this method returns true.
+     *
+     * Most providers will have an empty implementation for that method.
+     *
+     * For backward compatibility, providers that implement enterUpdateMode() should
+     * still make sure to allow editing operations to work even if enterUpdateMode()
+     * is not explicitly called.
+     *
+     * Several successive calls to enterUpdateMode() can be done. So there is
+     * a concept of stack of calls that must be handled by the provider. Only the first
+     * call to enterUpdateMode() will really turn update mode on.
+     *
+     * @return true in case of success (or no-op implementation), false in case of failure.
+     *
+     * @note added in QGIS 2.16
+     */
+    virtual bool enterUpdateMode() { return true; }
+
+    /** Leave update mode.
+     *
+     * This is aimed at providers that can open differently the connection to
+     * the datasource, according it to be in update mode or in read-only mode.
+     * This method shall be balanced with a successful call to enterUpdateMode().
+     *
+     * Most providers will have an empty implementation for that method.
+     *
+     * Several successive calls to enterUpdateMode() can be done. So there is
+     * a concept of stack of calls that must be handled by the provider. Only the last
+     * call to leaveUpdateMode() will really turn update mode off.
+     *
+     * @return true in case of success (or no-op implementation), false in case of failure.
+     *
+     * @note added in QGIS 2.16
+     */
+    virtual bool leaveUpdateMode() { return true; }
+
+    /**
+     * Allows setting arbitrary properties on the provider.
+     * It depends on the provider which properties are supported.
+     *
+     * @note added in 2.16
+     */
+    void setProviderProperty( ProviderProperty property, const QVariant& value );
+
+    /**
+     * Allows setting arbitrary properties on the provider.
+     * It depends on the provider which properties are supported.
+     *
+     * @note added in 2.16
+     */
+    void setProviderProperty( int property, const QVariant& value );
+
+    /**
+     * Get the current value of a certain provider property.
+     * It depends on the provider which properties are supported.
+     *
+     * @note added in 2.16
+     */
+    QVariant providerProperty( ProviderProperty property, const QVariant& defaultValue = QVariant() ) const;
+
+    /**
+     * Get the current value of a certain provider property.
+     * It depends on the provider which properties are supported.
+     *
+     * @note added in 2.16
+     */
+    QVariant providerProperty( int property , const QVariant& defaultValue ) const;
+
   signals:
 
     /**
      *   This is emitted whenever the worker thread has fully calculated the
-     *   PoSTGIS extents for this layer, and its event has been received by this
+     *   PostGIS extents for this layer, and its event has been received by this
      *   provider.
      */
     void fullExtentCalculated();
@@ -357,6 +443,8 @@ class SWGISCORE_EXPORT QgsDataProvider : public QObject
      * This could be a file, database, or server address.
      */
     QString mDataSourceURI;
+
+    QMap< int, QVariant > mProviderProperties;
 };
 
 

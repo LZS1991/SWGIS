@@ -46,11 +46,32 @@ class SWGISCORE_EXPORT QgsVectorColorRampV2
 
 };
 
-struct QgsGradientStop
+/** \ingroup core
+ * \class QgsGradientStop
+ * \brief Represents a color stop within a gradient color ramp.
+ */
+class SWGISCORE_EXPORT QgsGradientStop
 {
-  double offset; // relative (0,1)
-  QColor color;
-  QgsGradientStop( double o, const QColor& c ) : offset( o ), color( c ) { }
+  public:
+
+    /** Constructor for QgsGradientStop
+     * @param o positional offset for stop, between 0 and 1.0
+     * @param c color for stop
+     */
+    QgsGradientStop( double o, const QColor& c )
+        : offset( o )
+        , color( c )
+    { }
+
+    //! Relative positional offset, between 0 and 1
+    double offset;
+    //! Gradient color at stop
+    QColor color;
+
+    bool operator==( const QgsGradientStop& other ) const
+    {
+      return other.color == color && qgsDoubleNear( other.offset, offset );
+    }
 };
 
 typedef QList<QgsGradientStop> QgsGradientStopsList;
@@ -61,6 +82,14 @@ typedef QList<QgsGradientStop> QgsGradientStopsList;
 class SWGISCORE_EXPORT QgsVectorGradientColorRampV2 : public QgsVectorColorRampV2
 {
   public:
+
+    /** Constructor for QgsVectorGradientColorRampV2
+     * @param color1 start color, corresponding to a position of 0.0
+     * @param color2 end color, corresponding to a position of 1.0
+     * @param discrete set to true for discrete interpolation instead of smoothly
+     * interpolating between colors
+     * @param stops optional list of additional color stops
+     */
     QgsVectorGradientColorRampV2( const QColor& color1 = DEFAULT_GRADIENT_COLOR1,
                                   const QColor& color2 = DEFAULT_GRADIENT_COLOR2,
                                   bool discrete = false,
@@ -89,10 +118,28 @@ class SWGISCORE_EXPORT QgsVectorGradientColorRampV2 : public QgsVectorColorRampV
     void setDiscrete( bool discrete ) { mDiscrete = discrete; }
     void convertToDiscrete( bool discrete );
 
-    void setStops( const QgsGradientStopsList& stops ) { mStops = stops; }
-    const QgsGradientStopsList& stops() const { return mStops; }
+    /** Sets the list of intermediate gradient stops for the ramp.
+     * @param stops list of stops. Any existing color stops will be replaced. The stop
+     * list will be automatically reordered so that stops are listed in ascending offset
+     * order.
+     * @see stops()
+     */
+    void setStops( const QgsGradientStopsList& stops );
 
+    /** Returns the list of intermediate gradient stops for the ramp.
+     * @see setStops()
+     */
+    QgsGradientStopsList stops() const { return mStops; }
+
+    /** Returns any additional info attached to the gradient ramp (eg authorship notes)
+     * @see setInfo()
+     */
     QgsStringMap info() const { return mInfo; }
+
+    /** Sets additional info to attach to the gradient ramp (eg authorship notes)
+     * @param info map of string info to attach
+     * @see info()
+     */
     void setInfo( const QgsStringMap& info ) { mInfo = info; }
 
     /** Copy color ramp stops to a QGradient
@@ -101,7 +148,8 @@ class SWGISCORE_EXPORT QgsVectorGradientColorRampV2 : public QgsVectorColorRampV
     void addStopsToGradient( QGradient* gradient, double alpha = 1 );
 
   protected:
-    QColor mColor1, mColor2;
+    QColor mColor1;
+    QColor mColor2;
     bool mDiscrete;
     QgsGradientStopsList mStops;
     QgsStringMap mInfo;

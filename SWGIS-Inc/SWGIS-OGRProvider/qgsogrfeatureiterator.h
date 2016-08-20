@@ -22,7 +22,6 @@
 
 class QgsOgrFeatureIterator;
 class QgsOgrProvider;
-class QgsOgrAbstractGeometrySimplifier;
 
 class SWGISOGRPROVIDER_EXPORT QgsOgrFeatureSource : public QgsAbstractFeatureSource
 {
@@ -34,12 +33,14 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrFeatureSource : public QgsAbstractFeatureSou
 
   protected:
     const QgsOgrProvider* mProvider;
-    QString mFilePath;
+    QString mDataSource;
     QString mLayerName;
     int mLayerIndex;
     QString mSubsetString;
     QTextCodec* mEncoding;
     QgsFields mFields;
+    bool mFirstFieldIsFid;
+    QgsFields mFieldsWithoutFid;
     OGRwkbGeometryType mOgrGeometryTypeFilter;
     QString mDriverName;
 
@@ -64,9 +65,6 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrFeatureIterator : public QgsAbstractFeatureI
     //! fetch next feature, return true on success
     virtual bool fetchFeature( QgsFeature& feature ) override;
 
-    //! Setup the simplification of geometries to fetch using the specified simplify method
-    virtual bool prepareSimplification( const QgsSimplifyMethod& simplifyMethod ) override;
-
     //! fetch next feature filter expression
     bool nextFeatureFilterExpression( QgsFeature& f ) override;
 
@@ -86,13 +84,7 @@ class SWGISOGRPROVIDER_EXPORT QgsOgrFeatureIterator : public QgsAbstractFeatureI
     bool mFetchGeometry;
 
   private:
-    //! optional object to simplify OGR-geometries fecthed by this feature iterator
-    QgsOgrAbstractGeometrySimplifier* mGeometrySimplifier;
-
     bool mExpressionCompiled;
-
-    //! returns whether the iterator supports simplify geometries on provider side
-    virtual bool providerCanSimplify( QgsSimplifyMethod::MethodType methodType ) const override;
 };
 
 #endif // QGSOGRFEATUREITERATOR_H

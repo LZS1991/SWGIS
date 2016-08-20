@@ -25,6 +25,7 @@
 //#include "qgscomposer.h"
 #include "qgscontexthelp.h"
 #include "qgscoordinatetransform.h"
+#include "qgscrscache.h"
 #include "qgslogger.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayer.h"
@@ -55,7 +56,8 @@
 #include "qgslayertreelayer.h"
 #include "qgslayertreemodel.h"
 #include "qgsunittypes.h"
-
+#include "qgstablewidgetitem.h"
+#include "qgscomposer.h"
 #include "qgsmessagelog.h"
 
 //qt includes
@@ -87,7 +89,10 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas* mapCanvas, QWidget *pa
   mCoordinateDisplayComboBox->addItem( tr( "Degrees, minutes, seconds" ), DegreesMinutesSeconds );
 
   mDistanceUnitsCombo->addItem( tr( "Meters" ), QGis::Meters );
+  mDistanceUnitsCombo->addItem( tr( "Kilometers" ), QGis::Kilometers );
   mDistanceUnitsCombo->addItem( tr( "Feet" ), QGis::Feet );
+  mDistanceUnitsCombo->addItem( tr( "Yards" ), QGis::Yards );
+  mDistanceUnitsCombo->addItem( tr( "Miles" ), QGis::Miles );
   mDistanceUnitsCombo->addItem( tr( "Nautical miles" ), QGis::NauticalMiles );
   mDistanceUnitsCombo->addItem( tr( "Degrees" ), QGis::Degrees );
   mDistanceUnitsCombo->addItem( tr( "Map units" ), QGis::UnknownUnit );
@@ -125,7 +130,7 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas* mapCanvas, QWidget *pa
   // slot triggered by setChecked() might use it.
   mProjectSrsId = mMapCanvas->mapSettings().destinationCrs().srsid();
 
-  QgsCoordinateReferenceSystem srs( mProjectSrsId, QgsCoordinateReferenceSystem::InternalCrsId );
+  QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsBySrsId( mProjectSrsId );
   updateGuiForMapUnits( srs.mapUnits() );
 
   QgsDebugMsg( "Read project CRSID: " + QString::number( mProjectSrsId ) );
@@ -138,8 +143,18 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas* mapCanvas, QWidget *pa
   ///////////////////////////////////////////////////////////
   // Properties stored in QgsProject
 
+  Q_FOREACH ( QgsVectorLayer* layer, QgsMapLayerRegistry::instance()->layers<QgsVectorLayer*>() )
+  {
+    if ( layer->isEditable() )
+    {
+      mAutoTransaction->setEnabled( false );
+      mAutoTransaction->setToolTip( tr( "Layers are in edit mode. Stop edit mode on all layers to toggle transactional editing." ) );
+    }
+  }
+
+  mAutoTransaction->setChecked( QgsProject::instance()->autoTransaction() );
   title( QgsProject::instance()->title() );
-  projectFileName->setText( QgsProject::instance()->fileName() );
+  mProjectFileLineEdit->setText( QgsProject::instance()->fileName() );
 
   // get the manner in which the number of decimal places in the mouse
   // position display is set (manual or automatic)
@@ -225,7 +240,7 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas* mapCanvas, QWidget *pa
 
   QgsMapLayer* currentLayer = nullptr;
 
-  QStringList noIdentifyLayerIdList = QgsProject::instance()->readListEntry( "Identify", "/disabledLayers" );
+  QStringList noIdentifyLayerIdList = QgsProject::instance()->nonIdentifiableLayers();
 
   const QMap<QString, QgsMapLayer*> &mapLayers = QgsMapLayerRegistry::instance()->mapLayers();
 
@@ -242,11 +257,12 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas* mapCanvas, QWidget *pa
     mLayerSrsId = mProjectSrsId;
   }
 
-  twIdentifyLayers->setColumnCount( 3 );
+  twIdentifyLayers->setColumnCount( 4 );
   twIdentifyLayers->horizontalHeader()->setVisible( true );
   twIdentifyLayers->setHorizontalHeaderItem( 0, new QTableWidgetItem( tr( "Layer" ) ) );
   twIdentifyLayers->setHorizontalHeaderItem( 1, new QTableWidgetItem( tr( "Type" ) ) );
   twIdentifyLayers->setHorizontalHeaderItem( 2, new QTableWidgetItem( tr( "Identifiable" ) ) );
+  twIdentifyLayers->setHorizontalHeaderItem( 3, new QTableWidgetItem( tr( "Read Only" ) ) );
   twIdentifyLayers->setRowCount( mapLayers.size() );
   twIdentifyLayers->verticalHeader()->setSectionResizeMode( QHeaderView::ResizeToContents );
 
@@ -255,10 +271,10 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas* mapCanvas, QWidget *pa
   {
     currentLayer = it.value();
 
-    QTableWidgetItem *twi = new QTableWidgetItem( QString::number( i ) );
+    QgsTableWidgetItem *twi = new QgsTableWidgetItem( QString::number( i ) );
     twIdentifyLayers->setVerticalHeaderItem( i, twi );
 
-    twi = new QTableWidgetItem( currentLayer->name() );
+    twi = new QgsTableWidgetItem( currentLayer->name() );
     twi->setData( Qt::UserRole, it.key() );
     twi->setFlags( twi->flags() & ~Qt::ItemIsEditable );
     twIdentifyLayers->setItem( i, 0, twi );
@@ -282,13 +298,23 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas* mapCanvas, QWidget *pa
       }
     }
 
-    twi = new QTableWidgetItem( type );
+    twi = new QgsTableWidgetItem( type );
     twi->setFlags( twi->flags() & ~Qt::ItemIsEditable );
     twIdentifyLayers->setItem( i, 1, twi );
 
-    QCheckBox *cb = new QCheckBox();
-    cb->setChecked( !noIdentifyLayerIdList.contains( currentLayer->id() ) );
-    twIdentifyLayers->setCellWidget( i, 2, cb );
+    twi = new QgsTableWidgetItem();
+    twi->setFlags( twi->flags() & ~Qt::ItemIsEditable );
+    twi->setFlags( twi->flags() | Qt::ItemIsUserCheckable );
+    twi->setCheckState( noIdentifyLayerIdList.contains( currentLayer->id() ) ? Qt::Unchecked : Qt::Checked );
+    twi->setSortRole( Qt::CheckStateRole );
+    twIdentifyLayers->setItem( i, 2, twi );
+
+    twi = new QgsTableWidgetItem();
+    twi->setFlags( twi->flags() & ~Qt::ItemIsEditable );
+    twi->setFlags( twi->flags() | Qt::ItemIsUserCheckable );
+    twi->setCheckState( currentLayer->readOnly() ? Qt::Checked : Qt::Unchecked );
+    twi->setSortRole( Qt::CheckStateRole );
+    twIdentifyLayers->setItem( i, 3, twi );
   }
 
   grpOWSServiceCapabilities->setChecked( QgsProject::instance()->readBoolEntry( "WMSServiceCapabilities", "/", false ) );
@@ -688,6 +714,10 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas* mapCanvas, QWidget *pa
     on_cbxProjectionEnabled_toggled( myProjectionEnabled );
   }
 
+  mAutoTransaction->setChecked( QgsProject::instance()->autoTransaction() );
+  mEvaluateDefaultValues->setChecked( QgsProject::instance()->evaluateDefaultValues() );
+
+  // Variables editor
   mVariableEditor->context()->appendScope( QgsExpressionContextUtils::globalScope() );
   mVariableEditor->context()->appendScope( QgsExpressionContextUtils::projectScope() );
   mVariableEditor->reloadContext();
@@ -745,7 +775,7 @@ void QgsProjectProperties::apply()
   long myCRSID = projectionSelector->selectedCrsId();
   if ( myCRSID )
   {
-    QgsCoordinateReferenceSystem srs( myCRSID, QgsCoordinateReferenceSystem::InternalCrsId );
+    QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsBySrsId( myCRSID );
     mMapCanvas->setDestinationCrs( srs );
     QgsDebugMsg( QString( "Selected CRS " ) + srs.description() );
     // write the currently selected projections _proj string_ to project settings
@@ -772,6 +802,8 @@ void QgsProjectProperties::apply()
 
   // Set the project title
   QgsProject::instance()->setTitle( title() );
+  QgsProject::instance()->setAutoTransaction( mAutoTransaction->isChecked() );
+  QgsProject::instance()->setEvaluateDefaultValues( mEvaluateDefaultValues->isChecked() );
 
   // set the mouse display precision method and the
   // number of decimal places for the manual option
@@ -877,15 +909,19 @@ void QgsProjectProperties::apply()
   QStringList noIdentifyLayerList;
   for ( int i = 0; i < twIdentifyLayers->rowCount(); i++ )
   {
-    QCheckBox *cb = qobject_cast<QCheckBox *>( twIdentifyLayers->cellWidget( i, 2 ) );
-    if ( cb && !cb->isChecked() )
+    QString id = twIdentifyLayers->item( i, 0 )->data( Qt::UserRole ).toString();
+
+    if ( twIdentifyLayers->item( i, 2 )->checkState() == Qt::Unchecked )
     {
-      QString id = twIdentifyLayers->item( i, 0 )->data( Qt::UserRole ).toString();
       noIdentifyLayerList << id;
     }
+    bool readonly = twIdentifyLayers->item( i, 3 )->checkState() == Qt::Checked;
+    QgsVectorLayer* vl = qobject_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( id ) );
+    if ( vl )
+      vl->setReadOnly( readonly );
   }
 
-  QgsProject::instance()->writeEntry( "Identify", "/disabledLayers", noIdentifyLayerList );
+  QgsProject::instance()->setNonIdentifiableLayers( noIdentifyLayerList );
 
   QgsProject::instance()->writeEntry( "WMSServiceCapabilities", "/", grpOWSServiceCapabilities->isChecked() );
   QgsProject::instance()->writeEntry( "WMSServiceTitle", "/", mWMSTitle->text() );
@@ -1151,6 +1187,7 @@ void QgsProjectProperties::apply()
 
   //save variables
   QgsExpressionContextUtils::setProjectVariables( mVariableEditor->variablesInActiveScope() );
+  QgsProject::instance()->emitVariablesChanged();
 
   emit refresh();
 }
@@ -1267,7 +1304,7 @@ void QgsProjectProperties::srIdUpdated()
   if ( !isProjected() || !myCRSID )
     return;
 
-  QgsCoordinateReferenceSystem srs( myCRSID, QgsCoordinateReferenceSystem::InternalCrsId );
+  QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsBySrsId( myCRSID );
   //set radio button to crs map unit type
   QGis::UnitType units = srs.mapUnits();
 
@@ -1360,7 +1397,7 @@ void QgsProjectProperties::on_pbnWMSSetUsedSRS_clicked()
 
   if ( cbxProjectionEnabled->isChecked() )
   {
-    QgsCoordinateReferenceSystem srs( projectionSelector->selectedCrsId(), QgsCoordinateReferenceSystem::InternalCrsId );
+    QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsBySrsId( projectionSelector->selectedCrsId() );
     crsList << srs.authid();
   }
 
@@ -1376,24 +1413,23 @@ void QgsProjectProperties::on_pbnWMSSetUsedSRS_clicked()
 
 void QgsProjectProperties::on_mAddWMSComposerButton_clicked()
 {
-    //LZS2851
-//  QSet<QgsComposer*> projectComposers = SWGISApp::instance()->printComposers();
-//  QStringList composerTitles;
-//  QSet<QgsComposer*>::const_iterator cIt = projectComposers.constBegin();
-//  for ( ; cIt != projectComposers.constEnd(); ++cIt )
-//  {
-//    composerTitles << ( *cIt )->title();
-//  }
+  QSet<QgsComposer*> projectComposers = SWGISApp::instance()->printComposers();
+  QStringList composerTitles;
+  QSet<QgsComposer*>::const_iterator cIt = projectComposers.constBegin();
+  for ( ; cIt != projectComposers.constEnd(); ++cIt )
+  {
+    composerTitles << ( *cIt )->title();
+  }
 
-//  bool ok;
-//  QString name = QInputDialog::getItem( this, tr( "Select print composer" ), tr( "Composer Title" ), composerTitles, 0, false, &ok );
-//  if ( ok )
-//  {
-//    if ( mComposerListWidget->findItems( name, Qt::MatchExactly ).size() < 1 )
-//    {
-//      mComposerListWidget->addItem( name );
-//    }
-//  }
+  bool ok;
+  QString name = QInputDialog::getItem( this, tr( "Select print composer" ), tr( "Composer Title" ), composerTitles, 0, false, &ok );
+  if ( ok )
+  {
+    if ( mComposerListWidget->findItems( name, Qt::MatchExactly ).size() < 1 )
+    {
+      mComposerListWidget->addItem( name );
+    }
+  }
 }
 
 void QgsProjectProperties::on_mRemoveWMSComposerButton_clicked()

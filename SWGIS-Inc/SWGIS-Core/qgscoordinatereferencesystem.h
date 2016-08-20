@@ -28,6 +28,7 @@
 
 class QDomNode;
 class QDomDocument;
+class QgsCoordinateReferenceSystemPrivate;
 
 // forward declaration for sqlite3
 typedef struct sqlite3 sqlite3;
@@ -46,6 +47,7 @@ typedef void ( *CUSTOM_CRS_VALIDATION )( QgsCoordinateReferenceSystem& );
 
 /** \ingroup core
  * Class for storing a coordinate reference system (CRS)
+ * \note Since QGIS 2.16 QgsCoordinateReferenceSystem objects are implicitly shared.
  */
 class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
 {
@@ -54,7 +56,7 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
     enum CrsType
     {
       InternalCrsId,
-      PoqgsCrsId,
+      PostgisCrsId,
       EpsgCrsId     // deprecated
     };
 
@@ -71,15 +73,15 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
     explicit QgsCoordinateReferenceSystem( const QString& theDefinition );
 
     /** Use this constructor when you want to create a CRS object using
-     *  a poqgs SRID, an EpsgCrsId id or a QGIS CRS_ID.
+     *  a postgis SRID, an EpsgCrsId id or a QGIS CRS_ID.
      * @note We encourage you to use EpsgCrsId, WKT or Proj4 to describe CRS's in your code
-     * wherever possible. QGSI CRS_IDs are not guaranteed to be permanent / involatile.
+     * wherever possible. QGIS CRS_IDs are not guaranteed to be permanent / involatile.
      * @param theId The ID no valid for the chosen coordinate system id type
      * @param theType One of the types described in QgsCoordinateReferenceSystem::CrsType
      */
-    QgsCoordinateReferenceSystem( const long theId, CrsType theType = PoqgsCrsId );
+    QgsCoordinateReferenceSystem( const long theId, CrsType theType = PostgisCrsId );
 
-    //! copy constructor
+    //! Copy constructor
     QgsCoordinateReferenceSystem( const QgsCoordinateReferenceSystem& srs );
 
     //! Assignment operator
@@ -87,22 +89,20 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
 
     // Misc helper functions -----------------------
 
-    bool createFromId( const long theId, CrsType theType = PoqgsCrsId );
+    bool createFromId( const long theId, CrsType theType = PostgisCrsId );
 
     /**
-     * \brief Set up this CRS from the given OGC CRS
-     *
      * Sets this CRS to the given OGC WMS-format Coordinate Reference Systems.
-     *
-     * \retval false if not given an valid label
+     * @returns false if not given an valid label
+     * @note this method is expensive. Consider using QgsCRSCache::crsByOgcWmsCrs() instead.
      */
-    bool createFromOgcWmsCrs( QString theCrs );
+    bool createFromOgcWmsCrs( const QString& theCrs );
 
     /** Set up this CRS by fetching the appropriate information from the
      * sqlite backend. First the system level read only srs.db will be checked
      * and then the users ~/.qgis/qgis.db database will be checked for a match.
      * @note Any members will be overwritten during this process.
-     * @param theSrid The poqgs SRID for the desired spatial reference system.
+     * @param theSrid The postgis SRID for the desired spatial reference system.
      */
     bool createFromSrid( const long theSrid );
 
@@ -115,6 +115,7 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
      * @note SRID and EpsgCrsId may be blank if no match can be found on SRS db.
      * @param theWkt The WKT for the desired spatial reference system.
      * @return bool TRUE if success else false
+     * @note this method is expensive. Consider using QgsCRSCache::crsByWkt() instead.
      */
     bool createFromWkt( const QString &theWkt );
 
@@ -125,6 +126,7 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
      * @note Any members will be overwritten during this process.
      * @param theSrsId The QGIS SrsId for the desired spatial reference system.
      * @return bool TRUE if success else false
+     * @note this method is expensive. Consider using QgsCRSCache::crsBySrsId() instead.
      */
     bool createFromSrsId( const long theSrsId );
 
@@ -153,12 +155,13 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
      *
      * @param theProjString A proj4 format string
      * @return bool TRUE if success else false
+     * @note this method is expensive. Consider using QgsCRSCache::crsByProj4() instead.
      */
     bool createFromProj4( const QString &theProjString );
 
     /** Set up this CRS from a string definition, by default a WKT definition.  Otherwise
      * the string defines a authority, followed by a colon, followed by the definition.
-     * The authority can be one of "epsg", "poqgs", "internal" for integer definitions,
+     * The authority can be one of "epsg", "postgis", "internal" for integer definitions,
      * and "wkt" or "proj4" for string definitions.  The implementation of each authority
      * uses the corresponding createFrom... function.
      * @param theDefinition A String containing a coordinate reference system definition.
@@ -266,14 +269,14 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
 
     /** Returns the SrsId, if available.
      *  @return the internal sqlite3 srs.db primary key for this srs
-     * @see poqgsSrid()
+     * @see postgisSrid()
      */
     long srsid() const;
 
-    /** Returns PoSTGIS SRID for the CRS.
-     * @return the PoSTGIS spatial_ref_sys identifier for this CRS (defaults to 0)
+    /** Returns PostGIS SRID for the CRS.
+     * @return the PostGIS spatial_ref_sys identifier for this CRS (defaults to 0)
      */
-    long poqgsSrid() const;
+    long postgisSrid() const;
 
     /** Returns the authority identifier for the CRS, which includes both the authority (eg EPSG)
      * and the CRS number (eg 4326). This is the best method to use when showing a very short CRS
@@ -381,8 +384,8 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
      *  @param theSrsId The internal sqlite3 srs.db primary key for this CRS
      */
     void setInternalId( long theSrsId );
-    /** Set the poqgs srid
-     *  @param theSrid The poqgs spatial_ref_sys key for this CRS
+    /** Set the postgis srid
+     *  @param theSrid The postgis spatial_ref_sys key for this CRS
      */
     void setSrid( long theSrid );
     /** Set the Description
@@ -443,25 +446,6 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
     // returns the same code as sqlite3_open
     static int openDb( const QString& path, sqlite3 **db, bool readonly = true );
 
-    //!The internal sqlite3 srs.db primary key for this CRS
-    long    mSrsId;
-    //!A textual description of the CRS.
-    QString mDescription;
-    //!The official proj4 acronym for the projection family
-    QString mProjectionAcronym;
-    //!The official proj4 acronym for the ellipoid
-    QString mEllipsoidAcronym;
-    //!Whether this is a geographic or projected coordinate system
-    bool    mGeoFlag;
-    //! The map units
-    QGis::UnitType mMapUnits;
-    //!If available, the Poqgs spatial_ref_sys identifier for this CRS (defaults to 0)
-    long    mSRID;
-    //!If available the authority identifier for this CRS
-    QString mAuthId;
-    //! Whether this CRS is properly defined and valid
-    bool mIsValidFlag;
-
     //! Work out the projection units and set the appropriate local variable
     void setMapUnits();
 
@@ -471,20 +455,13 @@ class SWGISCORE_EXPORT QgsCoordinateReferenceSystem
     //! Helper for sql-safe value quoting
     static QString quotedValue( QString value );
 
-    OGRSpatialReferenceH mCRS;
-
     bool loadFromDb( const QString& db, const QString& expression, const QString& value );
-
-    QString mValidationHint;
-    mutable QString mWkt;
-    mutable QString mProj4;
 
     static bool loadIDs( QHash<int, QString> &wkts );
     static bool loadWkts( QHash<int, QString> &wkts, const char *filename );
     static bool syncDatumTransform( const QString& dbPath );
 
-    //!Whether this is a coordinate system has inverted axis
-    mutable int mAxisInverted;
+    QExplicitlySharedDataPointer<QgsCoordinateReferenceSystemPrivate> d;
 
     static CUSTOM_CRS_VALIDATION mCustomSrsValidation;
 };

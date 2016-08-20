@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 #include "qgsgpsdetector.h"
-#include "./qextserialport/qextserialenumerator.h"
+#include "qextserialenumerator.h"
 #include "qgslogger.h"
 #include "qgsgpsconnection.h"
 #include "qgsnmeaconnection.h"

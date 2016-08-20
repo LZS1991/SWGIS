@@ -18,7 +18,7 @@
 
 #include "ui_swgischeckboxconfigdlgbase.h"
 
-#include "./core/qgseditorconfigwidget.h"
+#include "qgseditorconfigwidget.h"
 
 /** \class QgsCheckBoxConfigDlg
  * \note not available in Python bindings

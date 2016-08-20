@@ -16,7 +16,7 @@
 #include "qgsrectangle.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgserror.h"
-#include "./geometry/qgsgeometry.h"
+#include "qgsgeometry.h"
 #include "qgslogger.h"
 #include "qgsnetworkaccessmanager.h"
 #include <QBuffer>
@@ -330,7 +330,6 @@ QDomElement QgsGmlSchema::domElement( const QDomElement &element, const QString 
 
 bool QgsGmlSchema::guessSchema( const QByteArray &data )
 {
-  QgsDebugMsg( "Entered" );
   mLevel = 0;
   mSkipLevel = std::numeric_limits<int>::max();
   XML_Parser p = XML_ParserCreateNS( nullptr, NS_SEPARATOR );

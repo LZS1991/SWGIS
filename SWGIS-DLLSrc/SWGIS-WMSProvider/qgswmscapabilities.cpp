@@ -1,3 +1,17 @@
+/***************************************************************************
+    qgswmscapabilities.cpp
+    ---------------------
+    begin                : January 2014
+    copyright            : (C) 2014 by Martin Dobias
+    email                : wonder dot sk at gmail dot com
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "qgswmscapabilities.h"
 #include "qgswmsprovider.h"
@@ -13,6 +27,7 @@
 #include "qgsmessagelog.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsunittypes.h"
+#include "qgscrscache.h"
 
 
 // %%% copied from qgswmsprovider.cpp
@@ -201,7 +216,6 @@ bool QgsWmsCapabilities::parseResponse( const QByteArray& response, const QgsWms
 
 bool QgsWmsCapabilities::parseCapabilitiesDom( QByteArray const &xml, QgsWmsCapabilitiesProperty& capabilitiesProperty )
 {
-  QgsDebugMsg( "entering." );
 
 #ifdef QGISDEBUG
   QFile file( QDir::tempPath() + "/qgis-wmsprovider-capabilities.xml" );
@@ -297,7 +311,6 @@ bool QgsWmsCapabilities::parseCapabilitiesDom( QByteArray const &xml, QgsWmsCapa
 
 void QgsWmsCapabilities::parseService( QDomElement const & e, QgsWmsServiceProperty& serviceProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -362,7 +375,6 @@ void QgsWmsCapabilities::parseService( QDomElement const & e, QgsWmsServicePrope
 
 void QgsWmsCapabilities::parseOnlineResource( QDomElement const & e, QgsWmsOnlineResourceAttribute& onlineResourceAttribute )
 {
-  QgsDebugMsg( "entering." );
 
   onlineResourceAttribute.xlinkHref = QUrl::fromEncoded( e.attribute( "xlink:href" ).toUtf8() ).toString();
 
@@ -372,7 +384,6 @@ void QgsWmsCapabilities::parseOnlineResource( QDomElement const & e, QgsWmsOnlin
 
 void QgsWmsCapabilities::parseKeywordList( QDomElement  const & e, QStringList& keywordListProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -400,7 +411,6 @@ void QgsWmsCapabilities::parseKeywordList( QDomElement  const & e, QStringList& 
 
 void QgsWmsCapabilities::parseContactInformation( QDomElement const & e, QgsWmsContactInformationProperty& contactInformationProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -467,7 +477,6 @@ void QgsWmsCapabilities::parseContactInformation( QDomElement const & e, QgsWmsC
 
 void QgsWmsCapabilities::parseContactPersonPrimary( QDomElement const & e, QgsWmsContactPersonPrimaryProperty& contactPersonPrimaryProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -497,7 +506,6 @@ void QgsWmsCapabilities::parseContactPersonPrimary( QDomElement const & e, QgsWm
 
 void QgsWmsCapabilities::parseContactAddress( QDomElement const & e, QgsWmsContactAddressProperty& contactAddressProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -543,7 +551,6 @@ void QgsWmsCapabilities::parseContactAddress( QDomElement const & e, QgsWmsConta
 
 void QgsWmsCapabilities::parseCapability( QDomElement const & e, QgsWmsCapabilityProperty& capabilityProperty )
 {
-  QgsDebugMsg( "entering." );
 
   for ( QDomNode n1 = e.firstChild(); !n1.isNull(); n1 = n1.nextSibling() )
   {
@@ -563,7 +570,9 @@ void QgsWmsCapabilities::parseCapability( QDomElement const & e, QgsWmsCapabilit
     }
     else if ( tagName == "Layer" )
     {
-      parseLayer( e1, capabilityProperty.layer );
+      QgsWmsLayerProperty layer;
+      parseLayer( e1, layer );
+      capabilityProperty.layers.push_back( layer );
     }
     else if ( tagName == "VendorSpecificCapabilities" )
     {
@@ -636,7 +645,6 @@ void QgsWmsCapabilities::parseCapability( QDomElement const & e, QgsWmsCapabilit
 
 void QgsWmsCapabilities::parseRequest( QDomElement const & e, QgsWmsRequestProperty& requestProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -676,7 +684,6 @@ void QgsWmsCapabilities::parseRequest( QDomElement const & e, QgsWmsRequestPrope
 
 void QgsWmsCapabilities::parseLegendUrl( QDomElement const & e, QgsWmsLegendUrlProperty& legendUrlProperty )
 {
-  QgsDebugMsg( "entering." );
 
   legendUrlProperty.width  = e.attribute( "width" ).toUInt();
   legendUrlProperty.height = e.attribute( "height" ).toUInt();
@@ -709,7 +716,6 @@ void QgsWmsCapabilities::parseLegendUrl( QDomElement const & e, QgsWmsLegendUrlP
 void QgsWmsCapabilities::parseLayer( QDomElement const & e, QgsWmsLayerProperty& layerProperty,
                                      QgsWmsLayerProperty *parentProperty )
 {
-  //QgsDebugMsg( "entering." );
 
 // TODO: Delete this stanza completely, depending on success of "Inherit things into the sublayer" below.
 #if 0
@@ -796,11 +802,9 @@ void QgsWmsCapabilities::parseLayer( QDomElement const & e, QgsWmsLayerProperty&
         {
           try
           {
-            QgsCoordinateReferenceSystem src;
-            src.createFromOgcWmsCrs( e1.attribute( "SRS" ) );
+            QgsCoordinateReferenceSystem src = QgsCRSCache::instance()->crsByOgcWmsCrs( e1.attribute( "SRS" ) );
 
-            QgsCoordinateReferenceSystem dst;
-            dst.createFromOgcWmsCrs( DEFAULT_LATLON_CRS );
+            QgsCoordinateReferenceSystem dst =  QgsCRSCache::instance()->crsByOgcWmsCrs( DEFAULT_LATLON_CRS );
 
             QgsCoordinateTransform ct( src, dst );
             layerProperty.ex_GeographicBoundingBox = ct.transformBoundingBox( layerProperty.ex_GeographicBoundingBox );
@@ -905,6 +909,17 @@ void QgsWmsCapabilities::parseLayer( QDomElement const & e, QgsWmsLayerProperty&
 
         parseStyle( e1, styleProperty );
 
+        for ( int i = 0; i < layerProperty.style.size(); ++i )
+        {
+          if ( layerProperty.style.at( i ).name == styleProperty.name )
+          {
+            // override inherited parent's style if it has the same name
+            // according to the WMS spec, it should not happen, but Mapserver
+            // does it all the time.
+            layerProperty.style.remove( i );
+            break;
+          }
+        }
         layerProperty.style.push_back( styleProperty );
       }
       else if ( tagName == "MinScaleDenominator" )
@@ -934,10 +949,6 @@ void QgsWmsCapabilities::parseLayer( QDomElement const & e, QgsWmsLayerProperty&
     // Store if the layer is queryable
     mQueryableForLayer[ layerProperty.name ] = layerProperty.queryable;
 
-    // Store the available Coordinate Reference Systems for the layer so that it
-    // can be combined with others later in supportedCrsForLayers()
-    mCrsForLayer[ layerProperty.name ] = layerProperty.crs;
-
     // Insert into the local class' registry
     mLayersSupported.push_back( layerProperty );
 
@@ -953,20 +964,12 @@ void QgsWmsCapabilities::parseLayer( QDomElement const & e, QgsWmsLayerProperty&
     mLayerParentNames[ layerProperty.orderId ] = QStringList() << layerProperty.name << layerProperty.title << layerProperty.abstract;
   }
 
-  if ( !parentProperty )
-  {
-    // Why clear()? I need top level access. Seems to work in standard select dialog without clear.
-    //layerProperty.layer.clear();
-    layerProperty.crs.clear();
-  }
-
   //QgsDebugMsg( "exiting." );
 }
 
 
 void QgsWmsCapabilities::parseStyle( QDomElement const & e, QgsWmsStyleProperty& styleProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -1013,7 +1016,6 @@ void QgsWmsCapabilities::parseStyle( QDomElement const & e, QgsWmsStyleProperty&
 
 void QgsWmsCapabilities::parseOperationType( QDomElement const & e, QgsWmsOperationType& operationType )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -1047,7 +1049,6 @@ void QgsWmsCapabilities::parseOperationType( QDomElement const & e, QgsWmsOperat
 
 void QgsWmsCapabilities::parseDcpType( QDomElement const & e, QgsWmsDcpTypeProperty& dcpType )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -1069,7 +1070,6 @@ void QgsWmsCapabilities::parseDcpType( QDomElement const & e, QgsWmsDcpTypePrope
 
 void QgsWmsCapabilities::parseHttp( QDomElement const & e, QgsWmsHttpProperty& httpProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -1100,7 +1100,6 @@ void QgsWmsCapabilities::parseHttp( QDomElement const & e, QgsWmsHttpProperty& h
 
 void QgsWmsCapabilities::parseGet( QDomElement const & e, QgsWmsGetProperty& getProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -1126,7 +1125,6 @@ void QgsWmsCapabilities::parseGet( QDomElement const & e, QgsWmsGetProperty& get
 
 void QgsWmsCapabilities::parsePost( QDomElement const & e, QgsWmsPostProperty& postProperty )
 {
-  QgsDebugMsg( "entering." );
 
   QDomNode n1 = e.firstChild();
   while ( !n1.isNull() )
@@ -1220,8 +1218,7 @@ void QgsWmsCapabilities::parseTileSetProfile( QDomElement const &e )
 
         if ( !bb.crs.isEmpty() )
         {
-          QgsCoordinateReferenceSystem crs;
-          crs.createFromOgcWmsCrs( bb.crs );
+          QgsCoordinateReferenceSystem crs = QgsCRSCache::instance()->crsByOgcWmsCrs( bb.crs );
           if ( crs.isValid() )
             bb.crs = crs.authid();
 
@@ -1288,8 +1285,7 @@ void QgsWmsCapabilities::parseWMTSContents( QDomElement const &e )
 
     QString supportedCRS = e0.firstChildElement( "ows:SupportedCRS" ).text();
 
-    QgsCoordinateReferenceSystem crs;
-    crs.createFromOgcWmsCrs( supportedCRS );
+    QgsCoordinateReferenceSystem crs = QgsCRSCache::instance()->crsByOgcWmsCrs( supportedCRS );
 
     s.wkScaleSet = e0.firstChildElement( "WellKnownScaleSet" ).text();
 
@@ -1425,8 +1421,7 @@ void QgsWmsCapabilities::parseWMTSContents( QDomElement const &e )
 
         if ( !bb.crs.isEmpty() )
         {
-          QgsCoordinateReferenceSystem crs;
-          crs.createFromOgcWmsCrs( bb.crs );
+          QgsCoordinateReferenceSystem crs = QgsCRSCache::instance()->crsByOgcWmsCrs( bb.crs );
           if ( crs.isValid() )
           {
             bb.crs = crs.authid();
@@ -1790,8 +1785,8 @@ bool QgsWmsCapabilities::detectTileLayerBoundingBox( QgsWmtsTileLayer& l )
   if ( tmsIt == mTileMatrixSets.constEnd() )
     return false;
 
-  QgsCoordinateReferenceSystem crs;
-  if ( !crs.createFromOgcWmsCrs( tmsIt->crs ) )
+  QgsCoordinateReferenceSystem crs = QgsCRSCache::instance()->crsByOgcWmsCrs( tmsIt->crs );
+  if ( !crs.isValid() )
     return false;
 
   // take most coarse tile matrix ...
@@ -1834,8 +1829,8 @@ bool QgsWmsCapabilities::shouldInvertAxisOrientation( const QString& ogcCrs )
     }
 
     //create CRS from string
-    QgsCoordinateReferenceSystem theSrs;
-    if ( theSrs.createFromOgcWmsCrs( ogcCrs ) && theSrs.axisInverted() )
+    QgsCoordinateReferenceSystem theSrs = QgsCRSCache::instance()->crsByOgcWmsCrs( ogcCrs );
+    if ( theSrs.isValid() && theSrs.axisInverted() )
     {
       changeXY = true;
     }
@@ -1935,7 +1930,6 @@ bool QgsWmsCapabilitiesDownload::downloadCapabilities()
 
 void QgsWmsCapabilitiesDownload::abort()
 {
-  QgsDebugMsg( "Entered" );
   mIsAborted = true;
   if ( mCapabilitiesReply )
   {

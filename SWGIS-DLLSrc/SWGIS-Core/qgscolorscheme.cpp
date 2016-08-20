@@ -18,7 +18,7 @@
 #include "qgscolorscheme.h"
 
 #include "qgsproject.h"
-#include "./symbology-ng/qgssymbollayerv2utils.h"
+#include "qgssymbollayerv2utils.h"
 #include "qgsapplication.h"
 
 #include <QSettings>

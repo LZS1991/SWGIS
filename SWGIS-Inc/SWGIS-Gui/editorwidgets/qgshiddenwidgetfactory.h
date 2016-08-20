@@ -16,9 +16,10 @@
 #ifndef QGSHIDDENWIDGETFACTORY_H
 #define QGSHIDDENWIDGETFACTORY_H
 
-#include "./core/qgseditorwidgetfactory.h"
+#include "qgseditorwidgetfactory.h"
 
-/** \class QgsHiddenWidgetFactory
+/** \ingroup gui
+ * \class QgsHiddenWidgetFactory
  * \note not available in Python bindings
  */
 

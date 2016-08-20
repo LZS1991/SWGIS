@@ -1,3 +1,17 @@
+/***************************************************************************
+    qgswmscapabilities.h
+    ---------------------
+    begin                : January 2014
+    copyright            : (C) 2014 by Martin Dobias
+    email                : wonder dot sk at gmail dot com
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 #ifndef QGSWMSCAPABILITIES_H
 #define QGSWMSCAPABILITIES_H
 
@@ -385,7 +399,12 @@ struct QgsWmsCapabilityProperty
 {
   QgsWmsRequestProperty                request;
   QgsWmsExceptionProperty              exception;
-  QgsWmsLayerProperty                  layer;
+
+  // Top level layer should normally be present max once
+  // <element name="Capability">
+  //    <element ref="wms:Layer" minOccurs="0"/>  - default maxOccurs=1
+  // but there are a few non conformant capabilities around (#13762)
+  QList<QgsWmsLayerProperty>           layers;
 
   QList<QgsWmtsTileLayer>              tileLayers;
   QHash<QString, QgsWmtsTileMatrixSet> tileMatrixSets;
@@ -428,7 +447,10 @@ enum QgsWmsDpiMode
 
 struct QgsWmsParserSettings
 {
-  QgsWmsParserSettings( bool ignAxis = false, bool invAxis = false ) : ignoreAxisOrientation( ignAxis ), invertAxisOrientation( invAxis ) {}
+  QgsWmsParserSettings( bool ignAxis = false, bool invAxis = false )
+      : ignoreAxisOrientation( ignAxis )
+      , invertAxisOrientation( invAxis )
+  {}
   bool ignoreAxisOrientation;
   bool invertAxisOrientation;
 };
@@ -436,7 +458,11 @@ struct QgsWmsParserSettings
 struct QgsWmsAuthorization
 {
   QgsWmsAuthorization( const QString& userName = QString(), const QString& password = QString(), const QString& referer = QString(), const QString& authcfg = QString() )
-      : mUserName( userName ), mPassword( password ), mReferer( referer ), mAuthCfg( authcfg ) {}
+      : mUserName( userName )
+      , mPassword( password )
+      , mReferer( referer )
+      , mAuthCfg( authcfg )
+  {}
 
 //  bool setAuthorization( QNetworkRequest &request ) const
 //  {
@@ -446,12 +472,12 @@ struct QgsWmsAuthorization
 //    }
 //    else if ( !mUserName.isNull() || !mPassword.isNull() )
 //    {
-//      request.setRawHeader( "Authorization", "Basic " + QString( "%1:%2" ).arg( mUserName, mPassword ).toAscii().toBase64() );
+//      request.setRawHeader( "Authorization", "Basic " + QString( "%1:%2" ).arg( mUserName, mPassword ).toLatin1()().toBase64() );
 //    }
 
 //    if ( !mReferer.isNull() )
 //    {
-//      request.setRawHeader( "Referer", QString( "%1" ).arg( mReferer ).toAscii() );
+//      request.setRawHeader( "Referer", QString( "%1" ).arg( mReferer ).toLatin1()() );
 //    }
 //    return true;
 //  }
@@ -641,11 +667,6 @@ class QgsWmsCapabilities
      * Used in determining if the Identify map tool can be useful on the rendered WMS map layer.
      */
     QMap<QString, bool> mQueryableForLayer;
-
-    /**
-     * available CRSs per layer
-     */
-    QMap<QString, QStringList > mCrsForLayer;
 
     /**
      * layers hosted by the WMS

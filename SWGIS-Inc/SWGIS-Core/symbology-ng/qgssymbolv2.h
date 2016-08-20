@@ -20,8 +20,8 @@
 #include <QList>
 #include <QMap>
 #include "qgsmapunitscale.h"
-#include "../geometry/qgsgeometry.h"
-#include "../geometry/qgspointv2.h"
+#include "qgsgeometry.h"
+#include "qgspointv2.h"
 
 class QColor;
 class QImage;
@@ -279,19 +279,19 @@ class SWGISCORE_EXPORT QgsSymbolV2
      * Creates a point in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr wkb );
+    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr& wkb );
 
     /**
      * Creates a line string in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
+    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
 
     /**
      * Creates a polygon in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
+    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
 
     /**
      * Retrieve a cloned list of all layers that make up this symbol.
@@ -314,6 +314,10 @@ class SWGISCORE_EXPORT QgsSymbolV2
     //! (marker-marker, line-line, fill-fill/line)
     //! @deprecated since 2.14, use QgsSymbolLayerV2::isCompatibleWithSymbol instead
     Q_DECL_DEPRECATED bool isSymbolLayerCompatible( SymbolType layerType );
+
+    //! Render editing vertex marker at specified point
+    //! @note added in QGIS 2.16
+    void renderVertexMarker( QPointF pt, QgsRenderContext& context, int currentVertexMarkerType, int currentVertexMarkerSize );
 
     SymbolType mType;
     QgsSymbolLayerV2List mLayers;
@@ -379,6 +383,24 @@ class SWGISCORE_EXPORT QgsSymbolV2RenderContext
     //! @note added in 2.4
     const QgsFields* fields() const { return mFields; }
 
+    /** Part count of current geometry
+     * @note added in QGIS 2.16
+     */
+    int geometryPartCount() const { return mGeometryPartCount; }
+    /** Sets the part count of current geometry
+     * @note added in QGIS 2.16
+     */
+    void setGeometryPartCount( int count ) { mGeometryPartCount = count; }
+
+    /** Part number of current geometry
+     * @note added in QGIS 2.16
+     */
+    int geometryPartNum() const { return mGeometryPartNum; }
+    /** Sets the part number of current geometry
+     * @note added in QGIS 2.16
+     */
+    void setGeometryPartNum( int num ) { mGeometryPartNum = num; }
+
     double outputLineWidth( double width ) const;
     double outputPixelSize( double size ) const;
 
@@ -410,6 +432,8 @@ class SWGISCORE_EXPORT QgsSymbolV2RenderContext
     int mRenderHints;
     const QgsFeature* mFeature; //current feature
     const QgsFields* mFields;
+    int mGeometryPartCount;
+    int mGeometryPartNum;
 
 
     QgsSymbolV2RenderContext( const QgsSymbolV2RenderContext& rh );

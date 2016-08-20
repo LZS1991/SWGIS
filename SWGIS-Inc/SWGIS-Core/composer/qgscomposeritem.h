@@ -57,6 +57,8 @@ class SWGISCORE_EXPORT QgsComposerItem: public QgsComposerObject, public QGraphi
       ComposerPicture,
       ComposerScaleBar,
       ComposerShape,
+      ComposerPolygon,
+      ComposerPolyline,
       ComposerTable,
       ComposerAttributeTable,
       ComposerTextTable,

@@ -16,14 +16,14 @@
 #ifndef QGSFILENAMEWIDGETWRAPPER_H
 #define QGSFILENAMEWIDGETWRAPPER_H
 
-#include "./core/qgseditorwidgetwrapper.h"
+#include "qgseditorwidgetwrapper.h"
 
 #include <QLineEdit>
 #include <QPushButton>
 #include <QLabel>
 
 
-/**
+/** \ingroup gui
  * Wraps a file name widget. Will offer a file browser to choose files.
  * \note not available in Python bindings
  */
@@ -41,6 +41,7 @@ class SWGISGUI_EXPORT QgsFileNameWidgetWrapper : public QgsEditorWidgetWrapper
   public:
     QVariant value() const override;
     bool valid() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;
@@ -50,6 +51,8 @@ class SWGISGUI_EXPORT QgsFileNameWidgetWrapper : public QgsEditorWidgetWrapper
     void setValue( const QVariant& value ) override;
 
   private:
+    void updateConstraintWidgetStatus( bool constraintValid ) override;
+
     QLineEdit* mLineEdit;
     QPushButton* mPushButton;
     QLabel* mLabel;

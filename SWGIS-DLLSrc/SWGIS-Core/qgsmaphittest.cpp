@@ -19,15 +19,17 @@
 #include "qgsmaplayerregistry.h"
 #include "qgsrendercontext.h"
 #include "qgsmaplayerstylemanager.h"
+#include "qgsrendererv2.h"
+#include "qgspointdisplacementrenderer.h"
 #include "qgsvectorlayer.h"
-#include "./symbology-ng/qgssymbollayerv2utils.h"
-#include "./geometry/qgsgeometry.h"
-#include "./symbology-ng/qgsrendererv2.h"
-#include "./symbology-ng/qgspointdisplacementrenderer.h"
+#include "qgssymbollayerv2utils.h"
+#include "qgsgeometry.h"
 #include "qgscrscache.h"
 
 QgsMapHitTest::QgsMapHitTest( const QgsMapSettings& settings, const QgsGeometry& polygon, const LayerFilterExpression& layerFilterExpression )
-    : mSettings( settings ), mLayerFilterExpression( layerFilterExpression ), mOnlyExpressions( false )
+    : mSettings( settings )
+    , mLayerFilterExpression( layerFilterExpression )
+    , mOnlyExpressions( false )
 {
   if ( !polygon.isEmpty() && polygon.type() == QGis::Polygon )
   {
@@ -36,7 +38,9 @@ QgsMapHitTest::QgsMapHitTest( const QgsMapSettings& settings, const QgsGeometry&
 }
 
 QgsMapHitTest::QgsMapHitTest( const QgsMapSettings& settings, const LayerFilterExpression& layerFilterExpression )
-    : mSettings( settings ), mLayerFilterExpression( layerFilterExpression ), mOnlyExpressions( true )
+    : mSettings( settings )
+    , mLayerFilterExpression( layerFilterExpression )
+    , mOnlyExpressions( true )
 {
 }
 
@@ -59,7 +63,7 @@ void QgsMapHitTest::run()
 
     if ( !mOnlyExpressions )
     {
-      if ( vl->hasScaleBasedVisibility() && ( mSettings.scale() < vl->minimumScale() || mSettings.scale() > vl->maximumScale() ) )
+      if ( !vl->isInScaleRange( mSettings.scale() ) )
       {
         mHitTest[vl] = SymbolV2Set(); // no symbols -> will not be shown
         mHitTestRuleKey[vl] = SymbolV2Set();

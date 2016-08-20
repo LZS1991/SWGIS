@@ -15,14 +15,14 @@
 
 #include "qgslegendrenderer.h"
 
-#include "./composer/qgscomposerlegenditem.h"
-#include "./layertree/qgslayertree.h"
-#include "./layertree/qgslayertreemodel.h"
-#include "./layertree/qgslayertreemodellegendnode.h"
-#include "./composer/qgslegendmodel.h"
+#include "qgscomposerlegenditem.h"
+#include "qgslayertree.h"
+#include "qgslayertreemodel.h"
+#include "qgslayertreemodellegendnode.h"
+#include "qgslegendmodel.h"
 #include "qgsmaplayerlegend.h"
 #include "qgsmaplayerregistry.h"
-#include "./symbology-ng/qgssymbolv2.h"
+#include "qgssymbolv2.h"
 #include "qgsvectorlayer.h"
 
 #include <QPainter>
@@ -161,6 +161,7 @@ QList<QgsLegendRenderer::Atom> QgsLegendRenderer::createAtomList( QgsLayerTreeGr
 
       // Group subitems
       QList<Atom> groupAtoms = createAtomList( nodeGroup, splitLayer );
+      bool hasSubItems = groupAtoms.size() > 0;
 
       if ( nodeLegendStyle( nodeGroup ) != QgsComposerLegendStyle::Hidden )
       {
@@ -188,7 +189,12 @@ QList<QgsLegendRenderer::Atom> QgsLegendRenderer::createAtomList( QgsLayerTreeGr
           groupAtoms.append( atom );
         }
       }
-      atoms.append( groupAtoms );
+
+      if ( hasSubItems ) //leave away groups without content
+      {
+        atoms.append( groupAtoms );
+      }
+
     }
     else if ( QgsLayerTree::isLayer( node ) )
     {

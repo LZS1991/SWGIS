@@ -62,7 +62,7 @@ class SWGISGUI_EXPORT QgsRelationReferenceWidget : public QWidget
     void setForeignKey( const QVariant &value );
 
     //! returns the related feature foreign key
-    QVariant foreignKey();
+    QVariant foreignKey() const;
 
     void setEditorContext( const QgsAttributeEditorContext& context, QgsMapCanvas* canvas, QgsMessageBar* messageBar );
 
@@ -106,7 +106,26 @@ class SWGISGUI_EXPORT QgsRelationReferenceWidget : public QWidget
 
     //! return the related feature (from the referenced layer)
     //! if no feature is related, it returns an invalid feature
-    QgsFeature referencedFeature();
+    QgsFeature referencedFeature() const;
+
+    /** Sets the widget to display in an indeterminate "mixed value" state.
+     * @note added in QGIS 2.16
+     */
+    void showIndeterminateState();
+
+    /**
+     * Determines if a button for adding new features should be shown.
+     *
+     * @note added in QGIS 2.16
+     */
+    bool allowAddFeatures() const;
+
+    /**
+     * Determines if a button for adding new features should be shown.
+     *
+     * @note added in QGIS 2.16
+     */
+    void setAllowAddFeatures( bool allowAddFeatures );
 
   public slots:
     //! open the form of the related feature in a new dialog
@@ -134,6 +153,8 @@ class SWGISGUI_EXPORT QgsRelationReferenceWidget : public QWidget
     void unsetMapTool();
     void mapToolDeactivated();
     void filterChanged();
+    void addEntry();
+    void updateAddEntryButton();
 
   private:
     void highlightFeature( QgsFeature f = QgsFeature(), CanvasExtent canvasExtent = Fixed );
@@ -174,6 +195,7 @@ class SWGISGUI_EXPORT QgsRelationReferenceWidget : public QWidget
     bool mOrderByValue;
     bool mOpenFormButtonVisible;
     bool mChainFilters;
+    bool mAllowAddFeatures;
 
     // UI
     QVBoxLayout* mTopLayout;
@@ -181,6 +203,7 @@ class SWGISGUI_EXPORT QgsRelationReferenceWidget : public QWidget
     QToolButton* mRemoveFKButton;
     QToolButton* mOpenFormButton;
     QToolButton* mHighlightFeatureButton;
+    QToolButton* mAddEntryButton;
     QAction* mHighlightFeatureAction;
     QAction* mScaleHighlightFeatureAction;
     QAction* mPanHighlightFeatureAction;

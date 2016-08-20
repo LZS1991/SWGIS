@@ -21,10 +21,15 @@
 #include <limits>
 
 #include "qgsvectordataprovider.h"
+#include "qgscircularstringv2.h"
+#include "qgscompoundcurvev2.h"
 #include "qgsfeature.h"
 #include "qgsfeatureiterator.h"
 #include "qgsfeaturerequest.h"
 #include "qgsfield.h"
+#include "qgsgeometry.h"
+#include "qgsgeometrycollectionv2.h"
+#include "qgsgeometryfactory.h"
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
 
@@ -73,6 +78,12 @@ bool QgsVectorDataProvider::addAttributes( const QList<QgsField> &attributes )
 bool QgsVectorDataProvider::deleteAttributes( const QgsAttributeIds &attributes )
 {
   Q_UNUSED( attributes );
+  return false;
+}
+
+bool QgsVectorDataProvider::renameAttributes( const QgsFieldNameMap& renamedAttributes )
+{
+  Q_UNUSED( renamedAttributes );
   return false;
 }
 
@@ -184,11 +195,23 @@ QString QgsVectorDataProvider::capabilitiesString() const
     QgsDebugMsg( "Capability: Delete Attributes" );
   }
 
+  if ( abilities & QgsVectorDataProvider::RenameAttributes )
+  {
+    abilitiesList += tr( "Rename Attributes" );
+    QgsDebugMsg( "Capability: Rename Attributes" );
+  }
+
   if ( abilities & QgsVectorDataProvider::CreateSpatialIndex )
   {
     // TODO: Tighten up this test.  See QgsOgrProvider for details.
     abilitiesList += tr( "Create Spatial Index" );
     QgsDebugMsg( "Capability: Create Spatial Index" );
+  }
+
+  if ( abilities & QgsVectorDataProvider::CreateAttributeIndex )
+  {
+    abilitiesList += tr( "Create Attribute Indexes" );
+    QgsDebugMsg( "Capability: Create Attribute Index" );
   }
 
   if ( abilities & QgsVectorDataProvider::SelectAtId )
@@ -221,22 +244,25 @@ QString QgsVectorDataProvider::capabilitiesString() const
     QgsDebugMsg( "Capability: change both feature attributes and geometry at once" );
   }
 
+  if ( abilities & QgsVectorDataProvider::TransactionSupport )
+  {
+    abilitiesList += tr( "Transactions" );
+    QgsDebugMsg( "Capability: transactions" );
+  }
+
+  if ( abilities & QgsVectorDataProvider::CircularGeometries )
+  {
+    abilitiesList += tr( "Curved Geometries" );
+    QgsDebugMsg( "Supports circular geometry types (circularstring, compoundcurve, curvepolygon)" );
+  }
+
   return abilitiesList.join( ", " );
 }
 
 
 int QgsVectorDataProvider::fieldNameIndex( const QString& fieldName ) const
 {
-  const QgsFields &theFields = fields();
-
-  for ( int i = 0; i < theFields.count(); ++i )
-  {
-    if ( QString::compare( theFields[i].name(), fieldName, Qt::CaseInsensitive ) == 0 )
-    {
-      return i;
-    }
-  }
-  return -1;
+  return fields().fieldNameIndex( fieldName );
 }
 
 QMap<QString, int> QgsVectorDataProvider::fieldNameMap() const
@@ -383,6 +409,19 @@ void QgsVectorDataProvider::uniqueValues( int index, QList<QVariant> &values, in
     if ( limit >= 0 && values.size() >= limit )
       break;
   }
+}
+
+QVariant QgsVectorDataProvider::aggregate( QgsAggregateCalculator::Aggregate aggregate, int index,
+    const QgsAggregateCalculator::AggregateParameters& parameters, QgsExpressionContext* context, bool& ok )
+{
+  //base implementation does nothing
+  Q_UNUSED( aggregate );
+  Q_UNUSED( index );
+  Q_UNUSED( parameters );
+  Q_UNUSED( context );
+
+  ok = false;
+  return QVariant();
 }
 
 void QgsVectorDataProvider::clearMinMaxCache()
@@ -579,6 +618,105 @@ void QgsVectorDataProvider::pushError( const QString& msg )
 QSet<QString> QgsVectorDataProvider::layerDependencies() const
 {
   return QSet<QString>();
+}
+
+QgsGeometry* QgsVectorDataProvider::convertToProviderType( const QgsGeometry* geom ) const
+{
+  if ( !geom )
+  {
+    return nullptr;
+  }
+
+  QgsAbstractGeometryV2* geometry = geom->geometry();
+  if ( !geometry )
+  {
+    return nullptr;
+  }
+
+  QgsWKBTypes::Type providerGeomType = QGis::fromOldWkbType( geometryType() );
+
+  //geom is already in the provider geometry type
+  if ( geometry->wkbType() == providerGeomType )
+  {
+    return nullptr;
+  }
+
+  QgsAbstractGeometryV2* outputGeom = nullptr;
+
+  //convert compoundcurve to circularstring (possible if compoundcurve consists of one circular string)
+  if ( QgsWKBTypes::flatType( providerGeomType ) == QgsWKBTypes::CircularString && QgsWKBTypes::flatType( geometry->wkbType() ) == QgsWKBTypes::CompoundCurve )
+  {
+    QgsCompoundCurveV2* compoundCurve = static_cast<QgsCompoundCurveV2*>( geometry );
+    if ( compoundCurve )
+    {
+      if ( compoundCurve->nCurves() == 1 )
+      {
+        const QgsCircularStringV2* circularString = dynamic_cast<const QgsCircularStringV2*>( compoundCurve->curveAt( 0 ) );
+        if ( circularString )
+        {
+          outputGeom = circularString->clone();
+        }
+      }
+    }
+  }
+
+  //convert to multitype if necessary
+  if ( QgsWKBTypes::isMultiType( providerGeomType ) && !QgsWKBTypes::isMultiType( geometry->wkbType() ) )
+  {
+    outputGeom = QgsGeometryFactory::geomFromWkbType( providerGeomType );
+    QgsGeometryCollectionV2* geomCollection = dynamic_cast<QgsGeometryCollectionV2*>( outputGeom );
+    if ( geomCollection )
+    {
+      geomCollection->addGeometry( geometry->clone() );
+    }
+  }
+
+  //convert to curved type if necessary
+  if ( !QgsWKBTypes::isCurvedType( geometry->wkbType() ) && QgsWKBTypes::isCurvedType( providerGeomType ) )
+  {
+    QgsAbstractGeometryV2* curveGeom = outputGeom ? outputGeom->toCurveType() : geometry->toCurveType();
+    if ( curveGeom )
+    {
+      delete outputGeom;
+      outputGeom = curveGeom;
+    }
+  }
+
+  //convert to linear type from curved type
+  if ( QgsWKBTypes::isCurvedType( geometry->wkbType() ) && !QgsWKBTypes::isCurvedType( providerGeomType ) )
+  {
+    QgsAbstractGeometryV2* segmentizedGeom = nullptr;
+    segmentizedGeom = outputGeom ? outputGeom->segmentize() : geometry->segmentize();
+    if ( segmentizedGeom )
+    {
+      delete outputGeom;
+      outputGeom = segmentizedGeom;
+    }
+  }
+
+  //set z/m types
+  if ( QgsWKBTypes::hasZ( providerGeomType ) )
+  {
+    if ( !outputGeom )
+    {
+      outputGeom = geometry->clone();
+    }
+    outputGeom->addZValue();
+  }
+  if ( QgsWKBTypes::hasM( providerGeomType ) )
+  {
+    if ( !outputGeom )
+    {
+      outputGeom = geometry->clone();
+    }
+    outputGeom->addMValue();
+  }
+
+  if ( outputGeom )
+  {
+    return new QgsGeometry( outputGeom );
+  }
+  return nullptr;
 }
 
 QStringList QgsVectorDataProvider::smEncodings;

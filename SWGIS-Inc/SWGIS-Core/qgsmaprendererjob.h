@@ -105,7 +105,10 @@ class SWGISCORE_EXPORT QgsMapRendererJob : public QObject
 
     struct Error
     {
-      Error( const QString& lid, const QString& msg ) : layerID( lid ), message( msg ) {}
+      Error( const QString& lid, const QString& msg )
+          : layerID( lid )
+          , message( msg )
+      {}
 
       QString layerID;
       QString message;
@@ -186,7 +189,8 @@ class SWGISCORE_EXPORT QgsMapRendererJob : public QObject
 };
 
 
-/** Intermediate base class adding functionality that allows client to query the rendered image.
+/** \ingroup core
+ * Intermediate base class adding functionality that allows client to query the rendered image.
  *  The image can be queried even while the rendering is still in progress to get intermediate result
  *
  * @note added in 2.4

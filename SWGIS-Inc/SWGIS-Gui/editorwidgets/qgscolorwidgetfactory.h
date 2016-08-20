@@ -16,9 +16,10 @@
 #ifndef QGSCOLORWIDGETFACTORY_H
 #define QGSCOLORWIDGETFACTORY_H
 
-#include "./core/qgseditorwidgetfactory.h"
+#include "qgseditorwidgetfactory.h"
 
-/** \class QgsColorWidgetFactory
+/** \ingroup gui
+ * \class QgsColorWidgetFactory
  * \note not available in Python bindings
  */
 

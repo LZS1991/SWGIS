@@ -67,8 +67,8 @@ QgsCoordinateTransform::QgsCoordinateTransform( const QgsCoordinateReferenceSyst
 QgsCoordinateTransform::QgsCoordinateTransform( long theSourceSrsId, long theDestSrsId )
     : QObject()
     , mInitialisedFlag( false )
-    , mSourceCRS( theSourceSrsId, QgsCoordinateReferenceSystem::InternalCrsId )
-    , mDestCRS( theDestSrsId, QgsCoordinateReferenceSystem::InternalCrsId )
+    , mSourceCRS( QgsCRSCache::instance()->crsBySrsId( theSourceSrsId ) )
+    , mDestCRS( QgsCRSCache::instance()->crsBySrsId( theDestSrsId ) )
     , mSourceProjection( nullptr )
     , mDestinationProjection( nullptr )
     , mSourceDatumTransform( -1 )
@@ -86,8 +86,8 @@ QgsCoordinateTransform::QgsCoordinateTransform( const QString& theSourceCRS, con
     , mDestinationDatumTransform( -1 )
 {
   setFinder();
-  mSourceCRS.createFromWkt( theSourceCRS );
-  mDestCRS.createFromWkt( theDestCRS );
+  mSourceCRS = QgsCRSCache::instance()->crsByWkt( theSourceCRS );
+  mDestCRS = QgsCRSCache::instance()->crsByWkt( theDestCRS );
   // initialize the coordinate system data structures
   //XXX Who spells initialize initialise?
   //XXX A: Its the queen's english....
@@ -108,7 +108,7 @@ QgsCoordinateTransform::QgsCoordinateTransform( long theSourceSrid,
   setFinder();
 
   mSourceCRS.createFromId( theSourceSrid, theSourceCRSType );
-  mDestCRS.createFromWkt( theDestWkt );
+  mDestCRS = QgsCRSCache::instance()->crsByWkt( theDestWkt );
   // initialize the coordinate system data structures
   //XXX Who spells initialize initialise?
   //XXX A: Its the queen's english....
@@ -152,7 +152,7 @@ void QgsCoordinateTransform::setDestCRS( const QgsCoordinateReferenceSystem& the
 void QgsCoordinateTransform::setDestCRSID( long theCRSID )
 {
   //!todo Add some logic here to determine if the srsid is a system or user one
-  mDestCRS.createFromSrsId( theCRSID );
+  mDestCRS = QgsCRSCache::instance()->crsBySrsId( theCRSID );
   initialise();
 }
 
@@ -175,7 +175,7 @@ void QgsCoordinateTransform::initialise()
   {
     //No destination projection is set so we set the default output projection to
     //be the same as input proj.
-    mDestCRS = QgsCRSCache::instance()->crsByAuthId( mSourceCRS.authid() );
+    mDestCRS = QgsCRSCache::instance()->crsByOgcWmsCrs( mSourceCRS.authid() );
   }
 
   bool useDefaultDatumTransform = ( mSourceDatumTransform == - 1 && mDestinationDatumTransform == -1 );
@@ -668,7 +668,6 @@ void QgsCoordinateTransform::transformCoords( int numPoints, double *x, double *
     {
       x[i] *= DEG_TO_RAD;
       y[i] *= DEG_TO_RAD;
-      z[i] *= DEG_TO_RAD;
     }
 
   }
@@ -736,7 +735,6 @@ void QgsCoordinateTransform::transformCoords( int numPoints, double *x, double *
     {
       x[i] *= RAD_TO_DEG;
       y[i] *= RAD_TO_DEG;
-      z[i] *= RAD_TO_DEG;
     }
   }
 #ifdef COORDINATE_TRANSFORM_VERBOSE
@@ -1022,11 +1020,9 @@ bool QgsCoordinateTransform::datumTransformCrsInfo( int datumTransform, int& eps
   preferred = sqlite3_column_int( stmt, 5 ) != 0;
   deprecated = sqlite3_column_int( stmt, 6 ) != 0;
 
-  QgsCoordinateReferenceSystem srcCrs;
-  srcCrs.createFromOgcWmsCrs( QString( "EPSG:%1" ).arg( srcCrsId ) );
+  QgsCoordinateReferenceSystem srcCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( QString( "EPSG:%1" ).arg( srcCrsId ) );
   srcProjection = srcCrs.description();
-  QgsCoordinateReferenceSystem destCrs;
-  destCrs.createFromOgcWmsCrs( QString( "EPSG:%1" ).arg( destCrsId ) );
+  QgsCoordinateReferenceSystem destCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( QString( "EPSG:%1" ).arg( destCrsId ) );
   dstProjection = destCrs.description();
 
   sqlite3_finalize( stmt );
